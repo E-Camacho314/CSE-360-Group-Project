@@ -1,7 +1,6 @@
 package cse360helpsystem;
 
 import java.util.ArrayList;
-
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -17,6 +16,15 @@ import javafx.scene.text.TextFlow;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+
+/**
+ * <p> LoginPage Class </p>
+ * 
+ * <p> Description: .</p>
+ * 
+ * @author Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson
+ * 
+ */
 
 public class LoginPage extends HBox {
 	private Label welcome = new Label("Welcome to the ASU CSE 360 Help System!");

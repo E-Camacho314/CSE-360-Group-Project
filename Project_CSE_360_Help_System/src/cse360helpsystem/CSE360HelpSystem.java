@@ -6,6 +6,15 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.geometry.Pos;
 
+/**
+ * <p> CSE360HelpSystem Class </p>
+ * 
+ * <p> Description: .</p>
+ * 
+ * @author Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson
+ * 
+ */
+
 public class CSE360HelpSystem extends Application
 {
     public static final int WIDTH = 600, HEIGHT = 400;
