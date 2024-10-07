@@ -22,7 +22,7 @@ public class CSE360HelpSystem extends Application
     public void start(Stage stage)
     {
         StackPane root = new StackPane();
-        AdminPage loginpage = new AdminPage();
+        LoginPage loginpage = new LoginPage();
         root.getChildren().add(loginpage);
         Scene scene = new Scene(root, WIDTH, HEIGHT);
         stage.setTitle("CSE 360 Help System");
