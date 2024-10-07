@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
+import javafx.geometry.Pos;
 
 public class CSE360HelpSystem extends Application
 {
@@ -12,9 +13,13 @@ public class CSE360HelpSystem extends Application
     public void start(Stage stage)
     {
         StackPane root = new StackPane();
+        LoginPage loginpage = new LoginPage();
+        root.getChildren().add(loginpage);
+        root.setAlignment(loginpage,Pos.CENTER_RIGHT);
         Scene scene = new Scene(root, WIDTH, HEIGHT);
         stage.setTitle("CSE 360 Help System");
         stage.setScene(scene);
+        stage.centerOnScreen();
         stage.show();
     }
 
