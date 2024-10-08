@@ -100,8 +100,7 @@ public class CreateAccount extends VBox {
         // Button Actions
         submitButton.setOnAction(e -> handleSubmit());
         backButton.setOnAction(e -> {
-            System.out.println("Back button clicked"); // For debugging
-            mainApp.showLoginPage();
+            mainApp.showLoginPage(); // Switch back to the login page
         });
     }
 

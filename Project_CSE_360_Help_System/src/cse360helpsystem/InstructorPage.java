@@ -32,6 +32,8 @@ public class InstructorPage extends HBox {
         mainPane.setCenter(instructPane);
         this.getChildren().addAll(mainPane);
         this.setAlignment(Pos.CENTER);
+        
+        
 
 	}
 }
