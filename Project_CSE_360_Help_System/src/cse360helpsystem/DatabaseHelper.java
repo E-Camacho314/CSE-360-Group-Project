@@ -22,6 +22,19 @@ public class DatabaseHelper {
             createTables();  // Create the necessary tables if they don't exist
         }
     }
+    
+    public void emptyDatabase() {
+        try {
+            connectToDatabase(); // Establish connection
+            String dropUserTable = "DROP TABLE IF EXISTS cse360users;";
+            statement.executeUpdate(dropUserTable);
+            System.out.println("Database emptied successfully.");
+        } catch (SQLException e) {
+            System.err.println("SQL error while emptying the database: " + e.getMessage());
+        } finally {
+            closeConnection();
+        }
+    }
 
     private void createTables() throws SQLException {
         String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("

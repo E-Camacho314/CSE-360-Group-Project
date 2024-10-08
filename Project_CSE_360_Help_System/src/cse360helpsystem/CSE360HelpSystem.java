@@ -42,6 +42,7 @@ public class CSE360HelpSystem extends Application
 
     public void start(Stage stage)
     {
+    	databaseHelper.emptyDatabase();
     	adminpage = new AdminPage();
     	loginpage = new LoginPage();
     	studentpage = new StudentPage();
