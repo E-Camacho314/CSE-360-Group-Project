@@ -119,6 +119,13 @@ public class LoginPage extends HBox {
 							passfield.clear();
 							databaseHelper.closeConnection();
 						}
+			        	else {
+			        		databaseHelper.register(username, passwords, "Y", "N", "N");
+			        		mainApp.showRoleChooser();
+		                	userfield.clear();
+							passfield.clear();
+							databaseHelper.closeConnection();
+			        	}
 			        	/*//if the course is new, it is added to the checkboxContainer and changing the label
 	            	  if (isNew == true){
 	            		  courseList.add(new Course(subject, courseN, instructor));
