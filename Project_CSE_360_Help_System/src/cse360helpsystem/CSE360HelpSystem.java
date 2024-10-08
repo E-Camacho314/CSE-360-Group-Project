@@ -17,9 +17,6 @@ import javafx.scene.text.Font;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 
-import java.sql.SQLException;
-
-import cse360helpsystem.DatabaseHelper;
 /**
  * <p> CSE360HelpSystem Class </p>
  * 
@@ -32,7 +29,6 @@ import cse360helpsystem.DatabaseHelper;
 public class CSE360HelpSystem extends Application
 {
     public static final int WIDTH = 600, HEIGHT = 400;
-	private static final DatabaseHelper databaseHelper = new DatabaseHelper();
 	private static StackPane root = new StackPane();
 	private static LoginPage loginpage;
 	private static AdminPage adminpage;
@@ -152,7 +148,7 @@ public class CSE360HelpSystem extends Application
 						warning.setText("");
 						username = userfield.getText();
 			        	passwords = passfield.getText();
-			        	//Check if the database is empty. If so, set up new user as Admin
+			        	/*//Check if the database is empty. If so, set up new user as Admin
 			        	if (databaseHelper.isDatabaseEmpty()) {
 			        		databaseHelper.register(username, passwords, "admin");
 			        		sceneChanger("admin");
@@ -235,16 +231,6 @@ public class CSE360HelpSystem extends Application
 
     public static void main(String[] args)
     {
-		try { 
-			
-			databaseHelper.connectToDatabase();  // Connect to the database
 		    launch(args);
-		} catch (SQLException e) {
-			System.err.println("Database error: " + e.getMessage());
-			e.printStackTrace();
-		}
-		finally {
-			databaseHelper.closeConnection();
-		}
     }
 }
