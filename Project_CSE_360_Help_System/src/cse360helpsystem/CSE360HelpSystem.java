@@ -17,9 +17,6 @@ import javafx.scene.text.Font;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 
-import java.sql.SQLException;
-
-import cse360helpsystem.DatabaseHelper;
 /**
  * <p> CSE360HelpSystem Class </p>
  * 
@@ -31,15 +28,16 @@ import cse360helpsystem.DatabaseHelper;
 
 public class CSE360HelpSystem extends Application
 {
-    public static final int WIDTH = 600, HEIGHT = 400;
-	private static final DatabaseHelper databaseHelper = new DatabaseHelper();
+    public static final int WIDTH = 600, HEIGHT = 500;
 	private static StackPane root = new StackPane();
 	private static LoginPage loginpage;
 	private static AdminPage adminpage;
 	private TextField passfield = new TextField();
 	private TextField userfield = new TextField();
+	private TextField inviteField = new TextField();
 	private Button loginbutton = new Button ("Log In");
 	private Button logoutbutton = new Button ("Log Out");
+	private Button createAccount = new Button ("Create Account");
 	private Label warning = new Label();
 	private String username;
 	private String passwords;
@@ -61,6 +59,7 @@ public class CSE360HelpSystem extends Application
     	private Label login = new Label("Username:");
     	private Label password = new Label("Password:");
     	private Button redirect = new Button("Have a One-Time Password?");
+    	private Label inviteLabel = new Label("Have an invite code?");
     	
     	public LoginPage(){
     		BorderPane mainPane = new BorderPane();
@@ -80,16 +79,23 @@ public class CSE360HelpSystem extends Application
             redirect.setTextFill(Color.BLUE);
             redirect.setFont(Font.font(null, 14));
             
+            inviteLabel.setTextFill(Color.BLACK);
+            inviteLabel.setFont(Font.font(null, 14));
+            
+            createAccount.setTextFill(Color.BLUE);
+            createAccount.setFont(Font.font(null, 14));
+            
             VBox loginPane = new VBox();
             loginPane.setSpacing(20);
             loginPane.setPadding(new Insets(10, 10, 10, 10));
-            loginPane.getChildren().addAll(welcome, warning, login, userfield, password, passfield, loginbutton, redirect);
+            loginPane.getChildren().addAll(welcome, warning, login, userfield, password, passfield, loginbutton, redirect, inviteLabel, inviteField, createAccount);
 
             mainPane.setCenter(loginPane);
             this.getChildren().addAll(mainPane);
             this.setAlignment(Pos.CENTER);
             
             loginbutton.setOnAction(new ButtonHandler());
+            createAccount.setOnAction(e -> showCreateAccountPage()); // Redirect to CreateAccount page
 
     	}
     }
@@ -152,7 +158,7 @@ public class CSE360HelpSystem extends Application
 						warning.setText("");
 						username = userfield.getText();
 			        	passwords = passfield.getText();
-			        	//Check if the database is empty. If so, set up new user as Admin
+			        	/*//Check if the database is empty. If so, set up new user as Admin
 			        	if (databaseHelper.isDatabaseEmpty()) {
 			        		databaseHelper.register(username, passwords, "admin");
 			        		sceneChanger("admin");
@@ -222,6 +228,14 @@ public class CSE360HelpSystem extends Application
 	        } //end of handle() method                 
     } //end of ButtonHandler class
     
+	private void showCreateAccountPage() {
+        String invitationCode = inviteField.getText().trim(); // Get the invitation code
+        CreateAccount createAccountPage = new CreateAccount(this, invitationCode); // Pass it to CreateAccount
+        Scene createAccountScene = new Scene(createAccountPage, 400, 300);
+        Stage stage = (Stage) createAccount.getScene().getWindow();
+        stage.setScene(createAccountScene);
+    }
+	
     private static void sceneChanger(String needed){
     	root.getChildren().clear();
     	if(needed.equals("admin")) {
@@ -231,20 +245,16 @@ public class CSE360HelpSystem extends Application
     		root.getChildren().add(loginpage);
     	}
     }
-
+    
+    // method used by other pages to return to login page
+    public void showLoginPage() {
+        root.getChildren().clear();
+        root.getChildren().add(loginpage);
+        System.out.println("Switched to Login Page"); // For debugging
+    }
 
     public static void main(String[] args)
     {
-		try { 
-			
-			databaseHelper.connectToDatabase();  // Connect to the database
 		    launch(args);
-		} catch (SQLException e) {
-			System.err.println("Database error: " + e.getMessage());
-			e.printStackTrace();
-		}
-		finally {
-			databaseHelper.closeConnection();
-		}
     }
 }
