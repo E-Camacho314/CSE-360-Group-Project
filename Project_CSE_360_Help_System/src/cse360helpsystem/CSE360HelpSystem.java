@@ -1,5 +1,6 @@
 package cse360helpsystem;
 
+import java.sql.SQLException;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -16,7 +17,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import cse360helpsystem.StudentPage;
 
 /**
  * <p> CSE360HelpSystem Class </p>
@@ -30,6 +30,7 @@ import cse360helpsystem.StudentPage;
 public class CSE360HelpSystem extends Application
 {
     public static final int WIDTH = 400, HEIGHT = 300;
+    private static final DatabaseHelper databaseHelper = new DatabaseHelper();
 	private static StackPane root = new StackPane();
 	private static LoginPage loginpage;
 	private static AdminPage adminpage;
@@ -102,6 +103,21 @@ public class CSE360HelpSystem extends Application
 
     public static void main(String[] args)
     {
+    	try {
+    	    Class.forName("org.sqlite.JDBC");
+    	} catch (ClassNotFoundException e) {
+    	    e.printStackTrace();
+    	}
+    	try { 
+			
+			databaseHelper.connectToDatabase();  // Connect to the database
 		    launch(args);
+		} catch (SQLException e) {
+			System.err.println("Database error: " + e.getMessage());
+			e.printStackTrace();
+		}
+		finally {
+			databaseHelper.closeConnection();
+		}
     }
 }

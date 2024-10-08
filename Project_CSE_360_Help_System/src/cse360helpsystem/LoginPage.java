@@ -31,6 +31,7 @@ import javafx.scene.layout.HBox;
 
 public class LoginPage extends HBox {
 	private CSE360HelpSystem mainApp = new CSE360HelpSystem();
+    private static final DatabaseHelper databaseHelper = new DatabaseHelper();
 	private PasswordField passfield = new PasswordField();
 	private TextField userfield = new TextField();
 	private TextField inviteField = new TextField();
@@ -104,16 +105,19 @@ public class LoginPage extends HBox {
 	private class ButtonHandler implements EventHandler<ActionEvent>{
 	    public void handle(ActionEvent e){
 	        try {
+	        	databaseHelper.connectToDatabase();  // Connect to the database
 	        	//check to see if the add button is clicked and the textfields are filled
 					if (e.getSource() == loginbutton && userfield.getText().isEmpty() != true && passfield.getText().isEmpty() != true) {
 						warning.setText("");
 						username = userfield.getText();
 			        	passwords = passfield.getText();
 			        	//Check if the database is empty. If so, set up new user as Admin
-			        	if (1 == 1) {
-			        		mainApp.showRoleChooser();
+			        	if (databaseHelper.isDatabaseEmpty() == true) {
+			        		databaseHelper.register(username, passwords, "Y", "N", "N");
+			        		mainApp.showAdminPage();
 		                	userfield.clear();
 							passfield.clear();
+							databaseHelper.closeConnection();
 						}
 			        	/*//if the course is new, it is added to the checkboxContainer and changing the label
 	            	  if (isNew == true){
