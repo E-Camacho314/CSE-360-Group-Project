@@ -19,7 +19,6 @@ import javafx.scene.text.TextFlow;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import cse360helpsystem.DatabaseHelper;
 /**
  * <p> LoginPage Class </p>
  * 
@@ -28,7 +27,3 @@ import cse360helpsystem.DatabaseHelper;
  * @author Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson
  * 
  */
-
-
-
-
