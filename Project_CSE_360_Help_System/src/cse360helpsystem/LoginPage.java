@@ -111,7 +111,7 @@ public class LoginPage extends HBox {
 			        	passwords = passfield.getText();
 			        	//Check if the database is empty. If so, set up new user as Admin
 			        	if (1 == 1) {
-			        		mainApp.showAdminPage();
+			        		mainApp.showRoleChooser();
 		                	userfield.clear();
 							passfield.clear();
 						}

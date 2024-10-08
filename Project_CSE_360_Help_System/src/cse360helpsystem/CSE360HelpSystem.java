@@ -34,6 +34,8 @@ public class CSE360HelpSystem extends Application
 	private static LoginPage loginpage;
 	private static AdminPage adminpage;
 	private static StudentPage studentpage;
+	private static InstructorPage instructorpage;
+	private static RoleChooser rolechoose;
 	private TextField inviteField = new TextField();
 	private Button createAccount = new Button ("Create Account");
 
@@ -42,6 +44,8 @@ public class CSE360HelpSystem extends Application
     	adminpage = new AdminPage();
     	loginpage = new LoginPage();
     	studentpage = new StudentPage();
+    	instructorpage = new InstructorPage();
+    	rolechoose = new RoleChooser();
         root.getChildren().add(loginpage);
         Scene scene = new Scene(root, WIDTH, HEIGHT);        
         stage.setTitle("CSE 360 Help System");
@@ -80,6 +84,20 @@ public class CSE360HelpSystem extends Application
         root.getChildren().clear();
         root.getChildren().add(studentpage);
         System.out.println("Switched to Student Page"); // For debugging
+    }
+    
+    // method used by other pages to return to instructor page
+    public void showInstructorPage() {
+        root.getChildren().clear();
+        root.getChildren().add(instructorpage);
+        System.out.println("Switched to Instructor Page"); // For debugging
+    }
+    
+    // method used by other pages to return to rolechooser page
+    public void showRoleChooser() {
+        root.getChildren().clear();
+        root.getChildren().add(rolechoose);
+        System.out.println("Switched to Instructor Page"); // For debugging
     }
 
     public static void main(String[] args)
