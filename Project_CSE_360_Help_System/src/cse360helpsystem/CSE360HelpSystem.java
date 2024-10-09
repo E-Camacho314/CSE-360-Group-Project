@@ -48,7 +48,22 @@ public class CSE360HelpSystem extends Application
     	studentpage = new StudentPage();
     	instructorpage = new InstructorPage();
     	rolechoose = new RoleChooser();
-        root.getChildren().add(loginpage);
+    	try {
+    		databaseHelper.connectToDatabase();
+        	if(databaseHelper.isDatabaseEmpty()) {
+        		showCreateAccountPage();
+        	}
+        	else {
+                root.getChildren().add(loginpage);
+        	}
+    	}
+    	catch(SQLException e) {
+			System.err.println("Database error: " + e.getMessage());
+			e.printStackTrace();
+    	}
+    	finally {
+    		databaseHelper.closeConnection();
+    	}
         Scene scene = new Scene(root, WIDTH, HEIGHT);        
         stage.setTitle("CSE 360 Help System");
         stage.setScene(scene);

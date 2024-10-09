@@ -15,6 +15,7 @@ import java.sql.SQLException;
 
 public class CreateAccount extends VBox {
     private CSE360HelpSystem mainApp;
+    private static final DatabaseHelper databaseHelper = new DatabaseHelper();
     private String invitationCode;
     private Label titleLabel;
     private Label emailLabel;
@@ -70,14 +71,14 @@ public class CreateAccount extends VBox {
         messageLabel = new Label();
         messageLabel.setTextFill(Color.BLACK);
         messageLabel.setFont(Font.font(14));
-
+        
         // Layout using GridPane
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
         grid.setVgap(10);
         grid.setHgap(10);
         grid.setPadding(new Insets(20, 20, 20, 20));
-
+        
         grid.add(titleLabel, 0, 0, 2, 1);
         grid.add(emailLabel, 0, 1);
         grid.add(emailField, 1, 1);
@@ -86,8 +87,27 @@ public class CreateAccount extends VBox {
         grid.add(confirmPassLabel, 0, 3);
         grid.add(confirmPassField, 1, 3);
         grid.add(submitButton, 1, 4);
-        grid.add(backButton, 1, 5);
         grid.add(messageLabel, 0, 6, 2, 1);
+        
+        try {
+    		databaseHelper.connectToDatabase();
+        	if(databaseHelper.isDatabaseEmpty()) {
+        		titleLabel.setText("First Admin Account Creation");
+        		emailLabel.setText("Username:");
+        		emailField.setPromptText("Enter your username");
+        		
+        	}
+        	else {
+                grid.add(backButton, 1, 5);
+        	}
+    	}
+    	catch(SQLException e) {
+			System.err.println("Database error: " + e.getMessage());
+			e.printStackTrace();
+    	}
+    	finally {
+    		databaseHelper.closeConnection();
+    	}
 
         // Align buttons to the right
         GridPane.setMargin(submitButton, new Insets(10, 0, 0, 0));
@@ -120,10 +140,12 @@ public class CreateAccount extends VBox {
         }
 
         try {
-            String role;
-            if (isDatabaseEmpty()) {
-                // First user is admin
-                role = "admin";
+            databaseHelper.connectToDatabase();
+        	String role;
+        	boolean success = false;
+            if (databaseHelper.isDatabaseEmpty()) {
+                databaseHelper.register(email, confirmPassword, 1, 0, 0);
+                success = true;
             } else {
                 if (invitationCode == null || invitationCode.trim().isEmpty()) {
                     messageLabel.setText("Invitation code is required.");
@@ -135,8 +157,6 @@ public class CreateAccount extends VBox {
                     return;
                 }
             }
-
-            boolean success = register(email, password, role);
             if (success) {
                 messageLabel.setTextFill(Color.GREEN);
                 messageLabel.setText("Account created successfully! Redirecting to login...");
@@ -159,7 +179,7 @@ public class CreateAccount extends VBox {
             messageLabel.setText("An error occurred during account creation.");
         }
     }
-
+/* These methods are handled by databaseHelper class
     // Example method to register a user
     private boolean register(String email, String password, String role) throws SQLException {
         // Example database connection - update with your connection details
@@ -183,6 +203,7 @@ public class CreateAccount extends VBox {
         // Implement logic to check if the users table is empty
         return false; // Update with actual logic
     }
+    */
 
     // method to consume invitation code
     private String consumeInvitationCode(String code) {
