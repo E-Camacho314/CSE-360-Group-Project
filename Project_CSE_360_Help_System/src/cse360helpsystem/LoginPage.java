@@ -113,14 +113,14 @@ public class LoginPage extends HBox {
 			        	passwords = passfield.getText();
 			        	//Check if the database is empty. If so, set up new user as Admin
 			        	if (databaseHelper.isDatabaseEmpty() == true) {
-			        		databaseHelper.register(username, passwords, "Y", "N", "N");
+			        		databaseHelper.register(username, passwords, 1, 0, 0);
 			        		mainApp.showAdminPage();
 		                	userfield.clear();
 							passfield.clear();
 							databaseHelper.closeConnection();
 						}
 			        	else {
-			        		databaseHelper.register(username, passwords, "Y", "N", "N");
+			        		databaseHelper.register(username, passwords, 1, 0, 0);
 			        		mainApp.showRoleChooser();
 		                	userfield.clear();
 							passfield.clear();

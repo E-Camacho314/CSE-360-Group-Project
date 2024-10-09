@@ -36,20 +36,20 @@ public class DatabaseHelper {
         }
     }
 
+
     private void createTables() throws SQLException {
         String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-               // + "firstname TEXT, "
-                //+ "middlename TEXT, "
-               // + "lastname TEXT, "
-               // + "preferred TEXT, "
-                //+ "username TEXT, "
+                + "firstname TEXT, "
+                + "middlename TEXT, "
+                + "lastname TEXT, "
+                + "preferred TEXT, "
+                + "username TEXT, "
                 + "email TEXT UNIQUE, "
                 + "password TEXT, "
-                //+ "role TEXT" // Add role column
-                + "admin TEXT, "
-                + "instructor TEXT, "
-                + "student TEXT"
+                + "admin INTEGER, "
+                + "instructor INTEGER, "
+                + "student INTEGER"
                 + ");";
         statement.execute(userTable);
     }
@@ -66,15 +66,15 @@ public class DatabaseHelper {
         return true;
     }
 
-    public void register(String email, String password, String admin, String instructor, String student) throws SQLException {
+    public void register(String email, String password, int admin, int instructor, int student) throws SQLException {
         String insertUser = "INSERT INTO cse360users (email, password, admin, instructor, student) VALUES (?, ?, ?, ?, ?)";
         System.out.println("User registering");
         try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
             pstmt.setString(1, email);
             pstmt.setString(2, password);
-            pstmt.setString(3, admin);
-            pstmt.setString(4, instructor);
-            pstmt.setString(5, student);
+            pstmt.setInt(3, admin);
+            pstmt.setInt(4, instructor);
+            pstmt.setInt(5, student);
             pstmt.executeUpdate();
             System.out.println("User registered successfully.");
         } catch (SQLException e) {
@@ -91,6 +91,45 @@ public class DatabaseHelper {
             try (ResultSet rs = pstmt.executeQuery()) {
                 return rs.next();
             }
+        }
+    }
+    
+    public void changeUserRoles(String email, int admin, int instructor, int student) throws SQLException {
+        // Prepare the SQL statement to update all roles at once
+        String updateSQL = "UPDATE cse360users SET admin = ?, instructor = ?, student = ? WHERE email = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(updateSQL)) {
+            // Set the roles based on the integer values: 1 means enabled, 0 means disabled
+            pstmt.setInt(1, admin == 1 ? 1 : 0);
+            pstmt.setInt(2, instructor == 1 ? 1 : 0);
+            pstmt.setInt(3, student == 1 ? 1 : 0);
+            pstmt.setString(4, email);
+            
+            int affectedRows = pstmt.executeUpdate();
+            
+            if (affectedRows > 0) {
+                System.out.println("User roles updated successfully.");
+            } else {
+                System.out.println("No user found with the email '" + email + "'.");
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error: " + e.getMessage());
+        }
+    }
+    
+    public void deleteUser(String email) throws SQLException {
+        String deleteUserSQL = "DELETE FROM cse360users WHERE email = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(deleteUserSQL)) {
+            pstmt.setString(1, email);
+            int affectedRows = pstmt.executeUpdate();
+            
+            if (affectedRows > 0) {
+                System.out.println("User with email '" + email + "' deleted successfully.");
+            } else {
+                System.out.println("No user found with the email '" + email + "'.");
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while deleting user: " + e.getMessage());
         }
     }
 
@@ -112,19 +151,26 @@ public class DatabaseHelper {
         String sql = "SELECT * FROM cse360users"; 
         try (Statement stmt = connection.createStatement(); 
              ResultSet rs = stmt.executeQuery(sql)) {
-            while(rs.next()) { 
+            while (rs.next()) { 
                 // Retrieve by column name 
-                int id  = rs.getInt("id"); 
+                int id = rs.getInt("id"); 
                 String email = rs.getString("email"); 
                 String password = rs.getString("password"); 
-                String role = rs.getString("role");  
+                String admin = rs.getString("admin");
+                String instructor = rs.getString("instructor");
+                String student = rs.getString("student");
 
                 // Display values 
                 System.out.print("ID: " + id); 
                 System.out.print(", Email: " + email); 
-                System.out.print(", Password: " + password); 
-                System.out.println(", Role: " + role); 
+                // Avoid printing passwords in production
+                System.out.print(", Password: " + password); // Consider removing this line
+                System.out.print(", Admin: " + admin); 
+                System.out.print(", Instructor: " + instructor); 
+                System.out.println(", Student: " + student); 
             } 
+        } catch (SQLException e) {
+            System.err.println("SQL error while displaying users: " + e.getMessage());
         }
     }
 

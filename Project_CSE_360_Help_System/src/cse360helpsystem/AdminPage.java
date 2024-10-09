@@ -1,11 +1,15 @@
 package cse360helpsystem;
 
+import java.sql.SQLException;
+
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -15,16 +19,25 @@ import javafx.scene.text.Font;
 
 public class AdminPage extends HBox {
 	private CSE360HelpSystem mainApp = new CSE360HelpSystem();
+    private static final DatabaseHelper databaseHelper = new DatabaseHelper();
 	private Label welcome = new Label("Admin View");
+	private Label warning = new Label("");
 	private Label userinfo = new Label("Manipulate Users:");
 	private Label perms = new Label("Permissions:");
 	private Button invitebutton = new Button ("Invite User");
 	private Button resetbutton = new Button ("Reset User");
-	private Button deletebutton = new Button ("Delete User");
+	private Button deletebutton = new Button ("Delete");
 	private Button listbutton = new Button ("List Users");
-	private Button addpermsbutton = new Button ("Add Roles");
-	private Button removepermsbutton = new Button ("Remove Roles");
+	private Button changepermsbutton = new Button ("Update Roles");
 	private Button logoutbutton = new Button ("Log Out");
+	private CheckBox admin = new CheckBox ("Admin");
+	private CheckBox instructor = new CheckBox ("Instructor");
+	private CheckBox student = new CheckBox ("Student");
+	private TextField deleteField = new TextField();
+	private TextField permsField = new TextField();
+	private TextField resetField = new TextField();
+	private TextField inviteField = new TextField();
+	private String user;
 	
 	public AdminPage(){
 		BorderPane mainPane = new BorderPane();
@@ -50,11 +63,13 @@ public class AdminPage extends HBox {
         listbutton.setTextFill(Color.BLACK);
         listbutton.setFont(Font.font(null, 14));
         
-        addpermsbutton.setTextFill(Color.BLACK);
-        addpermsbutton.setFont(Font.font(null, 14));
+        deleteField.setPromptText("Username to delete");
+        inviteField.setPromptText("User to invite");
+        resetField.setPromptText("Username to reset");
+        permsField.setPromptText("User to change Roles");
         
-        removepermsbutton.setTextFill(Color.RED);
-        removepermsbutton.setFont(Font.font(null, 14));
+        changepermsbutton.setTextFill(Color.BLACK);
+        changepermsbutton.setFont(Font.font(null, 14));
         
         logoutbutton.setTextFill(Color.BLACK);
         logoutbutton.setFont(Font.font(null, 14));
@@ -67,95 +82,101 @@ public class AdminPage extends HBox {
 
         adminPane.add(welcome, 0, 0, 2, 1);
         adminPane.add(userinfo, 0, 1);
-        adminPane.add(invitebutton, 0, 2);
-        adminPane.add(resetbutton, 1, 2);
-        adminPane.add(deletebutton, 1, 3);
-        adminPane.add(listbutton, 0, 3);
-        adminPane.add(perms, 0, 4);
-        adminPane.add(addpermsbutton, 0, 5);
-        adminPane.add(removepermsbutton, 1, 5);
-        adminPane.add(logoutbutton, 0, 6);
+        adminPane.add(warning, 1, 1);
+        adminPane.add(inviteField, 0, 2);
+        adminPane.add(invitebutton, 1, 2);
+        adminPane.add(resetField, 0, 3);
+        adminPane.add(resetbutton, 1, 3);
+        adminPane.add(deleteField, 0, 4);
+        adminPane.add(deletebutton, 1, 4);
+        adminPane.add(listbutton, 0, 5);
+        adminPane.add(permsField, 0, 6);
+        adminPane.add(admin, 0, 8);
+        adminPane.add(instructor, 0, 7);
+        adminPane.add(student, 1, 7);
+        adminPane.add(changepermsbutton, 2, 8);
+        adminPane.add(logoutbutton, 0, 9);
 
         mainPane.setCenter(adminPane);
         this.getChildren().addAll(mainPane);
         this.setAlignment(Pos.CENTER);
-        
-        logoutbutton.setOnAction(new ButtonHandler());
-        logoutbutton.setOnAction(e -> {
-            mainApp.showLoginPage(); // Switch back to the login page
-        });
+
+        logoutbutton.setOnAction(e -> mainApp.showLoginPage());
+        deletebutton.setOnAction(e -> delete());
+        changepermsbutton.setOnAction(e -> changePerms());
+        listbutton.setOnAction(e -> list());
 
 	}
 	
-	private class ButtonHandler implements EventHandler<ActionEvent>{
-        public void handle(ActionEvent e){
-            /*try {
-            	//check to see if the add button is clicked and the textfields are filled
-					if (e.getSource() == loginbutton && userfield.getText().isEmpty() != true && passfield.getText().isEmpty() != true) {
-						warning.setText("");
-						username = userfield.getText();
-			        	passwords = passfield.getText();
-			        	//Check if the database is empty. If so, set up new user as Admin
-			        	if (1 == 1) {
-			        		sceneChanger("admin");
-		                	userfield.clear();
-							passfield.clear();
-						}
-			        	else {
-			        		sceneChanger("logout");
-		                	userfield.clear();
-							passfield.clear();
-			        	}
-			        	//if the course is new, it is added to the checkboxContainer and changing the label
-                	  if (isNew == true){
-                		  courseList.add(new Course(subject, courseN, instructor));
-                		  updateCheckBoxContainer();
-						   labelLB.setText("Course added successfully");
-						   labelLB.setTextFill(Color.BLACK);
-						   labelLB.setFont(Font.font(null, 14));
-					  }
-                	  //if the course is a duplicate, the label is changed
-					   else {
-						   labelLB.setText("Duplicated Course - Not added");
-						   labelLB.setTextFill(Color.RED);
-						   labelLB.setFont(Font.font(null, 14));
-						   
-					 }
-                	  //clear all the text fields
-                	  userfield.clear();
-					  passfield.clear();
-              	    }
+	private void list() {
+        try {
+			databaseHelper.connectToDatabase();
+	        databaseHelper.displayUsers();
+			databaseHelper.closeConnection();
+        }
+        catch (SQLException e) {
+	        warning.setText("Error: " + e.getMessage());
+	        warning.setTextFill(Color.RED);
+	    }
+        finally {
+        	databaseHelper.closeConnection();
+        }
+	}
+	
+	private void delete() {
+	    try {
+	        databaseHelper.connectToDatabase();
+	        if (!deleteField.getText().isEmpty()) {
+	            user = deleteField.getText();
+	            databaseHelper.deleteUser(user);
+	            warning.setText("User deleted.");
+	            warning.setTextFill(Color.GREEN);
+	        } 
+	        else {
+	            warning.setText("Please enter a username.");
+	            warning.setTextFill(Color.RED);
+	        }
+	        deleteField.clear();
+	    } 
+	    catch (SQLException e) {
+	        warning.setText("Error deleting user: " + e.getMessage());
+	        warning.setTextFill(Color.RED);
+	    } 
+	    finally {
+	        databaseHelper.closeConnection();
+	    }
+	}
 
-					//check if the addbutton is clicked and atleast one textfield is empty
-	                  else if (e.getSource()  == loginbutton && (userfield.getText().isEmpty() == true || passfield.getText().isEmpty() == true)){
-	                	   warning.setText("At least one field is empty. Fill all fields");
-						   warning.setTextFill(Color.RED);
-						   warning.setFont(Font.font(null, 14));
-	                 }
+	private void changePerms() {
+	    try {
+	        databaseHelper.connectToDatabase();
+	        if (!permsField.getText().isEmpty()) {
+	            user = permsField.getText();
+	            int adminChoice = admin.isSelected() ? 1 : 0;
+	            int instChoice = instructor.isSelected() ? 1 : 0;
+	            int studChoice = student.isSelected() ? 1 : 0;
 
-					//check if the dropbutton was clicked
-	                else if (e.getSource() == logoutbutton){
-	                	
-	                } 
-	               else{
-						throw new Exception();
-					}
+	            databaseHelper.changeUserRoles(user, adminChoice, instChoice, studChoice);
+	            warning.setText("Roles updated.");
+	            warning.setTextFill(Color.GREEN);
 
-	           } //end of try*/
-
-            /*//exception if the courseNum is not an integer
-	           catch(NumberFormatException ex){
-	        	   labelLB.setText("Error! Course number must be an integer");
-				   labelLB.setTextFill(Color.RED);
-				   labelLB.setFont(Font.font(null, 14)); 
-	            }
-	           catch(Exception exception)
-	            {
-	        	   labelLB.setText("Error");
-				   labelLB.setTextFill(Color.RED);
-				   labelLB.setFont(Font.font(null, 14)); 
-	            }*/
-            
-	        } //end of handle() method                 
-    } //end of ButtonHandler class
+	            // Clear inputs
+	            permsField.clear();
+	            admin.setSelected(false);
+	            instructor.setSelected(false);
+	            student.setSelected(false);
+	        } 
+	        else {
+	            warning.setText("Please enter a username.");
+	            warning.setTextFill(Color.RED);
+	        }
+	    } 
+	    catch (SQLException e) {
+	        warning.setText("Error updating roles: " + e.getMessage());
+	        warning.setTextFill(Color.RED);
+	    } 
+	    finally {
+	        databaseHelper.closeConnection();
+	    }
+	}
 }

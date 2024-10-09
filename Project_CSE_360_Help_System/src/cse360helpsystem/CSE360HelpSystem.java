@@ -29,7 +29,7 @@ import javafx.geometry.Pos;
 
 public class CSE360HelpSystem extends Application
 {
-    public static final int WIDTH = 400, HEIGHT = 300;
+    public static final int WIDTH = 400, HEIGHT = 400;
     private static final DatabaseHelper databaseHelper = new DatabaseHelper();
 	private static StackPane root = new StackPane();
 	private static LoginPage loginpage;
