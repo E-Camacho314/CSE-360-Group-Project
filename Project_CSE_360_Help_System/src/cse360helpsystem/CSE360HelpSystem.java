@@ -1,5 +1,6 @@
 package cse360helpsystem;
 
+import java.sql.SQLException;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -16,7 +17,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import cse360helpsystem.StudentPage;
 
 /**
  * <p> CSE360HelpSystem Class </p>
@@ -29,19 +29,25 @@ import cse360helpsystem.StudentPage;
 
 public class CSE360HelpSystem extends Application
 {
-    public static final int WIDTH = 400, HEIGHT = 300;
+    public static final int WIDTH = 400, HEIGHT = 400;
+    private static final DatabaseHelper databaseHelper = new DatabaseHelper();
 	private static StackPane root = new StackPane();
 	private static LoginPage loginpage;
 	private static AdminPage adminpage;
 	private static StudentPage studentpage;
+	private static InstructorPage instructorpage;
+	private static RoleChooser rolechoose;
 	private TextField inviteField = new TextField();
 	private Button createAccount = new Button ("Create Account");
 
     public void start(Stage stage)
     {
+    	databaseHelper.emptyDatabase();
     	adminpage = new AdminPage();
     	loginpage = new LoginPage();
     	studentpage = new StudentPage();
+    	instructorpage = new InstructorPage();
+    	rolechoose = new RoleChooser();
         root.getChildren().add(loginpage);
         Scene scene = new Scene(root, WIDTH, HEIGHT);        
         stage.setTitle("CSE 360 Help System");
@@ -81,9 +87,38 @@ public class CSE360HelpSystem extends Application
         root.getChildren().add(studentpage);
         System.out.println("Switched to Student Page"); // For debugging
     }
+    
+    // method used by other pages to return to instructor page
+    public void showInstructorPage() {
+        root.getChildren().clear();
+        root.getChildren().add(instructorpage);
+        System.out.println("Switched to Instructor Page"); // For debugging
+    }
+    
+    // method used by other pages to return to rolechooser page
+    public void showRoleChooser() {
+        root.getChildren().clear();
+        root.getChildren().add(rolechoose);
+        System.out.println("Switched to Instructor Page"); // For debugging
+    }
 
     public static void main(String[] args)
     {
+    	try {
+    	    Class.forName("org.sqlite.JDBC");
+    	} catch (ClassNotFoundException e) {
+    	    e.printStackTrace();
+    	}
+    	try { 
+			
+			databaseHelper.connectToDatabase();  // Connect to the database
 		    launch(args);
+		} catch (SQLException e) {
+			System.err.println("Database error: " + e.getMessage());
+			e.printStackTrace();
+		}
+		finally {
+			databaseHelper.closeConnection();
+		}
     }
 }

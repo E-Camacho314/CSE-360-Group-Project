@@ -14,6 +14,7 @@ import javafx.scene.text.Font;
 public class InstructorPage extends HBox {
 	private Label welcome = new Label("Instructor View");
 	private Button logoutbutton = new Button ("Log Out");
+	private CSE360HelpSystem mainApp = new CSE360HelpSystem();
 	
 	public InstructorPage(){
 		BorderPane mainPane = new BorderPane();
@@ -33,7 +34,9 @@ public class InstructorPage extends HBox {
         this.getChildren().addAll(mainPane);
         this.setAlignment(Pos.CENTER);
         
-        
+        logoutbutton.setOnAction(e -> {
+            mainApp.showLoginPage(); // Switch back to the login page
+        });
 
 	}
 }
