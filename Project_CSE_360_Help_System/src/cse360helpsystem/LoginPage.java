@@ -30,8 +30,7 @@ import javafx.scene.layout.HBox;
  */
 
 public class LoginPage extends HBox {
-	private CSE360HelpSystem mainApp = new CSE360HelpSystem();
-    private static final DatabaseHelper databaseHelper = new DatabaseHelper();
+	private CSE360HelpSystem mainApp;
 	private PasswordField passfield = new PasswordField();
 	private TextField userfield = new TextField();
 	private TextField inviteField = new TextField();
@@ -47,7 +46,8 @@ public class LoginPage extends HBox {
 	private Button redirect = new Button("Have a One-Time Password?");
 	private Label inviteLabel = new Label("Have an invite code?");
 	
-	public LoginPage(){
+	public LoginPage(CSE360HelpSystem mainApp){
+		this.mainApp = mainApp;
 		BorderPane mainPane = new BorderPane();
 		
 		welcome.setTextFill(Color.BLACK);
@@ -105,26 +105,42 @@ public class LoginPage extends HBox {
 	private class ButtonHandler implements EventHandler<ActionEvent>{
 	    public void handle(ActionEvent e){
 	        try {
-	        	databaseHelper.connectToDatabase();  // Connect to the database
 	        	//check to see if the add button is clicked and the textfields are filled
 					if (e.getSource() == loginbutton && userfield.getText().isEmpty() != true && passfield.getText().isEmpty() != true) {
 						warning.setText("");
 						username = userfield.getText();
 			        	passwords = passfield.getText();
 			        	//Check if the database is empty. If so, set up new user as Admin
-			        	if (databaseHelper.isDatabaseEmpty() == true) {
-			        		databaseHelper.register(username, passwords, 1, 0, 0);
-			        		mainApp.showAdminPage();
+			        	if (mainApp.databaseHelper.doesUserExist(username)) {
+                            User user = mainApp.databaseHelper.getUserByUsername(username);
+			        		if(user.getFirstname().equals("") || user.getPreferred().equals("") || user.getMiddlename().equals("") || user.getLastname().equals("")) {
+			        			mainApp.showFinishSetupPage(username);
+			        		}
+			        		else {
+			        			if (user != null) {
+	                                if (user.isAdmin()) {
+	                                    mainApp.showAdminPage();
+	                                }
+	                                else if (user.isInstructor()) {
+	                                    mainApp.showInstructorPage();
+	                                }
+	                                else if (user.isStudent()) {
+	                                    mainApp.showStudentPage();
+	                                }
+	                                else {
+	                                    mainApp.showRoleChooser();
+	                                }
+	                            }
+			        		}
 		                	userfield.clear();
 							passfield.clear();
-							databaseHelper.closeConnection();
 						}
 			        	else {
-			        		databaseHelper.register(username, passwords, 1, 0, 0);
-			        		mainApp.showRoleChooser();
+			        		warning.setText("User does not Exist.");
+							warning.setTextFill(Color.RED);
+							warning.setFont(Font.font(null, 14));
 		                	userfield.clear();
 							passfield.clear();
-							databaseHelper.closeConnection();
 			        	}
 			        	/*//if the course is new, it is added to the checkboxContainer and changing the label
 	            	  if (isNew == true){

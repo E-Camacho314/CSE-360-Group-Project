@@ -12,14 +12,15 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
 public class RoleChooser extends HBox {
-	private CSE360HelpSystem mainApp = new CSE360HelpSystem();
+	private CSE360HelpSystem mainApp;
 	private Label welcome = new Label("Please Choose the Role to Log In to");
 	private Label warning = new Label("");
 	private Button adminbutton = new Button ("Administrator");
 	private Button instructbutton = new Button ("Instructor");
 	private Button studbutton = new Button ("Student");
 	
-	public RoleChooser(){
+	public RoleChooser(CSE360HelpSystem mainApp){
+		this.mainApp = mainApp;
 		BorderPane mainPane = new BorderPane();
 		
 		welcome.setTextFill(Color.BLACK);

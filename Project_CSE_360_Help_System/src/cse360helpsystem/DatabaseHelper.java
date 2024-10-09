@@ -49,7 +49,8 @@ public class DatabaseHelper {
                 + "password TEXT, "
                 + "admin INTEGER, "
                 + "instructor INTEGER, "
-                + "student INTEGER"
+                + "student INTEGER, "
+                + "flag INTEGER"
                 + ");";
         statement.execute(userTable);
     }
@@ -66,39 +67,87 @@ public class DatabaseHelper {
         return true;
     }
 
-    public void register(String email, String password, int admin, int instructor, int student) throws SQLException {
-        String insertUser = "INSERT INTO cse360users (email, password, admin, instructor, student) VALUES (?, ?, ?, ?, ?)";
+    public void register(String username, String password, int admin, int instructor, int student) throws SQLException {
+        // Adjusted SQL insert statement to include all columns
+        String insertUser = "INSERT INTO cse360users (email, username, password, admin, instructor, student, firstname, middlename, lastname, preferred) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         System.out.println("User registering");
         try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
-            pstmt.setString(1, email);
-            pstmt.setString(2, password);
-            pstmt.setInt(3, admin);
-            pstmt.setInt(4, instructor);
-            pstmt.setInt(5, student);
+            pstmt.setString(1, "");           // Email
+            pstmt.setString(2, username);           // Username
+            pstmt.setString(3, password);        // Password
+            pstmt.setInt(4, admin);              // Admin status
+            pstmt.setInt(5, instructor);         // Instructor status
+            pstmt.setInt(6, student);            // Student status
+
+            // Set additional fields to empty strings or null
+            pstmt.setString(7, "");              // First name
+            pstmt.setString(8, "");              // Middle name
+            pstmt.setString(9, "");              // Last name
+            pstmt.setString(10, "");             // Preferred name
+
             pstmt.executeUpdate();
             System.out.println("User registered successfully.");
         } catch (SQLException e) {
             System.err.println("SQL error: " + e.getMessage());
         }
     }
+    
+    public boolean registerWithEmailAndNames(String username, String email, String firstname, String middlename, String lastname, String preferredName) throws SQLException {
+        // Update existing user based on username
+        String updateUser = "UPDATE cse360users SET email = ?, firstname = ?, middlename = ?, lastname = ?, preferred = ? WHERE username = ?";
+        System.out.println("Modifying user with username and new details");
+        
+        try (PreparedStatement pstmt = connection.prepareStatement(updateUser)) {
+            pstmt.setString(1, email);            // Update email
+            pstmt.setString(2, firstname);        // Update first name
+            pstmt.setString(3, middlename);       // Update middle name
+            pstmt.setString(4, lastname);         // Update last name
+            pstmt.setString(5, preferredName);    // Update preferred name
+            pstmt.setString(6, username);         // Username to identify the user
+
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("User modified successfully with username and new details.");
+                return true;  // Modification successful
+            } else {
+                System.out.println("User modification failed. User might not exist.");
+                return false; // Modification failed
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error: " + e.getMessage());
+            return false; // Modification failed due to an exception
+        }
+    }
+
+
+
+
 
     public User login(String username, String password) throws SQLException {
         String query = "SELECT * FROM cse360users WHERE username = ? AND password = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, username);
             pstmt.setString(2, password);
+            
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     String email = rs.getString("email");
+                    String firstname = rs.getString("firstname");
+                    String middlename = rs.getString("middlename");
+                    String lastname = rs.getString("lastname");
+                    String preferredName = rs.getString("preferred");
                     boolean isAdmin = rs.getInt("admin") == 1;
                     boolean isInstructor = rs.getInt("instructor") == 1;
                     boolean isStudent = rs.getInt("student") == 1;
-                    return new User(username, email, isAdmin, isInstructor, isStudent);
+                    boolean isFlagged = rs.getInt("flag") == 1;
+                    
+                    return new User(username, email, firstname, middlename, lastname, preferredName, isAdmin, isInstructor, isStudent, isFlagged);
                 }
             }
         }
         return null;
     }
+
     
     public void changeUserRoles(String email, int admin, int instructor, int student) throws SQLException {
         // Prepare the SQL statement to update all roles at once
@@ -139,10 +188,10 @@ public class DatabaseHelper {
         }
     }
 
-    public boolean doesUserExist(String email) {
-        String query = "SELECT COUNT(*) FROM cse360users WHERE email = ?";
+    public boolean doesUserExist(String username) {
+        String query = "SELECT COUNT(*) FROM cse360users WHERE username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setString(1, email);
+            pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 return rs.getInt(1) > 0;
@@ -154,8 +203,9 @@ public class DatabaseHelper {
     }
     
     public ResultSet getAllUsers() throws SQLException {
-        String query = "SELECT email, admin, instructor, student FROM cse360users";
-        return statement.executeQuery(query);
+        String query = "SELECT email, username, firstname, middlename, lastname, preferred, admin, instructor, student, flag FROM cse360users";
+        PreparedStatement pstmt = connection.prepareStatement(query);
+        return pstmt.executeQuery();
     }
 
 
@@ -167,24 +217,36 @@ public class DatabaseHelper {
                 // Retrieve by column name 
                 int id = rs.getInt("id"); 
                 String email = rs.getString("email"); 
-                String password = rs.getString("password"); 
+                String password = rs.getString("password"); // Consider not printing this
                 String admin = rs.getString("admin");
                 String instructor = rs.getString("instructor");
                 String student = rs.getString("student");
+                String firstname = rs.getString("firstname");
+                String middlename = rs.getString("middlename");
+                String lastname = rs.getString("lastname");
+                String preferredName = rs.getString("preferred");
+                boolean isAdmin = admin != null && admin.equals("1");
+                boolean isInstructor = instructor != null && instructor.equals("1");
+                boolean isStudent = student != null && student.equals("1");
 
                 // Display values 
                 System.out.print("ID: " + id); 
                 System.out.print(", Email: " + email); 
                 // Avoid printing passwords in production
                 System.out.print(", Password: " + password); // Consider removing this line
-                System.out.print(", Admin: " + admin); 
-                System.out.print(", Instructor: " + instructor); 
-                System.out.println(", Student: " + student); 
+                System.out.print(", First Name: " + firstname);
+                System.out.print(", Middle Name: " + middlename);
+                System.out.print(", Last Name: " + lastname);
+                System.out.print(", Preferred Name: " + preferredName);
+                System.out.print(", Admin: " + isAdmin); 
+                System.out.print(", Instructor: " + isInstructor); 
+                System.out.println(", Student: " + isStudent); 
             } 
         } catch (SQLException e) {
             System.err.println("SQL error while displaying users: " + e.getMessage());
         }
     }
+
     
     public static boolean updateUserSetup(String username, String firstName, String middleName, String lastName, String preferredName) throws SQLException {
         String update = "UPDATE cse360users SET firstname = ?, middlename = ?, lastname = ?, preferred = ? WHERE username = ?";
@@ -222,19 +284,27 @@ public class DatabaseHelper {
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     String email = rs.getString("email");
+                    String firstname = rs.getString("firstname");
+                    String middlename = rs.getString("middlename");
+                    String lastname = rs.getString("lastname");
+                    String preferredName = rs.getString("preferred");
                     boolean isAdmin = rs.getInt("admin") == 1;
                     boolean isInstructor = rs.getInt("instructor") == 1;
                     boolean isStudent = rs.getInt("student") == 1;
-                    return new User(username, email, isAdmin, isInstructor, isStudent);
+                    boolean isFlagged = rs.getInt("flag") == 1;
+                    
+                    return new User(username, email, firstname, middlename, lastname, preferredName, isAdmin, isInstructor, isStudent, isFlagged);
                 }
             }
         }
         return null;
     }
 
+
     public void closeConnection() {
         try { 
             if (statement != null) statement.close(); 
+            System.out.println("Connection Closed");
         } catch(SQLException se2) { 
             se2.printStackTrace();
         } 

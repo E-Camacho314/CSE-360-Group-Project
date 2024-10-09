@@ -12,6 +12,7 @@ import java.sql.SQLException;
 
 public class FinishSetupPage extends VBox {
     private CSE360HelpSystem mainApp;
+    private static final DatabaseHelper databaseHelper = new DatabaseHelper();
     private String username;
     private Label titleLabel;
     private Label emailLabel;
@@ -136,7 +137,8 @@ public class FinishSetupPage extends VBox {
 
         try {
             // Update user details in the database
-            boolean success = DatabaseHelper.updateUserSetup(username, firstName, middleName, lastName, preferredName);
+        	mainApp.databaseHelper.displayUsers();
+            boolean success = mainApp.databaseHelper.registerWithEmailAndNames(username, email, firstName, middleName, lastName, preferredName);
             if (success) {
                 messageLabel.setTextFill(Color.GREEN);
                 messageLabel.setText("Account setup completed successfully!");
@@ -150,9 +152,8 @@ public class FinishSetupPage extends VBox {
                     }
                     javafx.application.Platform.runLater(() -> {
                         try {
-                            mainApp.getDatabaseHelper();
 							// Re-login to fetch updated user roles
-                            User user = mainApp.getDatabaseHelper().getUserByUsername(username);
+                            User user = mainApp.databaseHelper.getUserByUsername(username);
                             if (user != null) {
                                 if (user.isAdmin()) {
                                     mainApp.showAdminPage();

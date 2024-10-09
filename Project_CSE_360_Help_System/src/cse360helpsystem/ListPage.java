@@ -21,57 +21,91 @@ import java.sql.SQLException;
 public class ListPage extends HBox {
     private TableView<User> table = new TableView<>();
     private ObservableList<User> data = FXCollections.observableArrayList();
-    private CSE360HelpSystem mainApp = new CSE360HelpSystem();
+    private CSE360HelpSystem mainApp;
     private Label titleLabel = new Label("List of Users");
     private Button backButton = new Button("Back");
-    public ListPage() {
+
+    public ListPage(CSE360HelpSystem mainApp) {
+        this.mainApp = mainApp;
         BorderPane mainPane = new BorderPane();
+
         titleLabel.setTextFill(Color.BLACK);
         titleLabel.setFont(Font.font(16));
+
         // Set up the table columns
-        TableColumn<User, String> emailCol = new TableColumn<>("Email");
-        emailCol.setCellValueFactory(new PropertyValueFactory<>("email"));
-        TableColumn<User, String> adminCol = new TableColumn<>("Admin");
-        adminCol.setCellValueFactory(new PropertyValueFactory<>("admin"));
-        TableColumn<User, String> instructorCol = new TableColumn<>("Instructor");
-        instructorCol.setCellValueFactory(new PropertyValueFactory<>("instructor"));
-        TableColumn<User, String> studentCol = new TableColumn<>("Student");
-        studentCol.setCellValueFactory(new PropertyValueFactory<>("student"));
-        table.getColumns().addAll(emailCol, adminCol, instructorCol, studentCol);
+
+        TableColumn<User, String> usernameCol = new TableColumn<>("Username");
+        usernameCol.setCellValueFactory(new PropertyValueFactory<>("username"));
+
+        TableColumn<User, Boolean> adminCol = new TableColumn<>("Admin");
+        adminCol.setCellValueFactory(new PropertyValueFactory<>("isAdmin"));
+
+        TableColumn<User, Boolean> instructorCol = new TableColumn<>("Instructor");
+        instructorCol.setCellValueFactory(new PropertyValueFactory<>("isInstructor"));
+
+        TableColumn<User, Boolean> studentCol = new TableColumn<>("Student");
+        studentCol.setCellValueFactory(new PropertyValueFactory<>("isStudent"));
+
+        TableColumn<User, String> firstnameCol = new TableColumn<>("First Name");
+        firstnameCol.setCellValueFactory(new PropertyValueFactory<>("firstname"));
+
+        TableColumn<User, String> middlenameCol = new TableColumn<>("Middle Name");
+        middlenameCol.setCellValueFactory(new PropertyValueFactory<>("middlename"));
+
+        TableColumn<User, String> preferrednameCol = new TableColumn<>("Preferred Name");
+        preferrednameCol.setCellValueFactory(new PropertyValueFactory<>("preferredname"));
+
+        TableColumn<User, String> lastnameCol = new TableColumn<>("Last Name");
+        lastnameCol.setCellValueFactory(new PropertyValueFactory<>("lastname"));
+
+        // Add columns to the table, excluding email and flag status
+        table.getColumns().addAll(usernameCol, adminCol, instructorCol, studentCol, firstnameCol, middlenameCol, lastnameCol, preferrednameCol);
+
         // Load data from the database
         loadUserData();
+
         // Set up layout
         table.setItems(data);
-        table.setPrefWidth(400);
+        table.setPrefWidth(600);
+
         HBox buttonBox = new HBox(10, backButton);
         buttonBox.setAlignment(Pos.CENTER);
         buttonBox.setPadding(new Insets(10));
+
         VBox vBox = new VBox(10, titleLabel, table, buttonBox);
         vBox.setPadding(new Insets(10));
         vBox.setAlignment(Pos.CENTER);
+
         mainPane.setCenter(vBox);
         this.getChildren().add(mainPane);
         this.setAlignment(Pos.CENTER);
+
         // Back button action
         backButton.setOnAction(e -> mainApp.showAdminPage());
     }
+
     // Load users from the database and add them to the ObservableList
     private void loadUserData() {
         try {
             DatabaseHelper databaseHelper = new DatabaseHelper();
             databaseHelper.connectToDatabase();
             ResultSet rs = databaseHelper.getAllUsers();
+
             while (rs.next()) {
-                String email = rs.getString("email");
-                int admin = rs.getInt("admin");
-                int instructor = rs.getInt("instructor");
-                int student = rs.getInt("student");
-                // Convert int values to "Yes" or "No" for displaying roles
-                boolean adminStatus = (admin == 1) ? true : false;
-                boolean instructorStatus = (instructor == 1) ? true : false;
-                boolean studentStatus = (student == 1) ? true : false;
-                data.add(new User("", email, adminStatus, instructorStatus, studentStatus));
+                // Retrieve data but do not add email or flag status to the data model
+                String username = rs.getString("username");
+                String firstname = rs.getString("firstname");
+                String middlename = rs.getString("middlename");
+                String lastname = rs.getString("lastname");
+                String preferredName = rs.getString("preferred");
+                boolean adminStatus = rs.getInt("admin") == 1;
+                boolean instructorStatus = rs.getInt("instructor") == 1;
+                boolean studentStatus = rs.getInt("student") == 1;
+
+                // Create a User object without email and flag status
+                data.add(new User(username, null, firstname, middlename, lastname, preferredName, adminStatus, instructorStatus, studentStatus, false)); // Assuming flagStatus is false as it's not displayed
             }
+
             databaseHelper.closeConnection();
         } catch (SQLException e) {
             e.printStackTrace();

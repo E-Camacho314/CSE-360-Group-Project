@@ -22,8 +22,7 @@ import javafx.scene.Scene;
 
 
 public class AdminPage extends HBox {
-	private CSE360HelpSystem mainApp = new CSE360HelpSystem();
-    private static final DatabaseHelper databaseHelper = new DatabaseHelper();
+	private CSE360HelpSystem mainApp;
 	private Label welcome = new Label("Admin View");
 	private Label warning = new Label("");
 	private Label userinfo = new Label("Manipulate Users:");
@@ -44,7 +43,8 @@ public class AdminPage extends HBox {
 	private String user;
 	private boolean confirmation;
 	
-	public AdminPage(){
+	public AdminPage(CSE360HelpSystem mainApp){
+		this.mainApp = mainApp;
 		BorderPane mainPane = new BorderPane();
 		
 		welcome.setTextFill(Color.BLACK);
@@ -109,28 +109,13 @@ public class AdminPage extends HBox {
         logoutbutton.setOnAction(e -> mainApp.showLoginPage());
         deletebutton.setOnAction(e -> delete());
         changepermsbutton.setOnAction(e -> changePerms());
-        listbutton.setOnAction(e -> mainApp.showListPage());
+        listbutton.setOnAction(e -> {showUsers(); 
+        	mainApp.showListPage();});
 
-	}
-	
-	private void list() {
-        try {
-			databaseHelper.connectToDatabase();
-	        databaseHelper.displayUsers();
-			databaseHelper.closeConnection();
-        }
-        catch (SQLException e) {
-	        warning.setText("Error: " + e.getMessage());
-	        warning.setTextFill(Color.RED);
-	    }
-        finally {
-        	databaseHelper.closeConnection();
-        }
 	}
 	
 	private void delete() {
 	    try {
-	        databaseHelper.connectToDatabase();
 	        if (!deleteField.getText().isEmpty()) {
 	            user = deleteField.getText();
 	            
@@ -138,7 +123,7 @@ public class AdminPage extends HBox {
 	            deleteConfirmation(user);
 	            
 	            if (confirmation == true) {
-	            	databaseHelper.deleteUser(user);
+	            	mainApp.databaseHelper.deleteUser(user);
 	            	warning.setText("User deleted.");
 	            	warning.setTextFill(Color.GREEN);
 	            }
@@ -154,9 +139,17 @@ public class AdminPage extends HBox {
 	        warning.setTextFill(Color.RED);
 	    } 
 	    finally {
-	        databaseHelper.closeConnection();
+	    	System.out.println("deleted");
 	    }
 	}
+	
+    public void showUsers() {
+        try {
+            mainApp.databaseHelper.displayUsers();
+        } catch (SQLException e) {
+            System.err.println("Error fetching users: " + e.getMessage());
+        }
+    }
 	
 	private void deleteConfirmation(String user) {
 		Stage popup = new Stage();
@@ -194,14 +187,13 @@ public class AdminPage extends HBox {
 
 	private void changePerms() {
 	    try {
-	        databaseHelper.connectToDatabase();
 	        if (!permsField.getText().isEmpty()) {
 	            user = permsField.getText();
 	            int adminChoice = admin.isSelected() ? 1 : 0;
 	            int instChoice = instructor.isSelected() ? 1 : 0;
 	            int studChoice = student.isSelected() ? 1 : 0;
 
-	            databaseHelper.changeUserRoles(user, adminChoice, instChoice, studChoice);
+	            mainApp.databaseHelper.changeUserRoles(user, adminChoice, instChoice, studChoice);
 	            warning.setText("Roles updated.");
 	            warning.setTextFill(Color.GREEN);
 
@@ -221,7 +213,7 @@ public class AdminPage extends HBox {
 	        warning.setTextFill(Color.RED);
 	    } 
 	    finally {
-	        databaseHelper.closeConnection();
+	        System.out.println("updated");
 	    }
 	}
 }

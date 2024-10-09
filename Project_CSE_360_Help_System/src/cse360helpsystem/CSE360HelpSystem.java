@@ -30,7 +30,7 @@ import javafx.geometry.Pos;
 public class CSE360HelpSystem extends Application
 {
     public static final int WIDTH = 400, HEIGHT = 400;
-    private static final DatabaseHelper databaseHelper = new DatabaseHelper();
+    public static final DatabaseHelper databaseHelper = new DatabaseHelper();
 	private static StackPane root = new StackPane();
 	private static LoginPage loginpage;
 	private static AdminPage adminpage;
@@ -43,18 +43,20 @@ public class CSE360HelpSystem extends Application
     public void start(Stage stage)
     {
     	databaseHelper.emptyDatabase();
-    	adminpage = new AdminPage();
-    	loginpage = new LoginPage();
-    	studentpage = new StudentPage();
-    	instructorpage = new InstructorPage();
-    	rolechoose = new RoleChooser();
+    	adminpage = new AdminPage(this);
+    	loginpage = new LoginPage(this);
+    	studentpage = new StudentPage(this);
+    	instructorpage = new InstructorPage(this);
+    	rolechoose = new RoleChooser(this);
     	try {
     		databaseHelper.connectToDatabase();
         	if(databaseHelper.isDatabaseEmpty()) {
+        		databaseHelper.closeConnection();
         		showCreateAccountPage();
         	}
         	else {
-                root.getChildren().add(loginpage);
+        		databaseHelper.closeConnection();
+        		root.getChildren().add(loginpage);
         	}
     	}
     	catch(SQLException e) {
@@ -62,7 +64,7 @@ public class CSE360HelpSystem extends Application
 			e.printStackTrace();
     	}
     	finally {
-    		databaseHelper.closeConnection();
+    		System.out.println("path chosen");
     	}
         Scene scene = new Scene(root, WIDTH, HEIGHT);        
         stage.setTitle("CSE 360 Help System");
@@ -76,10 +78,12 @@ public class CSE360HelpSystem extends Application
         CreateAccount createAccountPage = new CreateAccount(this, invitationCode); // Pass it to CreateAccount
         root.getChildren().clear();
         root.getChildren().add(createAccountPage);
-        //Creating a new scene seems to have been the problem with createAccount being unable to go back to LoginPage
-        /*Scene createAccountScene = new Scene(createAccountPage, 400, 300);
-        Stage stage = (Stage) createAccount.getScene().getWindow();
-        stage.setScene(createAccountScene);*/
+    }
+	
+	public void showFinishSetupPage(String username) {
+        FinishSetupPage finishsetupPage = new FinishSetupPage(this, username); // Pass it to FinishSetupPage
+        root.getChildren().clear();
+        root.getChildren().add(finishsetupPage);
     }
 	    
     // method used by other pages to return to login page
@@ -114,11 +118,11 @@ public class CSE360HelpSystem extends Application
     public void showRoleChooser() {
         root.getChildren().clear();
         root.getChildren().add(rolechoose);
-        System.out.println("Switched to Instructor Page"); // For debugging
+        System.out.println("Switched to Role Chooser Page"); // For debugging
     }
-
+    
     public void showListPage() {
-        ListPage listPage = new ListPage(); // Create a new ListPage instance
+        ListPage listPage = new ListPage(this); // Create a new ListPage instance
         root.getChildren().clear();
         root.getChildren().add(listPage);
         System.out.println("Switched to List Page"); // For debugging

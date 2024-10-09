@@ -14,9 +14,10 @@ import javafx.scene.text.Font;
 public class InstructorPage extends HBox {
 	private Label welcome = new Label("Instructor View");
 	private Button logoutbutton = new Button ("Log Out");
-	private CSE360HelpSystem mainApp = new CSE360HelpSystem();
+	private CSE360HelpSystem mainApp;
 	
-	public InstructorPage(){
+	public InstructorPage(CSE360HelpSystem mainApp){
+		this.mainApp = mainApp;
 		BorderPane mainPane = new BorderPane();
 		
 		welcome.setTextFill(Color.BLUE);
