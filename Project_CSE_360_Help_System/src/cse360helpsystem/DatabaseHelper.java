@@ -146,6 +146,12 @@ public class DatabaseHelper {
         }
         return false; // If an error occurs, assume user doesn't exist
     }
+    
+    public ResultSet getAllUsers() throws SQLException {
+        String query = "SELECT email, admin, instructor, student FROM cse360users";
+        return statement.executeQuery(query);
+    }
+
 
     public void displayUsers() throws SQLException {
         String sql = "SELECT * FROM cse360users"; 

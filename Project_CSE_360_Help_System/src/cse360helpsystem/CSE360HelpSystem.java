@@ -102,6 +102,13 @@ public class CSE360HelpSystem extends Application
         System.out.println("Switched to Instructor Page"); // For debugging
     }
 
+    public void showListPage() {
+        ListPage listPage = new ListPage(); // Create a new ListPage instance
+        root.getChildren().clear();
+        root.getChildren().add(listPage);
+        System.out.println("Switched to List Page"); // For debugging
+    }
+    
     public static void main(String[] args)
     {
     	try {

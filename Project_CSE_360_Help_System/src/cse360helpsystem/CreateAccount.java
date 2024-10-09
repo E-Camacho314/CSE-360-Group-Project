@@ -164,14 +164,14 @@ public class CreateAccount extends VBox {
     private boolean register(String email, String password, String role) throws SQLException {
         // Example database connection - update with your connection details
         String url = "jdbc:mysql://localhost:3306/yourDatabase"; // Replace with your DB URL
-        String user = "yourUsername"; // Replace with your DB username
-        String pass = "yourPassword"; // Replace with your DB password
+        String user = "yourUsername";
+        String pass = "yourPassword";
 
         try (Connection conn = DriverManager.getConnection(url, user, pass)) {
             String query = "INSERT INTO users (email, password, role) VALUES (?, ?, ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(query)) {
                 pstmt.setString(1, email);
-                pstmt.setString(2, password); // Consider hashing the password before storing
+                pstmt.setString(2, password);
                 pstmt.setString(3, role);
                 return pstmt.executeUpdate() > 0; // Returns true if insertion was successful
             }

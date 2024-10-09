@@ -104,7 +104,7 @@ public class AdminPage extends HBox {
         logoutbutton.setOnAction(e -> mainApp.showLoginPage());
         deletebutton.setOnAction(e -> delete());
         changepermsbutton.setOnAction(e -> changePerms());
-        listbutton.setOnAction(e -> list());
+        listbutton.setOnAction(e -> mainApp.showListPage());
 
 	}
 	
