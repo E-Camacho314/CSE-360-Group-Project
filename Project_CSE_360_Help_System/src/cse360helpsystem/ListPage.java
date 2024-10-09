@@ -67,10 +67,10 @@ public class ListPage extends HBox {
                 int instructor = rs.getInt("instructor");
                 int student = rs.getInt("student");
                 // Convert int values to "Yes" or "No" for displaying roles
-                String adminStatus = (admin == 1) ? "Yes" : "No";
-                String instructorStatus = (instructor == 1) ? "Yes" : "No";
-                String studentStatus = (student == 1) ? "Yes" : "No";
-                data.add(new User(email, adminStatus, instructorStatus, studentStatus));
+                boolean adminStatus = (admin == 1) ? true : false;
+                boolean instructorStatus = (instructor == 1) ? true : false;
+                boolean studentStatus = (student == 1) ? true : false;
+                data.add(new User("", email, adminStatus, instructorStatus, studentStatus));
             }
             databaseHelper.closeConnection();
         } catch (SQLException e) {

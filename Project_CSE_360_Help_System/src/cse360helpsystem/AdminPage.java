@@ -16,6 +16,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.scene.Scene;
+
 
 public class AdminPage extends HBox {
 	private CSE360HelpSystem mainApp = new CSE360HelpSystem();
@@ -38,6 +42,7 @@ public class AdminPage extends HBox {
 	private TextField resetField = new TextField();
 	private TextField inviteField = new TextField();
 	private String user;
+	private boolean confirmation;
 	
 	public AdminPage(){
 		BorderPane mainPane = new BorderPane();
@@ -128,9 +133,15 @@ public class AdminPage extends HBox {
 	        databaseHelper.connectToDatabase();
 	        if (!deleteField.getText().isEmpty()) {
 	            user = deleteField.getText();
-	            databaseHelper.deleteUser(user);
-	            warning.setText("User deleted.");
-	            warning.setTextFill(Color.GREEN);
+	            
+	            // popup for confirmation
+	            deleteConfirmation(user);
+	            
+	            if (confirmation == true) {
+	            	databaseHelper.deleteUser(user);
+	            	warning.setText("User deleted.");
+	            	warning.setTextFill(Color.GREEN);
+	            }
 	        } 
 	        else {
 	            warning.setText("Please enter a username.");
@@ -145,6 +156,40 @@ public class AdminPage extends HBox {
 	    finally {
 	        databaseHelper.closeConnection();
 	    }
+	}
+	
+	private void deleteConfirmation(String user) {
+		Stage popup = new Stage();
+		popup.initModality(Modality.APPLICATION_MODAL);
+		popup.setTitle("Delete Confirmation");
+		Label warning = new Label("Are You Sure?");
+		Button yes = new Button("Yes");
+		Button no = new Button("No");
+		
+		yes.setOnAction(e -> {
+			confirmation = true;
+			popup.close();
+		});
+		
+		no.setOnAction(e -> {
+			confirmation = false;
+			popup.close();
+		});
+		
+		HBox confirmationButtons = new HBox(10);
+		confirmationButtons.getChildren().addAll(yes, no);
+		confirmationButtons.setAlignment(Pos.CENTER);
+		
+		HBox layout = new HBox(10);
+		layout.getChildren().addAll(warning, confirmationButtons);
+		layout.setAlignment(Pos.CENTER);
+		
+		Scene popupScene = new Scene(layout, 400, 100);
+		popup.setScene(popupScene);
+		popup.showAndWait();
+		
+		
+		
 	}
 
 	private void changePerms() {
