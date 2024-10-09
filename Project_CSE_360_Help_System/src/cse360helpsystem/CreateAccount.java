@@ -90,8 +90,7 @@ public class CreateAccount extends VBox {
         grid.add(messageLabel, 0, 6, 2, 1);
         
         try {
-    		databaseHelper.connectToDatabase();
-        	if(databaseHelper.isDatabaseEmpty()) {
+        	if(mainApp.databaseHelper.isDatabaseEmpty()) {
         		titleLabel.setText("First Admin Account Creation");
         		emailLabel.setText("Username:");
         		emailField.setPromptText("Enter your username");
@@ -106,7 +105,7 @@ public class CreateAccount extends VBox {
 			e.printStackTrace();
     	}
     	finally {
-    		databaseHelper.closeConnection();
+    		System.out.println("First User Account Creation");
     	}
 
         // Align buttons to the right
@@ -140,14 +139,13 @@ public class CreateAccount extends VBox {
         }
 
         try {
-            databaseHelper.connectToDatabase();
         	String role;
         	boolean success = false;
-            if (databaseHelper.isDatabaseEmpty()) {
-                databaseHelper.register(email, confirmPassword, 1, 0, 0);
+            if (mainApp.databaseHelper.isDatabaseEmpty()) {
+                mainApp.databaseHelper.register(email, confirmPassword, 1, 0, 0);
                 success = true;
             } else {
-                if (invitationCode == null || invitationCode.trim().isEmpty()) {
+if (invitationCode == null || invitationCode.trim().isEmpty()) {
                     messageLabel.setText("Invitation code is required.");
                     return;
                 }

@@ -42,22 +42,22 @@ public class CSE360HelpSystem extends Application
 
     public void start(Stage stage)
     {
-    	databaseHelper.emptyDatabase();
-    	adminpage = new AdminPage(this);
-    	loginpage = new LoginPage(this);
-    	studentpage = new StudentPage(this);
-    	instructorpage = new InstructorPage(this);
-    	rolechoose = new RoleChooser(this);
     	try {
-    		databaseHelper.connectToDatabase();
+        	adminpage = new AdminPage(this);
+        	loginpage = new LoginPage(this);
+        	studentpage = new StudentPage(this);
+        	instructorpage = new InstructorPage(this);
         	if(databaseHelper.isDatabaseEmpty()) {
-        		databaseHelper.closeConnection();
         		showCreateAccountPage();
         	}
         	else {
-        		databaseHelper.closeConnection();
         		root.getChildren().add(loginpage);
         	}
+        	Scene scene = new Scene(root, WIDTH, HEIGHT);        
+            stage.setTitle("CSE 360 Help System");
+            stage.setScene(scene);
+            stage.centerOnScreen();
+            stage.show();
     	}
     	catch(SQLException e) {
 			System.err.println("Database error: " + e.getMessage());
@@ -66,11 +66,6 @@ public class CSE360HelpSystem extends Application
     	finally {
     		System.out.println("path chosen");
     	}
-        Scene scene = new Scene(root, WIDTH, HEIGHT);        
-        stage.setTitle("CSE 360 Help System");
-        stage.setScene(scene);
-        stage.centerOnScreen();
-        stage.show();
     }
      
 	public void showCreateAccountPage() {
@@ -115,8 +110,9 @@ public class CSE360HelpSystem extends Application
     }
     
     // method used by other pages to return to rolechooser page
-    public void showRoleChooser() {
+    public void showRoleChooser(String username) {
         root.getChildren().clear();
+    	RoleChooser rolechoose = new RoleChooser(this, username);
         root.getChildren().add(rolechoose);
         System.out.println("Switched to Role Chooser Page"); // For debugging
     }
@@ -140,7 +136,9 @@ public class CSE360HelpSystem extends Application
     	    e.printStackTrace();
     	}
     	try { 
-			
+			databaseHelper.connectToDatabase();
+			databaseHelper.emptyDatabase();
+			databaseHelper.closeConnection();
 			databaseHelper.connectToDatabase();  // Connect to the database
 		    launch(args);
 		} catch (SQLException e) {
@@ -148,7 +146,7 @@ public class CSE360HelpSystem extends Application
 			e.printStackTrace();
 		}
 		finally {
-			databaseHelper.closeConnection();
+			System.out.println("Connected");
 		}
     }
 }

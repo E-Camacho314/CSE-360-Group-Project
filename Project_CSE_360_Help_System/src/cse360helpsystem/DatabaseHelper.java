@@ -28,11 +28,11 @@ public class DatabaseHelper {
             connectToDatabase(); // Establish connection
             String dropUserTable = "DROP TABLE IF EXISTS cse360users;";
             statement.executeUpdate(dropUserTable);
-            System.out.println("Database emptied successfully.");
+
         } catch (SQLException e) {
             System.err.println("SQL error while emptying the database: " + e.getMessage());
         } finally {
-            closeConnection();
+            System.out.println("Database emptied successfully.");
         }
     }
 

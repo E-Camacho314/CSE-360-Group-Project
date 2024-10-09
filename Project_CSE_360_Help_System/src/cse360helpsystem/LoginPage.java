@@ -113,13 +113,13 @@ public class LoginPage extends HBox {
 			        	//Check if the database is empty. If so, set up new user as Admin
 			        	if (mainApp.databaseHelper.doesUserExist(username)) {
                             User user = mainApp.databaseHelper.getUserByUsername(username);
-			        		if(user.getFirstname().equals("") || user.getPreferred().equals("") || user.getMiddlename().equals("") || user.getLastname().equals("")) {
+			        		if(user.getFirstname().equals("") || user.getMiddlename().equals("") || user.getLastname().equals("")) {
 			        			mainApp.showFinishSetupPage(username);
 			        		}
 			        		else {
-			        			if (user != null) {
-	                                if (user.isAdmin()) {
-	                                    mainApp.showAdminPage();
+	                            if (user != null) {
+	                                if ((user.isAdmin() && user.isInstructor()) || (user.isAdmin() && user.isStudent()) || (user.isInstructor() && user.isStudent())) {
+	                                    mainApp.showRoleChooser(username);
 	                                }
 	                                else if (user.isInstructor()) {
 	                                    mainApp.showInstructorPage();
@@ -127,8 +127,8 @@ public class LoginPage extends HBox {
 	                                else if (user.isStudent()) {
 	                                    mainApp.showStudentPage();
 	                                }
-	                                else {
-	                                    mainApp.showRoleChooser();
+	                                else if(user.isAdmin()){
+	                                    mainApp.showAdminPage();
 	                                }
 	                            }
 			        		}

@@ -155,8 +155,8 @@ public class FinishSetupPage extends VBox {
 							// Re-login to fetch updated user roles
                             User user = mainApp.databaseHelper.getUserByUsername(username);
                             if (user != null) {
-                                if (user.isAdmin()) {
-                                    mainApp.showAdminPage();
+                                if ((user.isAdmin() && user.isInstructor()) || (user.isAdmin() && user.isStudent()) || (user.isInstructor() && user.isStudent())) {
+                                    mainApp.showRoleChooser(username);
                                 }
                                 else if (user.isInstructor()) {
                                     mainApp.showInstructorPage();
@@ -164,8 +164,8 @@ public class FinishSetupPage extends VBox {
                                 else if (user.isStudent()) {
                                     mainApp.showStudentPage();
                                 }
-                                else {
-                                    mainApp.showRoleChooser();
+                                else if(user.isAdmin()){
+                                    mainApp.showAdminPage();
                                 }
                             }
                             else {
