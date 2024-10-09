@@ -1,26 +1,33 @@
 package cse360helpsystem;
 
 public class User {
+	private String username;
     private String email;
-    private String admin;
-    private String instructor;
-    private String student;
-    public User(String email, String admin, String instructor, String student) {
+    private boolean isAdmin;
+    private boolean isInstructor;
+    private boolean isStudent;
+    
+    public User(String username, String email, boolean isAdmin, boolean isInstructor, boolean isStudent) {
+    	this.username = username;
         this.email = email;
-        this.admin = admin;
-        this.instructor = instructor;
-        this.student = student;
+        this.isAdmin = isAdmin;
+        this.isInstructor = isInstructor;
+        this.isStudent = isStudent;
+    }
+    
+    public String getUsername() {
+        return username;
     }
     public String getEmail() {
         return email;
     }
-    public String getAdmin() {
-        return admin;
+    public boolean isAdmin() {
+        return isAdmin;
     }
-    public String getInstructor() {
-        return instructor;
+    public boolean isInstructor() {
+        return isInstructor;
     }
-    public String getStudent() {
-        return student;
+    public boolean isStudent() {
+        return isStudent;
     }
 }

@@ -10,7 +10,7 @@ import java.sql.Statement;
 public class DatabaseHelper {  
     static final String DB_URL = "jdbc:sqlite:helpsystem.db";  
 
-    private Connection connection = null;
+    private static Connection connection = null;
     private Statement statement = null; 
 
     public void connectToDatabase() throws SQLException {
@@ -82,16 +82,22 @@ public class DatabaseHelper {
         }
     }
 
-    public boolean login(String email, String password, String role) throws SQLException {
-        String query = "SELECT * FROM cse360users WHERE email = ? AND password = ? AND role = ?";
+    public User login(String username, String password) throws SQLException {
+        String query = "SELECT * FROM cse360users WHERE username = ? AND password = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setString(1, email);
+            pstmt.setString(1, username);
             pstmt.setString(2, password);
-            pstmt.setString(3, role);
             try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next();
+                if (rs.next()) {
+                    String email = rs.getString("email");
+                    boolean isAdmin = rs.getInt("admin") == 1;
+                    boolean isInstructor = rs.getInt("instructor") == 1;
+                    boolean isStudent = rs.getInt("student") == 1;
+                    return new User(username, email, isAdmin, isInstructor, isStudent);
+                }
             }
         }
+        return null;
     }
     
     public void changeUserRoles(String email, int admin, int instructor, int student) throws SQLException {
@@ -178,6 +184,52 @@ public class DatabaseHelper {
         } catch (SQLException e) {
             System.err.println("SQL error while displaying users: " + e.getMessage());
         }
+    }
+    
+    public static boolean updateUserSetup(String username, String firstName, String middleName, String lastName, String preferredName) throws SQLException {
+        String update = "UPDATE cse360users SET firstname = ?, middlename = ?, lastname = ?, preferred = ? WHERE username = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(update)) {
+            pstmt.setString(1, firstName);
+            pstmt.setString(2, middleName);
+            pstmt.setString(3, lastName);
+            pstmt.setString(4, preferredName.isEmpty() ? null : preferredName);
+            pstmt.setString(5, username);
+            return pstmt.executeUpdate() > 0;
+        }
+    }
+    
+    // Check if account setup is complete
+    public boolean isSetupComplete(String username) throws SQLException {
+        String query = "SELECT firstname, lastname FROM cse360users WHERE username = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, username);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String firstName = rs.getString("firstname");
+                    String lastName = rs.getString("lastname");
+                    return (firstName != null && !firstName.isEmpty()) &&
+                           (lastName != null && !lastName.isEmpty());
+                }
+            }
+        }
+        return false;
+    }
+    
+    public User getUserByUsername(String username) throws SQLException {
+        String query = "SELECT * FROM cse360users WHERE username = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, username);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String email = rs.getString("email");
+                    boolean isAdmin = rs.getInt("admin") == 1;
+                    boolean isInstructor = rs.getInt("instructor") == 1;
+                    boolean isStudent = rs.getInt("student") == 1;
+                    return new User(username, email, isAdmin, isInstructor, isStudent);
+                }
+            }
+        }
+        return null;
     }
 
     public void closeConnection() {

@@ -136,7 +136,7 @@ public class FinishSetupPage extends VBox {
 
         try {
             // Update user details in the database
-            boolean success = mainApp.getDatabaseHelper().updateUserSetup(username, firstName, middleName, lastName, preferredName);
+            boolean success = DatabaseHelper.updateUserSetup(username, firstName, middleName, lastName, preferredName);
             if (success) {
                 messageLabel.setTextFill(Color.GREEN);
                 messageLabel.setText("Account setup completed successfully!");
@@ -150,8 +150,9 @@ public class FinishSetupPage extends VBox {
                     }
                     javafx.application.Platform.runLater(() -> {
                         try {
-                            // Re-login to fetch updated user roles
-                            User user = mainApp.getDatabaseHelper().login(username, "");
+                            mainApp.getDatabaseHelper();
+							// Re-login to fetch updated user roles
+                            User user = mainApp.getDatabaseHelper().getUserByUsername(username);
                             if (user != null) {
                                 if (user.isAdmin()) {
                                     mainApp.showAdminPage();

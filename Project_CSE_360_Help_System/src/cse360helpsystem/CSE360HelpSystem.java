@@ -109,6 +109,10 @@ public class CSE360HelpSystem extends Application
         System.out.println("Switched to List Page"); // For debugging
     }
     
+    public DatabaseHelper getDatabaseHelper() {
+        return databaseHelper;
+    }
+    
     public static void main(String[] args)
     {
     	try {
