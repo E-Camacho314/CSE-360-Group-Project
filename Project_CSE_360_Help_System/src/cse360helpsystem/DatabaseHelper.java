@@ -316,7 +316,7 @@ public class DatabaseHelper {
     }
 
     public boolean storeInviteCode(String code, boolean isAdmin, boolean isInstructor, boolean isStudent) throws SQLException {
-        String insertInvite = "INSERT INTO invite_codes (code, is_admin, is_instructor, is_student, expiration_time) VALUES (?, ?, ?, ?, ?)";     
+        String insertInvite = "INSERT INTO invite_codes (code, is_admin, is_instructor, is_student) VALUES (?, ?, ?, ?)";     
         try (PreparedStatement pstmt = connection.prepareStatement(insertInvite)) {
             pstmt.setString(1, code);
             pstmt.setInt(2, isAdmin ? 1 : 0);
@@ -389,15 +389,13 @@ public class DatabaseHelper {
     
     // Validate invite code
     public boolean isInviteCodeValid(String inviteCode) throws SQLException {
-        String query = "SELECT is_used, expiration_time FROM invite_codes WHERE code = ?";
+        String query = "SELECT is_used FROM invite_codes WHERE code = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, inviteCode);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 boolean isUsed = rs.getInt("is_used") == 1;
-                long expirationTime = rs.getLong("expiration_time");
-                long currentTime = System.currentTimeMillis();
-                if (!isUsed && currentTime <= expirationTime) {
+                if (!isUsed) {
                     return true;
                 }
             }
@@ -443,9 +441,8 @@ public class DatabaseHelper {
     }
     
     public boolean storePasswordReset(String username, String oneTimePassword) throws SQLException {
-        String insertReset = "INSERT INTO password_resets (username, one_time_password, expiration_time) VALUES (?, ?, ?)"
-                + "ON CONFLICT(username) DO UPDATE SET one_time_password = excluded.one_time_password, "
-                + "expiration_time = excluded.expiration_time, is_used = 0";       
+        String insertReset = "INSERT INTO password_resets (username, one_time_password) VALUES (?, ?)"
+                + "ON CONFLICT(username) DO UPDATE SET one_time_password = excluded.one_time_password";       
         try (PreparedStatement pstmt = connection.prepareStatement(insertReset)) {
             pstmt.setString(1, username);
             pstmt.setString(2, oneTimePassword);
@@ -459,16 +456,14 @@ public class DatabaseHelper {
     }
 
     public boolean isOTPValid(String username, String oneTimePassword) throws SQLException {
-        String query = "SELECT is_used, expiration_time FROM password_resets WHERE username = ? AND one_time_password = ?";
+        String query = "SELECT is_used FROM password_resets WHERE username = ? AND one_time_password = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, username);
             pstmt.setString(2, oneTimePassword);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 boolean isUsed = rs.getInt("is_used") == 1;
-                long expirationTime = rs.getLong("expiration_time");
-                long currentTime = System.currentTimeMillis();
-                if (!isUsed && currentTime <= expirationTime) {
+                if (!isUsed) {
                     return true;
                 }
             }
