@@ -5,7 +5,17 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.StringProperty;
 
+/**
+* <p>User Class</p>
+* 
+* <p>Description:This class represents a user in the CSE360HelpSystem application.
+ * It contains properties related to the user's personal information and roles within the system.
+ * JavaFX properties are used for easy binding with UI components. </p>
+* 
+* <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
+*/
 public class User {
+	// User properties
     private final StringProperty username = new SimpleStringProperty();
     private final StringProperty email = new SimpleStringProperty();
     private final StringProperty firstname = new SimpleStringProperty();
@@ -17,9 +27,24 @@ public class User {
     private final BooleanProperty isStudent = new SimpleBooleanProperty();
     private final BooleanProperty flag = new SimpleBooleanProperty();
 
-    // Constructor
+    /**
+     * Constructor for the User class.
+     * Initializes user properties based on provided values.
+     * 
+     * @param username     The username of the user.
+     * @param email        The email address of the user.
+     * @param firstname    The first name of the user.
+     * @param middlename   The middle name of the user.
+     * @param lastname     The last name of the user.
+     * @param preferred    The preferred name of the user.
+     * @param isAdmin      Whether the user is an admin.
+     * @param isInstructor  Whether the user is an instructor.
+     * @param isStudent     Whether the user is a student.
+     * @param isFlagged     Whether the user is flagged.
+     */
     public User(String username, String email, String firstname, String middlename, String lastname, String preferred,
                 boolean isAdmin, boolean isInstructor, boolean isStudent, boolean isFlagged) {
+    	// Initialize properties using the setter methods for proper binding functionality
         setUsername(username);
         setEmail(email);
         setFirstname(firstname);
@@ -32,7 +57,7 @@ public class User {
         setFlag(isFlagged);
     }
 
-    // Getters
+    // Getters for retrieving property values
     public String getUsername() {
         return username.get();
     }
@@ -73,7 +98,7 @@ public class User {
         return flag.get();
     }
 
-    // Setters
+    // Setters for updating property values
     public void setUsername(String value) {
         username.set(value);
     }
@@ -114,7 +139,7 @@ public class User {
         flag.set(value);
     }
 
-    // Properties for binding
+    // Properties for binding with UI components
     public StringProperty usernameProperty() {
         return username;
     }

@@ -20,9 +20,20 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
 
-
+/**
+ * <p>AdmiPage Class</p>
+ * 
+ * <p>Description: This class represents the admin interface for managing users
+ * in the CSE360 Help System. Admins can invite users, reset passwords, delete users,
+ * and change user roles.</p>
+ * 
+ * <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
+ */
 public class AdminPage extends HBox {
+	// Reference to the main application class to access shared resources
 	private CSE360HelpSystem mainApp;
+	
+	// UI Components
 	private Label welcome = new Label("Admin View");
 	private Label warning = new Label("");
 	private Label userinfo = new Label("Manipulate Users:");
@@ -43,48 +54,54 @@ public class AdminPage extends HBox {
 	private String user;
 	private boolean confirmation;
 	
+	// Constructor for the AdminPage
 	public AdminPage(CSE360HelpSystem mainApp){
+		// Store reference to the main application
 		this.mainApp = mainApp;
+	
+		// Create a BorderPane to organize the layout
 		BorderPane mainPane = new BorderPane();
 		
+		// Configure the welcome label
 		welcome.setTextFill(Color.BLACK);
         welcome.setFont(Font.font(null, 14));
         
+        // Configure the userinfo label
         userinfo.setTextFill(Color.BLACK);
         userinfo.setFont(Font.font(null, 14));
         
+    	// Set up the permissions label
         perms.setTextFill(Color.BLACK);
         perms.setFont(Font.font(null, 14));
 
+        // Configure buttons and text fields
         invitebutton.setTextFill(Color.BLACK);
-        invitebutton.setFont(Font.font(null, 14));
-        
+        invitebutton.setFont(Font.font(null, 14));        
         resetbutton.setTextFill(Color.BLACK);
-        resetbutton.setFont(Font.font(null, 14));
-        
+        resetbutton.setFont(Font.font(null, 14));       
         deletebutton.setTextFill(Color.RED);
-        deletebutton.setFont(Font.font(null, 14));
-        
+        deletebutton.setFont(Font.font(null, 14));        
         listbutton.setTextFill(Color.BLACK);
         listbutton.setFont(Font.font(null, 14));
-        
-        deleteField.setPromptText("Username to delete");
-        inviteField.setPromptText("User to invite");
-        resetField.setPromptText("Username to reset");
-        permsField.setPromptText("User to change Roles");
-        
         changepermsbutton.setTextFill(Color.BLACK);
         changepermsbutton.setFont(Font.font(null, 14));
-        
         logoutbutton.setTextFill(Color.BLACK);
         logoutbutton.setFont(Font.font(null, 14));
         
+        // Set prompt texts for text fields
+        deleteField.setPromptText("Username to delete");
+        inviteField.setPromptText("User to invite");
+        resetField.setPromptText("Username to reset");
+        permsField.setPromptText("User to change Roles");     
+        
+        // Create a GridPane to arrange the UI components
         GridPane adminPane = new GridPane();
         adminPane.setAlignment(Pos.CENTER);
         adminPane.setVgap(10);
         adminPane.setHgap(10);
         adminPane.setPadding(new Insets(20, 20, 20, 20));
 
+        // Add components to the GridPane
         adminPane.add(welcome, 0, 0, 2, 1);
         adminPane.add(userinfo, 0, 1);
         adminPane.add(warning, 1, 1);
@@ -102,10 +119,14 @@ public class AdminPage extends HBox {
         adminPane.add(changepermsbutton, 2, 8);
         adminPane.add(logoutbutton, 0, 9);
 
+        // Set the VBox to the center of the BorderPane
         mainPane.setCenter(adminPane);
+        
+        // Add the BorderPane to the HBox (the root container of this page)
         this.getChildren().addAll(mainPane);
         this.setAlignment(Pos.CENTER);
 
+        // Set up action handlers for the buttons
         logoutbutton.setOnAction(e -> mainApp.showLoginPage());
         deletebutton.setOnAction(e -> delete());
         changepermsbutton.setOnAction(e -> changePerms());
@@ -115,6 +136,7 @@ public class AdminPage extends HBox {
         resetbutton.setOnAction(e -> resetUserPassword());
 	}
 	
+	// Method to delete a user from the database
 	private void delete() {
 	    try {
 	        if (!deleteField.getText().isEmpty()) {
@@ -144,6 +166,7 @@ public class AdminPage extends HBox {
 	    }
 	}
 	
+	 // Method to display users
     public void showUsers() {
         try {
             mainApp.databaseHelper.displayUsers();
@@ -152,6 +175,7 @@ public class AdminPage extends HBox {
         }
     }
     
+    // Method to log out
     private void logout() {
     	warning.setText("");
     	inviteField.clear();
@@ -159,11 +183,12 @@ public class AdminPage extends HBox {
     	mainApp.showLoginPage();
     }
 	
+    // Method to show confirmation dialog for deletion
 	private void deleteConfirmation(String user) {
 		Stage popup = new Stage();
-		popup.initModality(Modality.APPLICATION_MODAL);
+		popup.initModality(Modality.APPLICATION_MODAL); // Ensure it blocks input to other windows
 		popup.setTitle("Delete Confirmation");
-		Label warning = new Label("Are You Sure?");
+		Label warning = new Label("Are You Sure?"); // Confirmation message
 		Button yes = new Button("Yes");
 		Button no = new Button("No");
 		
@@ -177,10 +202,12 @@ public class AdminPage extends HBox {
 			popup.close();
 		});
 		
+		// Layout for confirmation buttons
 		HBox confirmationButtons = new HBox(10);
 		confirmationButtons.getChildren().addAll(yes, no);
 		confirmationButtons.setAlignment(Pos.CENTER);
 		
+		// Layout for the popup
 		HBox layout = new HBox(10);
 		layout.getChildren().addAll(warning, confirmationButtons);
 		layout.setAlignment(Pos.CENTER);
@@ -190,6 +217,7 @@ public class AdminPage extends HBox {
 		popup.showAndWait();	
 	}
 
+	// Method to change a user roles
 	private void changePerms() {
 	    try {
 	        if (!permsField.getText().isEmpty()) {
@@ -222,11 +250,12 @@ public class AdminPage extends HBox {
 	    } 
 	}
 	
+	// Method to convert boolean types to int as needed for other methods
 	public int booleanToInt(boolean value) {
 	    return value ? 1 : 0;
 	}
 
-	
+	// Method to allow an admin to create an invite code
 	private void inviteUser() {
 	    try {
 	        String inviteUsername = inviteField.getText().trim();
@@ -281,11 +310,12 @@ public class AdminPage extends HBox {
 	    }
 	}
 
+	// Method to generate a random string to be used as an invite code
 	private String generateInviteCode() {
 	    return Long.toHexString(Double.doubleToLongBits(Math.random()));
 	}
 	
-
+	// Method to allow an admin to change a user's password to an one time password
 	private void resetUserPassword() {
 	    try {
 	        String resetUser = resetField.getText();
@@ -311,7 +341,8 @@ public class AdminPage extends HBox {
 	    }
 	}
 	
+	// Method to generate a random string to be used as a one time password
 	private String generateOneTimePassword() {
 	    return Long.toHexString(Double.doubleToLongBits(Math.random()));
-}
+	}
 }

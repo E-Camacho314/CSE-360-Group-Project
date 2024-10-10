@@ -13,9 +13,23 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+/**
+ * <p>CreateAccount Class</p>
+ * 
+ * <p>Description: This class provides the UI for creating a new user account in the CSE360HelpSystem.
+ * It validates user input and interacts with the database to create the account.</p>
+ * 
+ * <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
+ */
+
 public class CreateAccount extends VBox {
+	// Reference to the main application instance
     private CSE360HelpSystem mainApp;
+    
+    // Singleton for database operations
     private static final DatabaseHelper databaseHelper = new DatabaseHelper();
+    
+    // UI Components
     private String invitationCode;
     private Label titleLabel;
     private Label emailLabel;
@@ -28,12 +42,20 @@ public class CreateAccount extends VBox {
     private Button backButton;
     private Label messageLabel;
 
+    /**
+     * Constructor for CreateAccount class.
+     * Initializes the UI components and sets up the layout.
+     *
+     * @param mainApp        The main application instance.
+     * @param invitationCode The invitation code for registration.
+     */
     public CreateAccount(CSE360HelpSystem mainApp, String invitationCode) {
         this.mainApp = mainApp;
         this.invitationCode = invitationCode;
         initializeUI();
     }
-
+    
+    // Method to initialize the user interface components and layout
     private void initializeUI() {
         // Title
         titleLabel = new Label("Create Account");
@@ -79,6 +101,7 @@ public class CreateAccount extends VBox {
         grid.setHgap(10);
         grid.setPadding(new Insets(20, 20, 20, 20));
         
+        // Adding components to the grid
         grid.add(titleLabel, 0, 0, 2, 1);
         grid.add(emailLabel, 0, 1);
         grid.add(emailField, 1, 1);
@@ -89,6 +112,7 @@ public class CreateAccount extends VBox {
         grid.add(submitButton, 1, 4);
         grid.add(messageLabel, 0, 6, 2, 1);
         
+        // Check if the database is empty to determine account creation context
         try {
         	if(mainApp.databaseHelper.isDatabaseEmpty()) {
         		titleLabel.setText("First Admin Account Creation");
@@ -101,6 +125,7 @@ public class CreateAccount extends VBox {
         	}
     	}
     	catch(SQLException e) {
+    		 // Handle SQL exceptions related to database access
 			System.err.println("Database error: " + e.getMessage());
 			e.printStackTrace();
     	}
@@ -123,16 +148,20 @@ public class CreateAccount extends VBox {
         });
     }
 
+    // Method to handle the submission of account creation form
     private void handleSubmit() {
+    	// Retrieve input values from fields
         String email = emailField.getText().trim();
         String password = passwordField.getText();
         String confirmPassword = confirmPassField.getText();
 
+        // Check for empty fields
         if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
             messageLabel.setText("All fields are required.");
             return;
         }
 
+        // Check if passwords match for verification
         if (!password.equals(confirmPassword)) {
             messageLabel.setText("Passwords do not match.");
             return;
@@ -141,11 +170,14 @@ public class CreateAccount extends VBox {
         try {
         	String role;
         	String username;
-        	boolean success = false;
+        	boolean success = false; // Flag to indicate success of account creation
+        	
+        	// If the database is empty, register as first admin
             if (mainApp.databaseHelper.isDatabaseEmpty()) {
                 mainApp.databaseHelper.register(email, confirmPassword, 1, 0, 0);
                 success = true;
             } else {
+            	// Register a user associated with an invitation code
             	username = mainApp.databaseHelper.getUsernameByInviteCode(invitationCode);
             	mainApp.databaseHelper.setEmailAndPassword(username, email, confirmPassword);
             	success = true;
@@ -171,11 +203,5 @@ public class CreateAccount extends VBox {
             messageLabel.setTextFill(Color.RED);
             messageLabel.setText("An error occurred during account creation.");
         }
-    }
-
-    // method to consume invitation code
-    private String consumeInvitationCode(String code) {
-        // Implement logic to validate and consume the invitation code
-        return "user"; // Update with actual logic
     }
 }

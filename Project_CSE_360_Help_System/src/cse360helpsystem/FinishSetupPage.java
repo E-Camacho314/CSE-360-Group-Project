@@ -10,10 +10,28 @@ import javafx.scene.text.Font;
 
 import java.sql.SQLException;
 
+/**
+ * <p>FinishSetupPage Class</p>
+ * 
+ * <p>Description: This class represents the final setup page where users complete their account details
+ * after initial registration. It collects email and usernames and updates
+ * the database accordingly. Upon successful completion, it redirects users to the appropriate
+ * dashboard based on their roles.</p>
+ * 
+ * <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
+ */
+
 public class FinishSetupPage extends VBox {
+	// Reference to the main application to facilitate navigation between pages
     private CSE360HelpSystem mainApp;
+    
+    // Singleton instance of DatabaseHelper for database operations
     private static final DatabaseHelper databaseHelper = new DatabaseHelper();
+    
+    // Username of the currently logged-in user
     private String username;
+    
+    // UI Components
     private Label titleLabel;
     private Label emailLabel;
     private Label passLabel;
@@ -30,12 +48,23 @@ public class FinishSetupPage extends VBox {
     private Button backButton;
     private Label messageLabel;
 
+    /**
+     * Constructor for FinishSetupPage.
+     * Initializes the UI components and sets up the layout.
+     * 
+     * @param mainApp the main application instance for navigation
+     * @param username the username of the user completing the setup
+     */
     public FinishSetupPage(CSE360HelpSystem mainApp, String username) {
         this.mainApp = mainApp;
         this.username = username;
         initializeUI();
     }
 
+    /**
+     * Initializes and configures all UI components and layouts.
+     * Sets up labels, text fields, buttons, and their event handlers.
+     */
     private void initializeUI() {
         // Title
         titleLabel = new Label("Finish Setting Up Your Account");
@@ -88,13 +117,14 @@ public class FinishSetupPage extends VBox {
         messageLabel.setTextFill(Color.BLACK);
         messageLabel.setFont(Font.font(14));
 
-        // Layout using GridPane
+        // Create a GridPane for organizing labels and text fields in a grid layout
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
         grid.setVgap(10);
         grid.setHgap(10);
         grid.setPadding(new Insets(20, 20, 20, 20));
 
+        // Adding components to the grid
         grid.add(titleLabel, 0, 0, 2, 1);
         grid.add(emailLabel, 0, 1);
         grid.add(emailField, 1, 1);
@@ -123,6 +153,11 @@ public class FinishSetupPage extends VBox {
         backButton.setOnAction(e -> mainApp.showLoginPage());
     }
 
+    /**
+     * Handles the submission of the form.
+     * Validates input fields, updates the user's information in the database,
+     * and navigates to the appropriate dashboard upon success.
+     */
     private void handleSubmit() {
         String email = emailField.getText().trim();
         String firstName = firstNameField.getText().trim();
@@ -180,11 +215,13 @@ public class FinishSetupPage extends VBox {
                 }).start();
             }
             else {
+            	// If updating user details failed, show an error message
                 messageLabel.setTextFill(Color.RED);
                 messageLabel.setText("Failed to update account.");
             }
         }
         catch (SQLException ex) {
+        	// Handle any SQL exceptions that occur during the update
             ex.printStackTrace();
             messageLabel.setTextFill(Color.RED);
             messageLabel.setText("An error occurred during setup.");

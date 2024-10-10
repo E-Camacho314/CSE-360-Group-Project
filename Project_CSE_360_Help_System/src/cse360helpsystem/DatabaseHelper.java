@@ -7,12 +7,31 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class DatabaseHelper {  
-    static final String DB_URL = "jdbc:sqlite:helpsystem.db";  
+/**
+* <p>DatabaseHelper Class</p>
+* 
+* <p> Description: This class manages all interactions with the SQLite database used by the CSE360HelpSystem.
+* It handles connecting to the database, creating necessary tables, and performing CRUD operations
+* related to users, invite codes, and password resets.</p>
+* 
+* <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
+*/
 
+public class DatabaseHelper {  
+	// Database URL pointing to the SQLite database file
+    static final String DB_URL = "jdbc:sqlite:helpsystem.db";  
+    
+    // Singleton instance of the database connection
     private static Connection connection = null;
     private Statement statement = null; 
 
+    /**
+     * Establishes a connection to the SQLite database.
+     * If the database does not exist, it will be created automatically.
+     * After establishing the connection, it initializes the necessary tables.
+     * 
+     * @throws SQLException if a database access error occurs
+     */
     public void connectToDatabase() throws SQLException {
         System.out.println("Connecting to database...");
         connection = DriverManager.getConnection(DB_URL);
@@ -23,6 +42,7 @@ public class DatabaseHelper {
         }
     }
     
+    // Method to reset all existing tables in order to test
     public void emptyDatabase() {
         try {
             connectToDatabase(); // Establish connection
@@ -40,7 +60,13 @@ public class DatabaseHelper {
         }
     }
 
-
+    /**
+     * Creates the necessary tables for the database
+     * cse360users: Stores user information.
+     * invite_codes: Manages invite codes for user registrations.
+     * password_resets: Handles password reset requests.
+     * @throws SQLException
+     */
     private void createTables() throws SQLException {
         String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -79,7 +105,7 @@ public class DatabaseHelper {
         statement.execute(resetTable);
     }
 
-    // Check if the database is empty
+    // Check if the database is empty in order to prompt an initial account setup for the first user
     public boolean isDatabaseEmpty() throws SQLException {
         String query = "SELECT COUNT(*) AS count FROM cse360users";
         ResultSet resultSet = statement.executeQuery(query);
@@ -91,6 +117,7 @@ public class DatabaseHelper {
         return true;
     }
     
+    // Method to update database with a different password in the case of resetting
     public boolean changePassword(String username, String newPassword) throws SQLException {
         String updatePassword = "UPDATE cse360users SET password = ? WHERE username = ?";
         
@@ -112,6 +139,7 @@ public class DatabaseHelper {
         return false; // Return false if the update failed
     }
 
+    // Method to verify password entered by user upon login attempt
     public boolean checkPassword(String username, String password) throws SQLException {
         String query = "SELECT password FROM cse360users WHERE username = ?";
         
@@ -132,6 +160,7 @@ public class DatabaseHelper {
         return false; // Return false if user not found or password does not match
     }
     
+    // Method to update the database when a user changes their email and password
     public boolean setEmailAndPassword(String username, String email, String password) throws SQLException {
         String updateQuery = "UPDATE cse360users SET email = ?, password = ? WHERE username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(updateQuery)) {
@@ -154,8 +183,16 @@ public class DatabaseHelper {
         }
     }
 
-
-
+    /** Method to add a new user to the database given a username, password, and what roles they have.
+     * 
+     * @param username		the username of the new user
+     * @param password		the password of the new user
+     * @param admin			1 if the user is an admin, 0 otherwise
+     * @param instructor	1 if the user is a instructor, 0 otherwise
+     * @param student		1 if the user is a student, 0 otherwise
+     * @return true if registration is successful, false otherwise
+     * @throws SQLException	SQLException if a database access error occurs
+     */
     public void register(String username, String password, int admin, int instructor, int student) throws SQLException {
         // Adjusted SQL insert statement to include all columns
         String insertUser = "INSERT INTO cse360users (email, username, password, admin, instructor, student, firstname, middlename, lastname, preferred) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -181,6 +218,18 @@ public class DatabaseHelper {
         }
     }
     
+    /**
+     * Updates an existing user's email and name details based on their username.
+     * 
+     * @param username     the username of the user to be updated
+     * @param email        the new email address
+     * @param firstname    the new first name
+     * @param middlename   the new middle name
+     * @param lastname     the new last name
+     * @param preferredName the new preferred name
+     * @return true if the update is successful, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
     public boolean registerWithEmailAndNames(String username, String email, String firstname, String middlename, String lastname, String preferredName) throws SQLException {
         // Update existing user based on username
         String updateUser = "UPDATE cse360users SET email = ?, firstname = ?, middlename = ?, lastname = ?, preferred = ? WHERE username = ?";
@@ -208,6 +257,14 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Authenticates a user by checking if the provided username and password match a record in the database.
+     * 
+     * @param username the username entered by the user
+     * @param password the password entered by the user
+     * @return a User object if authentication is successful, null otherwise
+     * @throws SQLException if a database access error occurs
+     */
     public User login(String username, String password) throws SQLException {
         String query = "SELECT * FROM cse360users WHERE username = ? AND password = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -233,7 +290,16 @@ public class DatabaseHelper {
         return null;
     }
 
-    
+    /**
+     * Changes the roles of a user based on their email address.
+     * Updates the admin, instructor, and student status flags in the database.
+     * 
+     * @param email       the email of the user whose roles are to be changed
+     * @param admin       1 to grant admin privileges, 0 to revoke
+     * @param instructor  1 to grant instructor privileges, 0 to revoke
+     * @param student     1 to grant student privileges, 0 to revoke
+     * @throws SQLException if a database access error occurs
+     */
     public void changeUserRoles(String email, int admin, int instructor, int student) throws SQLException {
         // Prepare the SQL statement to update all roles at once
         String updateSQL = "UPDATE cse360users SET admin = ?, instructor = ?, student = ? WHERE email = ?";
@@ -257,6 +323,12 @@ public class DatabaseHelper {
         }
     }
     
+    /**
+     * Deletes a user from the database based on their email address.
+     * 
+     * @param email the email of the user to be deleted
+     * @throws SQLException if a database access error occurs
+     */
     public void deleteUser(String email) throws SQLException {
         String deleteUserSQL = "DELETE FROM cse360users WHERE email = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(deleteUserSQL)) {
@@ -273,6 +345,13 @@ public class DatabaseHelper {
         }
     }
 
+
+    /**
+     * Checks if a user exists in the database based on their username.
+     * 
+     * @param username the username to check
+     * @return true if the user exists, false otherwise
+     */
     public boolean doesUserExist(String username) {
         String query = "SELECT COUNT(*) FROM cse360users WHERE username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -287,13 +366,24 @@ public class DatabaseHelper {
         return false; // If an error occurs, assume user doesn't exist
     }
     
+    /**
+     * Retrieves all users from the database.
+     * Useful for admin functionalities like listing all users.
+     * 
+     * @return a ResultSet containing all user records
+     * @throws SQLException if a database access error occurs
+     */
     public ResultSet getAllUsers() throws SQLException {
         String query = "SELECT email, username, firstname, middlename, lastname, preferred, admin, instructor, student, flag FROM cse360users";
         PreparedStatement pstmt = connection.prepareStatement(query);
         return pstmt.executeQuery();
     }
 
-
+    /**
+     * Displays all users in the console.
+     * 
+     * @throws SQLException if a database access error occurs
+     */
     public void displayUsers() throws SQLException {
         String sql = "SELECT * FROM cse360users"; 
         try (Statement stmt = connection.createStatement(); 
@@ -302,7 +392,7 @@ public class DatabaseHelper {
                 // Retrieve by column name 
                 int id = rs.getInt("id"); 
                 String email = rs.getString("email"); 
-                String password = rs.getString("password"); // Consider not printing this
+                String password = rs.getString("password");
                 String admin = rs.getString("admin");
                 String instructor = rs.getString("instructor");
                 String student = rs.getString("student");
@@ -318,7 +408,7 @@ public class DatabaseHelper {
                 System.out.print("ID: " + id); 
                 System.out.print(", Email: " + email); 
                 // Avoid printing passwords in production
-                System.out.print(", Password: " + password); // Consider removing this line
+                System.out.print(", Password: " + password);
                 System.out.print(", First Name: " + firstname);
                 System.out.print(", Middle Name: " + middlename);
                 System.out.print(", Last Name: " + lastname);
@@ -332,7 +422,17 @@ public class DatabaseHelper {
         }
     }
 
-    
+    /**
+     * Updates the user's setup information, including first name, middle name, last name, and preferred name.
+     * 
+     * @param username     the username of the user to update
+     * @param firstName    the new first name
+     * @param middleName   the new middle name
+     * @param lastName     the new last name
+     * @param preferredName the new preferred name
+     * @return true if the update was successful, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
     public static boolean updateUserSetup(String username, String firstName, String middleName, String lastName, String preferredName) throws SQLException {
         String update = "UPDATE cse360users SET firstname = ?, middlename = ?, lastname = ?, preferred = ? WHERE username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(update)) {
@@ -345,7 +445,14 @@ public class DatabaseHelper {
         }
     }
     
-    // Check if account setup is complete
+    /**
+     * Checks whether the account setup is complete for a given user.
+     * An account setup is considered complete if both first name and last name are provided.
+     * 
+     * @param username the username of the user to check
+     * @return true if setup is complete, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
     public boolean isSetupComplete(String username) throws SQLException {
         String query = "SELECT firstname, lastname FROM cse360users WHERE username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -362,6 +469,13 @@ public class DatabaseHelper {
         return false;
     }
     
+    /**
+     * Retrieves a User object based on the provided username.
+     * 
+     * @param username the username of the user to retrieve
+     * @return a User object with the user's details, or null if not found
+     * @throws SQLException if a database access error occurs
+     */
     public User getUserByUsername(String username) throws SQLException {
         String query = "SELECT * FROM cse360users WHERE username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -384,7 +498,18 @@ public class DatabaseHelper {
         }
         return null;
     }
-
+    
+    /**
+     * Stores an invite code associated with a user and their roles.
+     * 
+     * @param username the username associated with the invite code
+     * @param code the unique invite code
+     * @param isAdmin true if the invite grants admin privileges
+     * @param isInstructor true if the invite grants instructor privileges
+     * @param isStudent true if the invite grants student privileges
+     * @return true if the invite code is stored successfully, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
     public boolean storeInviteCode(String username, String code, boolean isAdmin, boolean isInstructor, boolean isStudent) throws SQLException {
         String insertInvite = "INSERT INTO invite_codes (code, username, is_admin, is_instructor, is_student) VALUES (?, ?, ?, ?, ?)";     
         try (PreparedStatement pstmt = connection.prepareStatement(insertInvite)) {
@@ -402,7 +527,13 @@ public class DatabaseHelper {
         }
     }
     
-    // Retrieve username based on invite code
+    /**
+     * Retrieves the username associated with a given invite code.
+     * 
+     * @param inviteCode the invite code to search for
+     * @return the username associated with the invite code, or null if not found
+     * @throws SQLException if a database access error occurs
+     */
     public String getUsernameByInviteCode(String inviteCode) throws SQLException {
         String query = "SELECT username FROM invite_codes WHERE code = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -417,7 +548,12 @@ public class DatabaseHelper {
         return null;
     }
 
-    
+   /**
+    * 
+    * @param username the username associated with the invite code
+    * @return a string displaying the invite code, or null
+    * @throws SQLException if a database access error occurs
+    */
     public String getInviteCode(String username) throws SQLException {
         String query = "SELECT invite_code FROM cse360users WHERE username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -432,7 +568,15 @@ public class DatabaseHelper {
         return null;
     }
     
-    // Assign roles based on invite code and register the user
+    /**
+     * Assigns roles to a user based on a provided invite code and registers the user.
+     * After assigning roles, it marks the invite code as used to prevent reuse.
+     * 
+     * @param username   the username of the user to assign roles to
+     * @param inviteCode the invite code used for role assignment
+     * @return true if roles are assigned and user is registered successfully, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
     public boolean assignRolesBasedOnInviteCode(String username, String inviteCode) throws SQLException {
         // Validate the invite code
         if (!isInviteCodeValid(inviteCode)) {
@@ -474,7 +618,13 @@ public class DatabaseHelper {
         return false;
     }
     
-    // Validate invite code
+    /**
+     * Validates whether an invite code is valid and unused.
+     * 
+     * @param inviteCode the invite code to validate
+     * @return true if the invite code is valid and not used, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
     public boolean isInviteCodeValid(String inviteCode) throws SQLException {
         String query = "SELECT is_used FROM invite_codes WHERE code = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -492,7 +642,12 @@ public class DatabaseHelper {
         return false;
     }
     
-    // Mark invite code as used
+    /**
+     * Marks an invite code as used to prevent its reuse.
+     * 
+     * @param inviteCode the invite code to mark as used
+     * @throws SQLException if a database access error occurs
+     */
     public void markInviteCodeAsUsed(String inviteCode) throws SQLException {
         String update = "UPDATE invite_codes SET is_used = 1 WHERE code = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(update)) {
@@ -508,6 +663,14 @@ public class DatabaseHelper {
         }
     }
     
+    /**
+     * Resets a user's password to a new value.
+     * 
+     * @param username    the username of the user whose password is to be reset
+     * @param newPassword the new password to set
+     * @return true if the password was reset successfully, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
     public boolean resetPassword(String username, String newPassword) throws SQLException {
         String updatePassword = "UPDATE cse360users SET password = ? WHERE username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(updatePassword)) {
@@ -527,6 +690,15 @@ public class DatabaseHelper {
         }
     }
     
+    /**
+     * Stores a password reset request by associating a one-time password (OTP) with a username.
+     * If a reset request already exists for the user, it updates the OTP.
+     * 
+     * @param username         the username of the user requesting a password reset
+     * @param oneTimePassword  the generated one-time password for resetting
+     * @return true if the OTP was stored successfully, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
     public boolean storePasswordReset(String username, String oneTimePassword) throws SQLException {
         String insertReset = "INSERT INTO password_resets (username, one_time_password) VALUES (?, ?)"
                 + "ON CONFLICT(username) DO UPDATE SET one_time_password = excluded.one_time_password";       
@@ -542,6 +714,14 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Validates whether a provided one-time password (OTP) is valid and unused for a given user.
+     * 
+     * @param username         the username of the user attempting to reset their password
+     * @param oneTimePassword  the OTP provided by the user
+     * @return true if the OTP is valid and unused, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
     public boolean isOTPValid(String username, String oneTimePassword) throws SQLException {
         String query = "SELECT is_used FROM password_resets WHERE username = ? AND one_time_password = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -560,6 +740,12 @@ public class DatabaseHelper {
         return false;
     }
     
+    /**
+     * Marks a one-time password (OTP) as used for a given user to prevent its reuse.
+     * 
+     * @param username the username of the user whose OTP is to be marked as used
+     * @throws SQLException if a database access error occurs
+     */
     public void markOTPAsUsed(String username) throws SQLException {
         String update = "UPDATE password_resets SET is_used = 1 WHERE username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(update)) {
@@ -575,6 +761,10 @@ public class DatabaseHelper {
         }
     }
     
+    /**
+     * Closes the database connection and associated statement.
+     * Should be called when the application is shutting down to release resources.
+     */
     public void closeConnection() {
         try { 
             if (statement != null) statement.close(); 

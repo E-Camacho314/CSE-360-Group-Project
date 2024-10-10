@@ -21,7 +21,7 @@ import javafx.geometry.Pos;
 /**
  * <p> CSE360HelpSystem Class </p>
  * 
- * <p> Description: .</p>
+ * <p> Description: A JavaFX application uses a GUI and that connects to a database and allows users to perform various functions.</p>
  * 
  * @author Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson
  * 
@@ -29,30 +29,49 @@ import javafx.geometry.Pos;
 
 public class CSE360HelpSystem extends Application
 {
+	// Constants for window dimensions
     public static final int WIDTH = 400, HEIGHT = 400;
+    
+    // Singleton instance of the DatabaseHelper class to manage database connections
     public static final DatabaseHelper databaseHelper = new DatabaseHelper();
+    
+    // StackPane root will hold the current UI page
 	private static StackPane root = new StackPane();
+	
+	// Pages for different roles and functionalities
 	private static LoginPage loginpage;
 	private static AdminPage adminpage;
 	private static StudentPage studentpage;
 	private static InstructorPage instructorpage;
 	private static RoleChooser rolechoose;
+	
+	// UI components for creating a new account
 	private TextField inviteField = new TextField();
 	private Button createAccount = new Button ("Create Account");
 
+	/**
+     * The main entry point for the JavaFX application.
+     * Initializes the different pages and loads the correct UI based on the database state.
+     */
     public void start(Stage stage)
     {
     	try {
+    		// Initialize different pages (Admin, Login, Student, Instructor)
         	adminpage = new AdminPage(this);
         	loginpage = new LoginPage(this);
         	studentpage = new StudentPage(this);
         	instructorpage = new InstructorPage(this);
+        	
+        	// Check if the database is empty
         	if(databaseHelper.isDatabaseEmpty()) {
         		showCreateAccountPage("");
         	}
         	else {
+        		// If users exist, load the login page
         		root.getChildren().add(loginpage);
         	}
+        	
+        	// Create the main scene for the application
         	Scene scene = new Scene(root, WIDTH, HEIGHT);        
             stage.setTitle("CSE 360 Help System");
             stage.setScene(scene);
@@ -60,6 +79,7 @@ public class CSE360HelpSystem extends Application
             stage.show();
     	}
     	catch(SQLException e) {
+    		// Handle any SQL exceptions and print the error message
 			System.err.println("Database error: " + e.getMessage());
 			e.printStackTrace();
     	}
@@ -67,48 +87,50 @@ public class CSE360HelpSystem extends Application
     		System.out.println("path chosen");
     	}
     }
-     
+    
+    // Displays the Create Account page where users can enter an invitation code to sign up
 	public void showCreateAccountPage(String invite) {
         CreateAccount createAccountPage = new CreateAccount(this, invite); // Pass it to CreateAccount
         root.getChildren().clear();
         root.getChildren().add(createAccountPage);
     }
 	
+	// Displays the Finish Setup page for completing account setup after the user is created
 	public void showFinishSetupPage(String username) {
         FinishSetupPage finishsetupPage = new FinishSetupPage(this, username); // Pass it to FinishSetupPage
         root.getChildren().clear();
         root.getChildren().add(finishsetupPage);
     }
 	    
-    // method used by other pages to return to login page
+    // Displays the login page
     public void showLoginPage() {
         root.getChildren().clear();
         root.getChildren().add(loginpage);
         System.out.println("Switched to Login Page"); // For debugging
     }
     
-    // method used by other pages to return to admin page
+    // Displays the admin page for admin users
     public void showAdminPage() {
         root.getChildren().clear();
         root.getChildren().add(adminpage);
         System.out.println("Switched to Admin Page"); // For debugging
     }
     
-    // method used by other pages to return to student page
+    // Displays the student page for student users
     public void showStudentPage() {
         root.getChildren().clear();
         root.getChildren().add(studentpage);
         System.out.println("Switched to Student Page"); // For debugging
     }
     
-    // method used by other pages to return to instructor page
+    // Displays the instructor page for instructor users
     public void showInstructorPage() {
         root.getChildren().clear();
         root.getChildren().add(instructorpage);
         System.out.println("Switched to Instructor Page"); // For debugging
     }
     
-    // method used by other pages to return to rolechooser page
+    // Displays the role chooser page for users who need to select their role
     public void showRoleChooser(String username) {
         root.getChildren().clear();
     	RoleChooser rolechoose = new RoleChooser(this, username);
@@ -116,7 +138,7 @@ public class CSE360HelpSystem extends Application
         System.out.println("Switched to Role Chooser Page"); // For debugging
     }
     
-    // method used by other pages to return to rolechooser page
+    // Displays a new password to be used for the user
     public void showNewPass(String username) {
     	NewPassword pass = new NewPassword(this, username);
     	root.getChildren().clear();
@@ -124,6 +146,7 @@ public class CSE360HelpSystem extends Application
         System.out.println("Switched to Role Chooser Page"); // For debugging
     }
     
+    // Displays a page containing a list of information for the admin
     public void showListPage() {
         ListPage listPage = new ListPage(this); // Create a new ListPage instance
         root.getChildren().clear();
@@ -131,24 +154,28 @@ public class CSE360HelpSystem extends Application
         System.out.println("Switched to List Page"); // For debugging
     }
     
+    // Provides access to the database helper for other parts of the application
     public DatabaseHelper getDatabaseHelper() {
         return databaseHelper;
     }
     
+    // The main method that sets up the database connection and launches the JavaFX application
     public static void main(String[] args)
     {
     	try {
+    		// Load the SQLite JDBC driver
     	    Class.forName("org.sqlite.JDBC");
     	} catch (ClassNotFoundException e) {
     	    e.printStackTrace();
     	}
     	try { 
 			databaseHelper.connectToDatabase();
-			databaseHelper.emptyDatabase();
+			databaseHelper.emptyDatabase();		// Empty the database for testing purposes
 			databaseHelper.closeConnection();
 			databaseHelper.connectToDatabase();  // Connect to the database
 		    launch(args);
 		} catch (SQLException e) {
+			// Handle SQL exceptions and print error message
 			System.err.println("Database error: " + e.getMessage());
 			e.printStackTrace();
 		}
