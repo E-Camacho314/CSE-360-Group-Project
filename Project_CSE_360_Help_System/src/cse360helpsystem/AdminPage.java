@@ -111,7 +111,8 @@ public class AdminPage extends HBox {
         changepermsbutton.setOnAction(e -> changePerms());
         listbutton.setOnAction(e -> {showUsers(); 
         	mainApp.showListPage();});
-
+        invitebutton.setOnAction(e -> inviteUser());
+        resetbutton.setOnAction(e -> resetUserPassword());
 	}
 	
 	private void delete() {
@@ -179,10 +180,7 @@ public class AdminPage extends HBox {
 		
 		Scene popupScene = new Scene(layout, 400, 100);
 		popup.setScene(popupScene);
-		popup.showAndWait();
-		
-		
-		
+		popup.showAndWait();	
 	}
 
 	private void changePerms() {
@@ -214,6 +212,93 @@ public class AdminPage extends HBox {
 	    } 
 	    finally {
 	        System.out.println("updated");
+	    } 
+	}
+	
+	private void inviteUser() {
+	    try {
+	        String inviteUsername = inviteField.getText().trim();
+	        if (inviteUsername.isEmpty()) {
+	            warning.setText("Please enter a username to invite.");
+	            warning.setTextFill(Color.RED);
+	            return;
+	        }
+
+	        // Check if the user already exists
+	        if (mainApp.getDatabaseHelper().doesUserExist(inviteUsername)) {
+	            warning.setText("Username already exists. Choose a different one.");
+	            warning.setTextFill(Color.RED);
+	            return;
+	        }
+
+	        // Determine selected roles
+	        boolean isAdmin = admin.isSelected();
+	        boolean isInstructor = instructor.isSelected();
+	        boolean isStudent = student.isSelected();
+
+	        // Ensure at least one role is selected
+	        if (!isAdmin && !isInstructor && !isStudent) {
+	            warning.setText("Select at least one role for the invite.");
+	            warning.setTextFill(Color.RED);
+	            return;
+	        }
+
+	        // Generate a unique invite code
+	        String inviteCode = generateInviteCode();
+
+	        // Store the invite code with roles
+	        boolean stored = mainApp.getDatabaseHelper().storeInviteCode(inviteCode, isAdmin, isInstructor, isStudent);
+	        if (stored) {
+	            // Optionally, send the invite code via email or display it
+	            warning.setTextFill(Color.GREEN);
+	            warning.setText("Invite created successfully. Code: " + inviteCode);
+	            // Clear inputs
+	            inviteField.clear();
+	            admin.setSelected(false);
+	            instructor.setSelected(false);
+	            student.setSelected(false);
+	        } else {
+	            warning.setText("Failed to create invite. Try again.");
+	            warning.setTextFill(Color.RED);
+	        }
+
+	    } catch (SQLException e) {
+	        warning.setText("Error creating invite: " + e.getMessage());
+	        warning.setTextFill(Color.RED);
 	    }
 	}
+
+	private String generateInviteCode() {
+	    return Long.toHexString(Double.doubleToLongBits(Math.random()));
+	}
+	
+
+	private void resetUserPassword() {
+	    try {
+	        String resetUser = resetField.getText();
+	        if (resetUser.isEmpty()) {
+	            warning.setText("Please enter a username.");
+	            warning.setTextFill(Color.RED);
+	            return;
+	        }
+	
+	        String oneTimePassword = generateOneTimePassword();
+	
+	        mainApp.databaseHelper.resetPassword(resetUser, oneTimePassword);
+	        
+	        warning.setText("Password reset. One-time password: " + oneTimePassword);
+	        warning.setTextFill(Color.GREEN);
+	
+	        // Clear inputs
+	        resetField.clear();
+	
+	    } catch (SQLException e) {
+	        warning.setText("Error resetting password: " + e.getMessage());
+	        warning.setTextFill(Color.RED);
+	    }
+	}
+	
+	private String generateOneTimePassword() {
+	    return Long.toHexString(Double.doubleToLongBits(Math.random()));
+}
 }

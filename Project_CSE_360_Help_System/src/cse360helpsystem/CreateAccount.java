@@ -145,7 +145,7 @@ public class CreateAccount extends VBox {
                 mainApp.databaseHelper.register(email, confirmPassword, 1, 0, 0);
                 success = true;
             } else {
-if (invitationCode == null || invitationCode.trim().isEmpty()) {
+            	if (invitationCode == null || invitationCode.trim().isEmpty()) {
                     messageLabel.setText("Invitation code is required.");
                     return;
                 }

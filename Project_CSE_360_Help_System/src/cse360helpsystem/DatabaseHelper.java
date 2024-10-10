@@ -53,6 +53,25 @@ public class DatabaseHelper {
                 + "flag INTEGER"
                 + ");";
         statement.execute(userTable);
+        
+        // invite code table
+        String inviteTable = "CREATE TABLE IF NOT EXISTS invite_codes ("
+                + "code TEXT PRIMARY KEY, "
+                + "is_admin INTEGER, "
+                + "is_instructor INTEGER, "
+                + "is_student INTEGER, "
+                + "is_used INTEGER DEFAULT 0, "
+                + ");";
+        statement.execute(inviteTable);
+        
+        // password_resets table
+        String resetTable = "CREATE TABLE IF NOT EXISTS password_resets ("
+                + "username TEXT PRIMARY KEY, "
+                + "one_time_password TEXT, "
+                + "is_used INTEGER DEFAULT 0, "
+                + "FOREIGN KEY(username) REFERENCES cse360users(username) ON DELETE CASCADE"
+                + ");";
+        statement.execute(resetTable);
     }
 
     // Check if the database is empty
@@ -118,10 +137,6 @@ public class DatabaseHelper {
             return false; // Modification failed due to an exception
         }
     }
-
-
-
-
 
     public User login(String username, String password) throws SQLException {
         String query = "SELECT * FROM cse360users WHERE username = ? AND password = ?";
@@ -300,7 +315,184 @@ public class DatabaseHelper {
         return null;
     }
 
+    public boolean storeInviteCode(String code, boolean isAdmin, boolean isInstructor, boolean isStudent) throws SQLException {
+        String insertInvite = "INSERT INTO invite_codes (code, is_admin, is_instructor, is_student, expiration_time) VALUES (?, ?, ?, ?, ?)";     
+        try (PreparedStatement pstmt = connection.prepareStatement(insertInvite)) {
+            pstmt.setString(1, code);
+            pstmt.setInt(2, isAdmin ? 1 : 0);
+            pstmt.setInt(3, isInstructor ? 1 : 0);
+            pstmt.setInt(4, isStudent ? 1 : 0);
+            pstmt.executeUpdate();
+            System.out.println("Invite code stored successfully: " + code);
+            return true;
+        } catch (SQLException e) {
+            System.err.println("SQL error while storing invite code: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    public String getInviteCode(String username) throws SQLException {
+        String query = "SELECT invite_code FROM cse360users WHERE username = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("invite_code");
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while retrieving invite code: " + e.getMessage());
+        }
+        return null;
+    }
+    
+    // Assign roles based on invite code and register the user
+    public boolean assignRolesBasedOnInviteCode(String username, String inviteCode) throws SQLException {
+        // Validate the invite code
+        if (!isInviteCodeValid(inviteCode)) {
+            System.out.println("Invalid or expired invite code.");
+            return false;
+        }
 
+        // Retrieve roles associated with the invite code
+        String query = "SELECT is_admin, is_instructor, is_student FROM invite_codes WHERE code = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, inviteCode);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                boolean isAdmin = rs.getInt("is_admin") == 1;
+                boolean isInstructor = rs.getInt("is_instructor") == 1;
+                boolean isStudent = rs.getInt("is_student") == 1;
+
+                // Insert the new user with assigned roles
+                String insertUser = "INSERT INTO cse360users (username, email, password, admin, instructor, student) VALUES (?, ?, ?, ?, ?, ?)";
+                try (PreparedStatement insertPstmt = connection.prepareStatement(insertUser)) {
+                    insertPstmt.setString(1, username);
+                    insertPstmt.setString(2, ""); // Email to be set during account setup
+                    insertPstmt.setString(3, ""); // Password to be set during account setup
+                    insertPstmt.setInt(4, isAdmin ? 1 : 0);
+                    insertPstmt.setInt(5, isInstructor ? 1 : 0);
+                    insertPstmt.setInt(6, isStudent ? 1 : 0);
+                    insertPstmt.executeUpdate();
+                }
+
+                // Mark the invite code as used
+                markInviteCodeAsUsed(inviteCode);
+
+                System.out.println("Roles assigned and user registered successfully.");
+                return true;
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while assigning roles: " + e.getMessage());
+        }
+        return false;
+    }
+    
+    // Validate invite code
+    public boolean isInviteCodeValid(String inviteCode) throws SQLException {
+        String query = "SELECT is_used, expiration_time FROM invite_codes WHERE code = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, inviteCode);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                boolean isUsed = rs.getInt("is_used") == 1;
+                long expirationTime = rs.getLong("expiration_time");
+                long currentTime = System.currentTimeMillis();
+                if (!isUsed && currentTime <= expirationTime) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while validating invite code: " + e.getMessage());
+        }
+        return false;
+    }
+    
+    // Mark invite code as used
+    public void markInviteCodeAsUsed(String inviteCode) throws SQLException {
+        String update = "UPDATE invite_codes SET is_used = 1 WHERE code = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(update)) {
+            pstmt.setString(1, inviteCode);
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Invite code marked as used.");
+            } else {
+                System.out.println("Failed to mark invite code as used. Code might not exist.");
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while marking invite code as used: " + e.getMessage());
+        }
+    }
+    
+    public boolean resetPassword(String username, String newPassword) throws SQLException {
+        String updatePassword = "UPDATE cse360users SET password = ? WHERE username = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(updatePassword)) {
+            pstmt.setString(1, newPassword);
+            pstmt.setString(2, username);
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Password reset successfully for user: " + username);
+                return true;
+            } else {
+                System.out.println("Failed to reset password. User not found.");
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while resetting password: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    public boolean storePasswordReset(String username, String oneTimePassword) throws SQLException {
+        String insertReset = "INSERT INTO password_resets (username, one_time_password, expiration_time) VALUES (?, ?, ?)"
+                + "ON CONFLICT(username) DO UPDATE SET one_time_password = excluded.one_time_password, "
+                + "expiration_time = excluded.expiration_time, is_used = 0";       
+        try (PreparedStatement pstmt = connection.prepareStatement(insertReset)) {
+            pstmt.setString(1, username);
+            pstmt.setString(2, oneTimePassword);
+            pstmt.executeUpdate();
+            System.out.println("Password reset stored successfully for user: " + username);
+            return true;
+        } catch (SQLException e) {
+            System.err.println("SQL error while storing password reset: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean isOTPValid(String username, String oneTimePassword) throws SQLException {
+        String query = "SELECT is_used, expiration_time FROM password_resets WHERE username = ? AND one_time_password = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, username);
+            pstmt.setString(2, oneTimePassword);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                boolean isUsed = rs.getInt("is_used") == 1;
+                long expirationTime = rs.getLong("expiration_time");
+                long currentTime = System.currentTimeMillis();
+                if (!isUsed && currentTime <= expirationTime) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while validating OTP: " + e.getMessage());
+        }
+        return false;
+    }
+    
+    public void markOTPAsUsed(String username) throws SQLException {
+        String update = "UPDATE password_resets SET is_used = 1 WHERE username = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(update)) {
+            pstmt.setString(1, username);
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("OTP marked as used for user: " + username);
+            } else {
+                System.out.println("Failed to mark OTP as used. User might not exist.");
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while marking OTP as used: " + e.getMessage());
+        }
+    }
+    
     public void closeConnection() {
         try { 
             if (statement != null) statement.close(); 
