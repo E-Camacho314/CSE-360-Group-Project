@@ -48,7 +48,7 @@ public class CSE360HelpSystem extends Application
         	studentpage = new StudentPage(this);
         	instructorpage = new InstructorPage(this);
         	if(databaseHelper.isDatabaseEmpty()) {
-        		showCreateAccountPage();
+        		showCreateAccountPage("");
         	}
         	else {
         		root.getChildren().add(loginpage);
@@ -68,9 +68,8 @@ public class CSE360HelpSystem extends Application
     	}
     }
      
-	public void showCreateAccountPage() {
-        String invitationCode = inviteField.getText().trim(); // Get the invitation code
-        CreateAccount createAccountPage = new CreateAccount(this, invitationCode); // Pass it to CreateAccount
+	public void showCreateAccountPage(String invite) {
+        CreateAccount createAccountPage = new CreateAccount(this, invite); // Pass it to CreateAccount
         root.getChildren().clear();
         root.getChildren().add(createAccountPage);
     }
@@ -114,6 +113,14 @@ public class CSE360HelpSystem extends Application
         root.getChildren().clear();
     	RoleChooser rolechoose = new RoleChooser(this, username);
         root.getChildren().add(rolechoose);
+        System.out.println("Switched to Role Chooser Page"); // For debugging
+    }
+    
+    // method used by other pages to return to rolechooser page
+    public void showNewPass(String username) {
+    	NewPassword pass = new NewPassword(this, username);
+    	root.getChildren().clear();
+        root.getChildren().add(pass);
         System.out.println("Switched to Role Chooser Page"); // For debugging
     }
     

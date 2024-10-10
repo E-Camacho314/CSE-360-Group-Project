@@ -87,9 +87,7 @@ public class ListPage extends HBox {
     // Load users from the database and add them to the ObservableList
     private void loadUserData() {
         try {
-            DatabaseHelper databaseHelper = new DatabaseHelper();
-            databaseHelper.connectToDatabase();
-            ResultSet rs = databaseHelper.getAllUsers();
+            ResultSet rs = mainApp.databaseHelper.getAllUsers();
 
             while (rs.next()) {
                 // Retrieve data but do not add email or flag status to the data model
@@ -105,8 +103,6 @@ public class ListPage extends HBox {
                 // Create a User object without email and flag status
                 data.add(new User(username, null, firstname, middlename, lastname, preferredName, adminStatus, instructorStatus, studentStatus, false)); // Assuming flagStatus is false as it's not displayed
             }
-
-            databaseHelper.closeConnection();
         } catch (SQLException e) {
             e.printStackTrace();
         }

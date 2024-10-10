@@ -28,6 +28,10 @@ public class DatabaseHelper {
             connectToDatabase(); // Establish connection
             String dropUserTable = "DROP TABLE IF EXISTS cse360users;";
             statement.executeUpdate(dropUserTable);
+            String dropinviteTable = "DROP TABLE IF EXISTS invite_codes;";
+            statement.executeUpdate(dropinviteTable);
+            String dropotherTable = "DROP TABLE IF EXISTS password_resets;";
+            statement.executeUpdate(dropotherTable);
 
         } catch (SQLException e) {
             System.err.println("SQL error while emptying the database: " + e.getMessage());
@@ -57,10 +61,11 @@ public class DatabaseHelper {
         // invite code table
         String inviteTable = "CREATE TABLE IF NOT EXISTS invite_codes ("
                 + "code TEXT PRIMARY KEY, "
+        		+ "username TEXT, "
                 + "is_admin INTEGER, "
                 + "is_instructor INTEGER, "
                 + "is_student INTEGER, "
-                + "is_used INTEGER DEFAULT 0, "
+                + "is_used INTEGER DEFAULT 0"
                 + ");";
         statement.execute(inviteTable);
         
@@ -85,6 +90,71 @@ public class DatabaseHelper {
         System.out.println("Empty");
         return true;
     }
+    
+    public boolean changePassword(String username, String newPassword) throws SQLException {
+        String updatePassword = "UPDATE cse360users SET password = ? WHERE username = ?";
+        
+        try (PreparedStatement pstmt = connection.prepareStatement(updatePassword)) {
+            pstmt.setString(1, newPassword);
+            pstmt.setString(2, username);
+            int rowsAffected = pstmt.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                System.out.println("Password updated successfully for user: " + username);
+                return true;
+            } else {
+                System.out.println("Failed to update password. User not found.");
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while updating password: " + e.getMessage());
+        }
+        
+        return false; // Return false if the update failed
+    }
+
+    public boolean checkPassword(String username, String password) throws SQLException {
+        String query = "SELECT password FROM cse360users WHERE username = ?";
+        
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                String storedPassword = rs.getString("password");
+                return storedPassword.equals(password);
+            } else {
+                System.out.println("User not found.");
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while checking password: " + e.getMessage());
+        }
+        
+        return false; // Return false if user not found or password does not match
+    }
+    
+    public boolean setEmailAndPassword(String username, String email, String password) throws SQLException {
+        String updateQuery = "UPDATE cse360users SET email = ?, password = ? WHERE username = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(updateQuery)) {
+            pstmt.setString(1, email);
+            pstmt.setString(2, password);
+            pstmt.setString(3, username);
+            
+            int rowsAffected = pstmt.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                System.out.println("Email and password updated successfully for user: " + username);
+                return true;
+            } else {
+                System.out.println("User not found or no changes made for user: " + username);
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while updating email and password: " + e.getMessage());
+            return false;
+        }
+    }
+
+
 
     public void register(String username, String password, int admin, int instructor, int student) throws SQLException {
         // Adjusted SQL insert statement to include all columns
@@ -315,13 +385,14 @@ public class DatabaseHelper {
         return null;
     }
 
-    public boolean storeInviteCode(String code, boolean isAdmin, boolean isInstructor, boolean isStudent) throws SQLException {
-        String insertInvite = "INSERT INTO invite_codes (code, is_admin, is_instructor, is_student) VALUES (?, ?, ?, ?)";     
+    public boolean storeInviteCode(String username, String code, boolean isAdmin, boolean isInstructor, boolean isStudent) throws SQLException {
+        String insertInvite = "INSERT INTO invite_codes (code, username, is_admin, is_instructor, is_student) VALUES (?, ?, ?, ?, ?)";     
         try (PreparedStatement pstmt = connection.prepareStatement(insertInvite)) {
             pstmt.setString(1, code);
-            pstmt.setInt(2, isAdmin ? 1 : 0);
-            pstmt.setInt(3, isInstructor ? 1 : 0);
-            pstmt.setInt(4, isStudent ? 1 : 0);
+            pstmt.setString(2, username);
+            pstmt.setInt(3, isAdmin ? 1 : 0);
+            pstmt.setInt(4, isInstructor ? 1 : 0);
+            pstmt.setInt(5, isStudent ? 1 : 0);
             pstmt.executeUpdate();
             System.out.println("Invite code stored successfully: " + code);
             return true;
@@ -330,6 +401,22 @@ public class DatabaseHelper {
             return false;
         }
     }
+    
+    // Retrieve username based on invite code
+    public String getUsernameByInviteCode(String inviteCode) throws SQLException {
+        String query = "SELECT username FROM invite_codes WHERE code = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, inviteCode);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("username");
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while retrieving username by invite code: " + e.getMessage());
+        }
+        return null;
+    }
+
     
     public String getInviteCode(String username) throws SQLException {
         String query = "SELECT invite_code FROM cse360users WHERE username = ?";

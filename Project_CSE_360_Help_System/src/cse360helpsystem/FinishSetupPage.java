@@ -16,6 +16,7 @@ public class FinishSetupPage extends VBox {
     private String username;
     private Label titleLabel;
     private Label emailLabel;
+    private Label passLabel;
     private Label firstNameLabel;
     private Label middleNameLabel;
     private Label lastNameLabel;

@@ -40,6 +40,7 @@ public class LoginPage extends HBox {
 	private Label warning = new Label();
 	private String username;
 	private String passwords;
+	private String invite;
 	private Label welcome = new Label("Welcome to the ASU CSE 360 Help System!");
 	private Label login = new Label("Username:");
 	private Label password = new Label("Password:");
@@ -99,7 +100,7 @@ public class LoginPage extends HBox {
         this.setAlignment(Pos.CENTER);
         
         loginbutton.setOnAction(new ButtonHandler());
-        createAccount.setOnAction(e -> mainApp.showCreateAccountPage()); // Redirect to CreateAccount page
+        createAccount.setOnAction(new ButtonHandler());
 	}
 	
 	private class ButtonHandler implements EventHandler<ActionEvent>{
@@ -111,9 +112,12 @@ public class LoginPage extends HBox {
 						username = userfield.getText();
 			        	passwords = passfield.getText();
 			        	//Check if the database is empty. If so, set up new user as Admin
-			        	if (mainApp.databaseHelper.doesUserExist(username)) {
+			        	if (mainApp.databaseHelper.doesUserExist(username) && mainApp.databaseHelper.checkPassword(username, passwords)) {
                             User user = mainApp.databaseHelper.getUserByUsername(username);
 			        		if(user.getFirstname().equals("") || user.getMiddlename().equals("") || user.getLastname().equals("")) {
+			        			mainApp.showFinishSetupPage(username);
+			        		}
+			        		else if (user.isFlagged() == true ) {
 			        			mainApp.showFinishSetupPage(username);
 			        		}
 			        		else {
@@ -142,22 +146,6 @@ public class LoginPage extends HBox {
 		                	userfield.clear();
 							passfield.clear();
 			        	}
-			        	/*//if the course is new, it is added to the checkboxContainer and changing the label
-	            	  if (isNew == true){
-	            		  courseList.add(new Course(subject, courseN, instructor));
-	            		  updateCheckBoxContainer();
-						   labelLB.setText("Course added successfully");
-						   labelLB.setTextFill(Color.BLACK);
-						   labelLB.setFont(Font.font(null, 14));
-					  }
-	            	  //if the course is a duplicate, the label is changed
-					   else {
-						   labelLB.setText("Duplicated Course - Not added");
-						   labelLB.setTextFill(Color.RED);
-						   labelLB.setFont(Font.font(null, 14));
-						   
-					 }*/
-	            	  //clear all the text fields
 	            	  userfield.clear();
 					  passfield.clear();
 	          	    }
@@ -167,7 +155,24 @@ public class LoginPage extends HBox {
 	                	   warning.setText("At least one field is empty.");
 						   warning.setTextFill(Color.RED);
 						   warning.setFont(Font.font(null, 14));
-	                 }					
+	                 }		
+	                if(e.getSource() == createAccount && inviteField.getText().isEmpty() != true) {
+	                	invite = inviteField.getText();
+	                	if(mainApp.databaseHelper.isInviteCodeValid(invite)) {
+	                		inviteField.clear();
+	                		mainApp.showCreateAccountPage(invite);
+	                	}
+	                	else {
+		                	   warning.setText("Invalid Invite Code.");
+							   warning.setTextFill(Color.RED);
+							   warning.setFont(Font.font(null, 14));
+	                	}
+	                }
+	                else if(e.getSource() == createAccount && inviteField.getText().isEmpty() == true) {
+	                	   warning.setText("Missing Invite Code.");
+						   warning.setTextFill(Color.RED);
+						   warning.setFont(Font.font(null, 14));
+	                }
 	           } //end of try*/
 
 	        //exception if the courseNum is not an integer

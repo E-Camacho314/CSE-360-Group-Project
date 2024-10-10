@@ -151,6 +151,13 @@ public class AdminPage extends HBox {
             System.err.println("Error fetching users: " + e.getMessage());
         }
     }
+    
+    private void logout() {
+    	warning.setText("");
+    	inviteField.clear();
+    	resetField.clear();
+    	mainApp.showLoginPage();
+    }
 	
 	private void deleteConfirmation(String user) {
 		Stage popup = new Stage();
@@ -215,6 +222,11 @@ public class AdminPage extends HBox {
 	    } 
 	}
 	
+	public int booleanToInt(boolean value) {
+	    return value ? 1 : 0;
+	}
+
+	
 	private void inviteUser() {
 	    try {
 	        String inviteUsername = inviteField.getText().trim();
@@ -247,7 +259,8 @@ public class AdminPage extends HBox {
 	        String inviteCode = generateInviteCode();
 
 	        // Store the invite code with roles
-	        boolean stored = mainApp.getDatabaseHelper().storeInviteCode(inviteCode, isAdmin, isInstructor, isStudent);
+	        boolean stored = mainApp.getDatabaseHelper().storeInviteCode(inviteUsername, inviteCode, isAdmin, isInstructor, isStudent);
+	        mainApp.databaseHelper.register(inviteUsername, "", booleanToInt(isAdmin), booleanToInt(isInstructor), booleanToInt(isStudent));
 	        if (stored) {
 	            // Optionally, send the invite code via email or display it
 	            warning.setTextFill(Color.GREEN);

@@ -140,20 +140,15 @@ public class CreateAccount extends VBox {
 
         try {
         	String role;
+        	String username;
         	boolean success = false;
             if (mainApp.databaseHelper.isDatabaseEmpty()) {
                 mainApp.databaseHelper.register(email, confirmPassword, 1, 0, 0);
                 success = true;
             } else {
-            	if (invitationCode == null || invitationCode.trim().isEmpty()) {
-                    messageLabel.setText("Invitation code is required.");
-                    return;
-                }
-                role = consumeInvitationCode(invitationCode.trim());
-                if (role == null) {
-                    messageLabel.setText("Invalid or already used invitation code.");
-                    return;
-                }
+            	username = mainApp.databaseHelper.getUsernameByInviteCode(invitationCode);
+            	mainApp.databaseHelper.setEmailAndPassword(username, email, confirmPassword);
+            	success = true;
             }
             if (success) {
                 messageLabel.setTextFill(Color.GREEN);
@@ -177,31 +172,6 @@ public class CreateAccount extends VBox {
             messageLabel.setText("An error occurred during account creation.");
         }
     }
-/* These methods are handled by databaseHelper class
-    // Example method to register a user
-    private boolean register(String email, String password, String role) throws SQLException {
-        // Example database connection - update with your connection details
-        String url = "jdbc:mysql://localhost:3306/yourDatabase"; // Replace with your DB URL
-        String user = "yourUsername";
-        String pass = "yourPassword";
-
-        try (Connection conn = DriverManager.getConnection(url, user, pass)) {
-            String query = "INSERT INTO users (email, password, role) VALUES (?, ?, ?)";
-            try (PreparedStatement pstmt = conn.prepareStatement(query)) {
-                pstmt.setString(1, email);
-                pstmt.setString(2, password);
-                pstmt.setString(3, role);
-                return pstmt.executeUpdate() > 0; // Returns true if insertion was successful
-            }
-        }
-    }
-
-    // method to check if the database is empty
-    private boolean isDatabaseEmpty() throws SQLException {
-        // Implement logic to check if the users table is empty
-        return false; // Update with actual logic
-    }
-    */
 
     // method to consume invitation code
     private String consumeInvitationCode(String code) {
