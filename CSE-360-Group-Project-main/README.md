@@ -1,6 +1,8 @@
 # CSE-360-Group-Project
 Github Repository for CSE 360 Team 43 Project
 
+Current Phase: PHASE II
+
 NOTE: src has the most updated files. Please look at that for grading
 
 Instructions:
