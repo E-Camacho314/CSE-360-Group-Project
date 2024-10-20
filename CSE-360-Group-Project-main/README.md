@@ -1,6 +1,8 @@
 # CSE-360-Group-Project
 Github Repository for CSE 360 Team 43 Project
 
+NOTE: src has the most updated files. Please look at that for grading
+
 Instructions:
   Download Files and add Project_CSE_360_Help_System to eclipse workspace
   Set slf4j jars in module path and sqlite jar in class path
