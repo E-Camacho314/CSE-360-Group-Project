@@ -33,7 +33,7 @@ public class CSE360HelpSystem extends Application
     public static final int WIDTH = 500, HEIGHT = 500;
     
     // Singleton instance of the DatabaseHelper class to manage database connections
-    public static final DatabaseHelper databaseHelper = new DatabaseHelper();
+    public static DatabaseHelper databaseHelper;
     
     // StackPane root will hold the current UI page
 	private static StackPane root = new StackPane();
@@ -52,8 +52,9 @@ public class CSE360HelpSystem extends Application
 	/**
      * The main entry point for the JavaFX application.
      * Initializes the different pages and loads the correct UI based on the database state.
+	 * @throws Exception 
      */
-    public void start(Stage stage)
+    public void start(Stage stage) throws Exception
     {
     	try {
     		// Initialize different pages (Admin, Login, Student, Instructor)
@@ -160,7 +161,7 @@ public class CSE360HelpSystem extends Application
     }
     
     // The main method that sets up the database connection and launches the JavaFX application
-    public static void main(String[] args)
+    public static void main(String[] args) throws Exception
     {
     	try {
     		// Load the SQLite JDBC driver
@@ -169,6 +170,7 @@ public class CSE360HelpSystem extends Application
     	    e.printStackTrace();
     	}
     	try { 
+    		databaseHelper = new DatabaseHelper();
 			databaseHelper.connectToDatabase();
 			databaseHelper.emptyDatabase();		// Empty the database for testing purposes
 			databaseHelper.closeConnection();

@@ -25,9 +25,6 @@ public class FinishSetupPage extends VBox {
 	// Reference to the main application to facilitate navigation between pages
     private CSE360HelpSystem mainApp;
     
-    // Singleton instance of DatabaseHelper for database operations
-    private static final DatabaseHelper databaseHelper = new DatabaseHelper();
-    
     // Username of the currently logged-in user
     private String username;
     

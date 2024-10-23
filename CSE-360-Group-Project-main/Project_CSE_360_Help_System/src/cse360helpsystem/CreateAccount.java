@@ -26,9 +26,6 @@ public class CreateAccount extends VBox {
 	// Reference to the main application instance
     private CSE360HelpSystem mainApp;
     
-    // Singleton for database operations
-    private static final DatabaseHelper databaseHelper = new DatabaseHelper();
-    
     // UI Components
     private String invitationCode;
     private Label titleLabel;
