@@ -4,6 +4,7 @@ Github Repository for CSE 360 Team 43 Project
 Instructions:
   Download Files and add Project_CSE_360_Help_System to eclipse workspace
   Set slf4j jars in module path and sqlite jar in class path
+  Add BouncyCastle library to class path
   Set run configurations
   Run project
 
