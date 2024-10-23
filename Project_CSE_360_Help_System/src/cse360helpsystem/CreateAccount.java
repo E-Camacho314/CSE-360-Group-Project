@@ -26,9 +26,6 @@ public class CreateAccount extends VBox {
 	// Reference to the main application instance
     private CSE360HelpSystem mainApp;
     
-    // Singleton for database operations
-    private static final DatabaseHelper databaseHelper = new DatabaseHelper();
-    
     // UI Components
     private String invitationCode;
     private Label titleLabel;
@@ -180,6 +177,7 @@ public class CreateAccount extends VBox {
             	// Register a user associated with an invitation code
             	username = mainApp.databaseHelper.getUsernameByInviteCode(invitationCode);
             	mainApp.databaseHelper.setEmailAndPassword(username, email, confirmPassword);
+            	mainApp.databaseHelper.markInviteCodeAsUsed(invitationCode);
             	success = true;
             }
             if (success) {

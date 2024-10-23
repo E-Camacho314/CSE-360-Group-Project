@@ -161,7 +161,7 @@ public class LoginPage extends HBox {
 			        			mainApp.showFinishSetupPage(username);
 			        		}
 			        		else if (user.isFlagged() == true ) {
-			        			mainApp.showFinishSetupPage(username);
+			        			mainApp.showNewPass(username);
 			        		}
 			        		else {
 			        			// Navigate to the appropriate dashboard based on user roles

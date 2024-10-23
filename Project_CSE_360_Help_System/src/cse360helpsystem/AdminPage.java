@@ -36,6 +36,8 @@ public class AdminPage extends HBox {
 	// UI Components
 	private Label welcome = new Label("Admin View");
 	private Label warning = new Label("");
+	private Label code = new Label("");
+	private Label codetype = new Label("");
 	private Label userinfo = new Label("Manipulate Users:");
 	private Label perms = new Label("Permissions:");
 	private Button invitebutton = new Button ("Invite User");
@@ -44,6 +46,10 @@ public class AdminPage extends HBox {
 	private Button listbutton = new Button ("List Users");
 	private Button changepermsbutton = new Button ("Update Roles");
 	private Button logoutbutton = new Button ("Log Out");
+	private Button articlesbutton = new Button ("Articles");
+	private CheckBox admin1 = new CheckBox ("Admin");
+	private CheckBox instructor1 = new CheckBox ("Instructor");
+	private CheckBox student1 = new CheckBox ("Student");
 	private CheckBox admin = new CheckBox ("Admin");
 	private CheckBox instructor = new CheckBox ("Instructor");
 	private CheckBox student = new CheckBox ("Student");
@@ -52,6 +58,7 @@ public class AdminPage extends HBox {
 	private TextField resetField = new TextField();
 	private TextField inviteField = new TextField();
 	private String user;
+	private String current = "admin";
 	private boolean confirmation;
 	
 	// Constructor for the AdminPage
@@ -87,6 +94,8 @@ public class AdminPage extends HBox {
         changepermsbutton.setFont(Font.font(null, 14));
         logoutbutton.setTextFill(Color.BLACK);
         logoutbutton.setFont(Font.font(null, 14));
+        articlesbutton.setTextFill(Color.BLACK);
+        articlesbutton.setFont(Font.font(null, 14));
         
         // Set prompt texts for text fields
         deleteField.setPromptText("Username to delete");
@@ -105,19 +114,25 @@ public class AdminPage extends HBox {
         adminPane.add(welcome, 0, 0, 2, 1);
         adminPane.add(userinfo, 0, 1);
         adminPane.add(warning, 1, 1);
-        adminPane.add(inviteField, 0, 2);
-        adminPane.add(invitebutton, 1, 2);
-        adminPane.add(resetField, 0, 3);
-        adminPane.add(resetbutton, 1, 3);
-        adminPane.add(deleteField, 0, 4);
-        adminPane.add(deletebutton, 1, 4);
-        adminPane.add(listbutton, 0, 5);
-        adminPane.add(permsField, 0, 6);
-        adminPane.add(admin, 0, 8);
-        adminPane.add(instructor, 0, 7);
-        adminPane.add(student, 1, 7);
-        adminPane.add(changepermsbutton, 2, 8);
-        adminPane.add(logoutbutton, 0, 9);
+        adminPane.add(codetype, 0, 2);
+        adminPane.add(code, 1, 2);
+        adminPane.add(inviteField, 0, 3);
+        adminPane.add(invitebutton, 1, 3);
+        adminPane.add(admin1, 0, 4);
+        adminPane.add(instructor1, 0, 5);
+        adminPane.add(student1, 1, 5);
+        adminPane.add(resetField, 0, 6);
+        adminPane.add(resetbutton, 1, 6);
+        adminPane.add(deleteField, 0, 7);
+        adminPane.add(deletebutton, 1, 7);
+        adminPane.add(listbutton, 0, 8);
+        adminPane.add(permsField, 0, 9);
+        adminPane.add(changepermsbutton, 1, 9);
+        adminPane.add(instructor, 0, 10);
+        adminPane.add(student, 1, 10);
+        adminPane.add(admin, 0, 11);
+        adminPane.add(logoutbutton, 0, 12);
+        adminPane.add(articlesbutton, 1, 12);
 
         // Set the VBox to the center of the BorderPane
         mainPane.setCenter(adminPane);
@@ -127,13 +142,14 @@ public class AdminPage extends HBox {
         this.setAlignment(Pos.CENTER);
 
         // Set up action handlers for the buttons
-        logoutbutton.setOnAction(e -> mainApp.showLoginPage());
+        logoutbutton.setOnAction(e -> logout());
         deletebutton.setOnAction(e -> delete());
         changepermsbutton.setOnAction(e -> changePerms());
         listbutton.setOnAction(e -> {showUsers(); 
         	mainApp.showListPage();});
         invitebutton.setOnAction(e -> inviteUser());
         resetbutton.setOnAction(e -> resetUserPassword());
+        articlesbutton.setOnAction(e -> mainApp.showArticlesPage(current));
 	}
 	
 	// Method to delete a user from the database
@@ -178,6 +194,8 @@ public class AdminPage extends HBox {
     // Method to log out
     private void logout() {
     	warning.setText("");
+    	code.setText("");
+    	codetype.setText("");
     	inviteField.clear();
     	resetField.clear();
     	mainApp.showLoginPage();
@@ -273,9 +291,9 @@ public class AdminPage extends HBox {
 	        }
 
 	        // Determine selected roles
-	        boolean isAdmin = admin.isSelected();
-	        boolean isInstructor = instructor.isSelected();
-	        boolean isStudent = student.isSelected();
+	        boolean isAdmin = admin1.isSelected();
+	        boolean isInstructor = instructor1.isSelected();
+	        boolean isStudent = student1.isSelected();
 
 	        // Ensure at least one role is selected
 	        if (!isAdmin && !isInstructor && !isStudent) {
@@ -293,12 +311,16 @@ public class AdminPage extends HBox {
 	        if (stored) {
 	            // Optionally, send the invite code via email or display it
 	            warning.setTextFill(Color.GREEN);
-	            warning.setText("Invite created successfully. Code: " + inviteCode);
+	            warning.setText("Invite created successfully.");
+		        codetype.setText("Code: ");
+		        codetype.setTextFill(Color.GREEN);
+		        code.setText(inviteCode);
+		        code.setTextFill(Color.GREEN);
 	            // Clear inputs
 	            inviteField.clear();
-	            admin.setSelected(false);
-	            instructor.setSelected(false);
-	            student.setSelected(false);
+	            admin1.setSelected(false);
+	            instructor1.setSelected(false);
+	            student1.setSelected(false);
 	        } else {
 	            warning.setText("Failed to create invite. Try again.");
 	            warning.setTextFill(Color.RED);
@@ -327,10 +349,14 @@ public class AdminPage extends HBox {
 	
 	        String oneTimePassword = generateOneTimePassword();
 	
-	        mainApp.databaseHelper.resetPassword(resetUser, oneTimePassword);
+	        mainApp.databaseHelper.resetPassword(resetUser, oneTimePassword, 1);
 	        
-	        warning.setText("Password reset. One-time password: " + oneTimePassword);
+	        warning.setText("Password reset.");
 	        warning.setTextFill(Color.GREEN);
+	        codetype.setText("One-time password: ");
+	        codetype.setTextFill(Color.GREEN);
+	        code.setText(oneTimePassword);
+	        code.setTextFill(Color.GREEN);
 	
 	        // Clear inputs
 	        resetField.clear();

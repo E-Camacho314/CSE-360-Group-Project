@@ -30,10 +30,10 @@ import javafx.geometry.Pos;
 public class CSE360HelpSystem extends Application
 {
 	// Constants for window dimensions
-    public static final int WIDTH = 400, HEIGHT = 400;
+    public static final int WIDTH = 500, HEIGHT = 500;
     
     // Singleton instance of the DatabaseHelper class to manage database connections
-    public static final DatabaseHelper databaseHelper = new DatabaseHelper();
+    public static DatabaseHelper databaseHelper;
     
     // StackPane root will hold the current UI page
 	private static StackPane root = new StackPane();
@@ -52,8 +52,9 @@ public class CSE360HelpSystem extends Application
 	/**
      * The main entry point for the JavaFX application.
      * Initializes the different pages and loads the correct UI based on the database state.
+	 * @throws Exception 
      */
-    public void start(Stage stage)
+    public void start(Stage stage) throws Exception
     {
     	try {
     		// Initialize different pages (Admin, Login, Student, Instructor)
@@ -101,6 +102,13 @@ public class CSE360HelpSystem extends Application
         root.getChildren().clear();
         root.getChildren().add(finishsetupPage);
     }
+	
+	// Displays the Articles page for manipulating articles if the user is an instructor or admin
+	public void showArticlesPage(String prev) {
+        ArticlesPage articlesPage = new ArticlesPage(this, prev); // Pass it to ArticlesPage
+        root.getChildren().clear();
+        root.getChildren().add(articlesPage);
+    }
 	    
     // Displays the login page
     public void showLoginPage() {
@@ -143,7 +151,7 @@ public class CSE360HelpSystem extends Application
     	NewPassword pass = new NewPassword(this, username);
     	root.getChildren().clear();
         root.getChildren().add(pass);
-        System.out.println("Switched to Role Chooser Page"); // For debugging
+        System.out.println("Switched to New Password Page"); // For debugging
     }
     
     // Displays a page containing a list of information for the admin
@@ -160,7 +168,7 @@ public class CSE360HelpSystem extends Application
     }
     
     // The main method that sets up the database connection and launches the JavaFX application
-    public static void main(String[] args)
+    public static void main(String[] args) throws Exception
     {
     	try {
     		// Load the SQLite JDBC driver
@@ -169,6 +177,7 @@ public class CSE360HelpSystem extends Application
     	    e.printStackTrace();
     	}
     	try { 
+    		databaseHelper = new DatabaseHelper();
 			databaseHelper.connectToDatabase();
 			databaseHelper.emptyDatabase();		// Empty the database for testing purposes
 			databaseHelper.closeConnection();
