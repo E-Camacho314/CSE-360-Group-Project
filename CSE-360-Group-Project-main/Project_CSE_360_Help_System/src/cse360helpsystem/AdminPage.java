@@ -46,6 +46,7 @@ public class AdminPage extends HBox {
 	private Button listbutton = new Button ("List Users");
 	private Button changepermsbutton = new Button ("Update Roles");
 	private Button logoutbutton = new Button ("Log Out");
+	private Button articlesbutton = new Button ("Articles");
 	private CheckBox admin1 = new CheckBox ("Admin");
 	private CheckBox instructor1 = new CheckBox ("Instructor");
 	private CheckBox student1 = new CheckBox ("Student");
@@ -57,6 +58,7 @@ public class AdminPage extends HBox {
 	private TextField resetField = new TextField();
 	private TextField inviteField = new TextField();
 	private String user;
+	private String current = "admin";
 	private boolean confirmation;
 	
 	// Constructor for the AdminPage
@@ -92,6 +94,8 @@ public class AdminPage extends HBox {
         changepermsbutton.setFont(Font.font(null, 14));
         logoutbutton.setTextFill(Color.BLACK);
         logoutbutton.setFont(Font.font(null, 14));
+        articlesbutton.setTextFill(Color.BLACK);
+        articlesbutton.setFont(Font.font(null, 14));
         
         // Set prompt texts for text fields
         deleteField.setPromptText("Username to delete");
@@ -123,11 +127,12 @@ public class AdminPage extends HBox {
         adminPane.add(deletebutton, 1, 7);
         adminPane.add(listbutton, 0, 8);
         adminPane.add(permsField, 0, 9);
-        adminPane.add(admin, 0, 11);
+        adminPane.add(changepermsbutton, 1, 9);
         adminPane.add(instructor, 0, 10);
         adminPane.add(student, 1, 10);
-        adminPane.add(changepermsbutton, 1, 9);
+        adminPane.add(admin, 0, 11);
         adminPane.add(logoutbutton, 0, 12);
+        adminPane.add(articlesbutton, 1, 12);
 
         // Set the VBox to the center of the BorderPane
         mainPane.setCenter(adminPane);
@@ -144,6 +149,7 @@ public class AdminPage extends HBox {
         	mainApp.showListPage();});
         invitebutton.setOnAction(e -> inviteUser());
         resetbutton.setOnAction(e -> resetUserPassword());
+        articlesbutton.setOnAction(e -> mainApp.showArticlesPage(current));
 	}
 	
 	// Method to delete a user from the database

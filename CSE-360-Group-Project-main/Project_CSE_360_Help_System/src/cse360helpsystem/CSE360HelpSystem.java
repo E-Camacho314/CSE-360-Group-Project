@@ -102,6 +102,13 @@ public class CSE360HelpSystem extends Application
         root.getChildren().clear();
         root.getChildren().add(finishsetupPage);
     }
+	
+	// Displays the Articles page for manipulating articles if the user is an instructor or admin
+	public void showArticlesPage(String prev) {
+        ArticlesPage articlesPage = new ArticlesPage(this, prev); // Pass it to ArticlesPage
+        root.getChildren().clear();
+        root.getChildren().add(articlesPage);
+    }
 	    
     // Displays the login page
     public void showLoginPage() {

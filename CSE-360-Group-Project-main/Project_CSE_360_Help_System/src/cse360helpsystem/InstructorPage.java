@@ -26,6 +26,8 @@ public class InstructorPage extends HBox {
 	// UI Components
 	private Label welcome = new Label("Instructor View");
 	private Button logoutbutton = new Button ("Log Out");
+	private Button articlesbutton = new Button ("Articles");
+	private String current = "instructor";
 	private CSE360HelpSystem mainApp;
 	
 	/**
@@ -42,18 +44,22 @@ public class InstructorPage extends HBox {
 		BorderPane mainPane = new BorderPane();
 		
 		// Configure the welcome label
-		welcome.setTextFill(Color.BLUE);
+		welcome.setTextFill(Color.BLACK);
         welcome.setFont(Font.font(null, 14));
+        
+        // Configure the articles button
+        articlesbutton.setTextFill(Color.BLACK);
+        articlesbutton.setFont(Font.font(null, 14));
 
         // Configure the logout button
-        logoutbutton.setTextFill(Color.BLUE);
+        logoutbutton.setTextFill(Color.BLACK);
         logoutbutton.setFont(Font.font(null, 14));
         
         // Create a VBox to hold the welcome label and logout button vertically
         VBox instructPane = new VBox();
         instructPane.setSpacing(20);
         instructPane.setPadding(new Insets(10, 10, 10, 10));
-        instructPane.getChildren().addAll(welcome, logoutbutton);
+        instructPane.getChildren().addAll(welcome, articlesbutton, logoutbutton);
 
         // Set the VBox to the center of the BorderPane
         mainPane.setCenter(instructPane);
@@ -61,6 +67,10 @@ public class InstructorPage extends HBox {
         // Add the BorderPane to the HBox (the root container of this page)
         this.getChildren().addAll(mainPane);
         this.setAlignment(Pos.CENTER);
+        
+        articlesbutton.setOnAction(e -> {
+            mainApp.showArticlesPage(current); // Switch articles page
+        });
         
         logoutbutton.setOnAction(e -> {
             mainApp.showLoginPage(); // Switch back to the login page
