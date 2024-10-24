@@ -88,16 +88,19 @@ public class DatabaseHelper {
         statement.execute(resetTable);
         
 		// table for all the articles
-		String articleTable = "CREATE TABLE IF NOT EXISTS articles ("
-		        + "id INT AUTO_INCREMENT PRIMARY KEY, "
-		        + "title VARCHAR(255) NOT NULL, "
-		        + "authors TEXT, "  // Using TEXT for multiple authors
-		        + "abstract TEXT, "
-		        + "keywords TEXT, "
-		        + "body TEXT NOT NULL, "
-		        + "ref_list TEXT"
-		        + ");";
-		statement.execute(articleTable);
+        String articleTable = "CREATE TABLE IF NOT EXISTS articles ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
+                + "title TEXT NOT NULL, "
+                + "headers TEXT, "  // Added commas between columns
+                + "groups TEXT, "
+                + "access TEXT, "
+                + "authors TEXT, "  // Using TEXT for multiple authors
+                + "abstract TEXT, "
+                + "keywords TEXT, "
+                + "body TEXT NOT NULL, "
+                + "ref_list TEXT"
+                + ");";
+        statement.execute(articleTable);
     }
 
     /**
@@ -796,14 +799,18 @@ public class DatabaseHelper {
  // Check if articles is empty
  	public boolean isArticlesEmpty() throws SQLException {
  		// creates new articles table if the table is already empty
- 	    String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
-                 + "id INT AUTO_INCREMENT PRIMARY KEY, "
-                 + "title VARCHAR(255) NOT NULL, "
-                 + "authors TEXT, "
-                 + "abstract TEXT, "
-                 + "keywords TEXT, "
-                 + "body TEXT NOT NULL, "
-                 + "ref_list TEXT)";
+        String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
+                + "title TEXT NOT NULL, "
+                + "headers TEXT, "  // Added commas between columns
+                + "groups TEXT, "
+                + "access TEXT, "
+                + "authors TEXT, "  // Using TEXT for multiple authors
+                + "abstract TEXT, "
+                + "keywords TEXT, "
+                + "body TEXT NOT NULL, "
+                + "ref_list TEXT"
+                + ");";
          statement.execute(createArticlesTableSQL);
  		String query = "SELECT COUNT(*) AS count FROM articles";
  		ResultSet resultSet = statement.executeQuery(query);
@@ -860,13 +867,17 @@ public class DatabaseHelper {
      public boolean restore(String filePath) throws Exception {
          // Recreate the articles table if it doesn't exist
          String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
-                     + "id INT AUTO_INCREMENT PRIMARY KEY, "
-                     + "title VARCHAR(255) NOT NULL, "
-                     + "authors TEXT, "
-                     + "abstract TEXT, "
-                     + "keywords TEXT, "
-                     + "body TEXT NOT NULL, "
-                     + "ref_list TEXT)";
+                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
+                 + "title TEXT NOT NULL, "
+                 + "headers TEXT, "  // Added commas between columns
+                 + "groups TEXT, "
+                 + "access TEXT, "
+                 + "authors TEXT, "  // Using TEXT for multiple authors
+                 + "abstract TEXT, "
+                 + "keywords TEXT, "
+                 + "body TEXT NOT NULL, "
+                 + "ref_list TEXT"
+                 + ");";
          
          try {
              statement.execute(createArticlesTableSQL);
@@ -1059,14 +1070,17 @@ public class DatabaseHelper {
  	// creates a new article, encrypt all the information, inserts the information into the table, and deletes the decrypted information
  	public boolean insertArticle(String title, String authors, String abstractText, String keywords, String body, String references) throws Exception {
  		// create new articles table if it does not exist already
- 		String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
-                 + "id INT AUTO_INCREMENT PRIMARY KEY, "
-                 + "title VARCHAR(255) NOT NULL, "
-                 + "authors TEXT, "
-                 + "abstract TEXT, "
-                 + "keywords TEXT, "
-                 + "body TEXT NOT NULL, "
-                 + "ref_list TEXT)";
+        String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
+                + "title TEXT NOT NULL, "
+                + "headers TEXT, "  // Added commas between columns
+                + "groups TEXT, "
+                + "access TEXT, "
+                + "abstract TEXT, "
+                + "keywords TEXT, "
+                + "body TEXT NOT NULL, "
+                + "ref_list TEXT"
+                + ");";
          try {
  			statement.execute(createArticlesTableSQL);
  		} catch (SQLException e) {

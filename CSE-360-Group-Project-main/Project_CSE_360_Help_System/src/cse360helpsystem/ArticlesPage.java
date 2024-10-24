@@ -89,7 +89,7 @@ public class ArticlesPage extends VBox {
         
         // Set prompt texts for text fields
         deleteField.setPromptText("Article to delete");
-        updateField.setPromptText("Article to update");   
+        updateField.setPromptText("Article ID to update");   
         backupField.setPromptText("File to backup to"); 
         restoreField.setPromptText("File to restore from"); 
         
@@ -106,7 +106,8 @@ public class ArticlesPage extends VBox {
         articlesPane.add(codetype, 0, 2);
         articlesPane.add(code, 1, 2);
         articlesPane.add(createbutton, 0, 3);
-        articlesPane.add(updatebutton, 0, 4);
+        articlesPane.add(updateField, 0, 4);
+        articlesPane.add(updatebutton, 1, 4);
         articlesPane.add(deleteField, 0, 5);
         articlesPane.add(deletebutton, 1, 5);
         articlesPane.add(listbutton, 0, 6);
@@ -126,6 +127,8 @@ public class ArticlesPage extends VBox {
 
         // Button Actions
         returnbutton.setOnAction(e -> returnToPage(prev));
+        createbutton.setOnAction(e -> mainApp.showArticleCreatePage(prev, 1));
+        updatebutton.setOnAction(e -> mainApp.showArticleCreatePage(prev, 0));
     }
     
     private void returnToPage(String prev) {
