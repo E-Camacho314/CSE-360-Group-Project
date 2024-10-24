@@ -79,7 +79,7 @@ public class ArticleCreationPage extends VBox {
     private void initializeUI() {
         
     	//check if a valid id is given
-    	if(id != 0) {
+    	if(id == 0) {
         	// Title if Creating a new Article
             titleLabel = new Label("Create Article");
             
@@ -189,13 +189,13 @@ public class ArticleCreationPage extends VBox {
         grid.add(messageLabel, 0, 6, 2, 1);
         
         // check if a valid id is given
-        if(id != 0) {
-        	// create article button added if a valid id is given
+        if(id == 0) {
+        	// create article button added if a valid id is not given
         	grid.add(createButton, 0, 10);
             GridPane.setMargin(createButton, new Insets(10, 0, 0, 0));
         }
         else {
-        	// update buttons added if the id is 0
+        	// update buttons added if the id is given
         	titleButton.setFont(Font.font(14));
         	headersButton.setFont(Font.font(14));
         	groupsButton.setFont(Font.font(14));
@@ -225,63 +225,5 @@ public class ArticleCreationPage extends VBox {
         backButton.setOnAction(e -> {
             mainApp.showArticlesPage(prev); // Switch back to the login page
         });
-    }
-
-    // Method to handle the submission of account creation form
-    private void handleSubmit() {
-    	/*// Retrieve input values from fields
-        String email = emailField.getText().trim();
-        String password = passwordField.getText();
-        String confirmPassword = confirmPassField.getText();
-
-        // Check for empty fields
-        if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-            messageLabel.setText("All fields are required.");
-            return;
-        }
-
-        // Check if passwords match for verification
-        if (!password.equals(confirmPassword)) {
-            messageLabel.setText("Passwords do not match.");
-            return;
-        }
-
-        try {
-        	String role;
-        	String username;
-        	boolean success = false; // Flag to indicate success of account creation
-        	
-        	// If the database is empty, register as first admin
-            if (mainApp.databaseHelper.isDatabaseEmpty()) {
-                mainApp.databaseHelper.register(email, confirmPassword, 1, 0, 0);
-                success = true;
-            } else {
-            	// Register a user associated with an invitation code
-            	username = mainApp.databaseHelper.getUsernameByInviteCode(invitationCode);
-            	mainApp.databaseHelper.setEmailAndPassword(username, email, confirmPassword);
-            	mainApp.databaseHelper.markInviteCodeAsUsed(invitationCode);
-            	success = true;
-            }
-            if (success) {
-                messageLabel.setTextFill(Color.GREEN);
-                messageLabel.setText("Account created successfully! Redirecting to login...");
-                // Redirect back to login after a short delay
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException ex) {
-                        // Handle exception
-                    }
-                    javafx.application.Platform.runLater(() -> mainApp.showLoginPage());
-                }).start();
-            } else {
-                messageLabel.setTextFill(Color.RED);
-                messageLabel.setText("Email already exists.");
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            messageLabel.setTextFill(Color.RED);
-            messageLabel.setText("An error occurred during account creation.");
-        }*/
     }
 }

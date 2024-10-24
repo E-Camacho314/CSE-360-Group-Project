@@ -88,7 +88,7 @@ public class ArticlesPage extends VBox {
         viewbutton.setFont(Font.font(null, 14));
         
         // Set prompt texts for text fields
-        deleteField.setPromptText("Article to delete");
+        deleteField.setPromptText("Article ID to delete");
         updateField.setPromptText("Article ID to update");   
         backupField.setPromptText("File to backup to"); 
         restoreField.setPromptText("File to restore from"); 
@@ -127,8 +127,8 @@ public class ArticlesPage extends VBox {
 
         // Button Actions
         returnbutton.setOnAction(e -> returnToPage(prev));
-        createbutton.setOnAction(e -> mainApp.showArticleCreatePage(prev, 1));
-        updatebutton.setOnAction(e -> mainApp.showArticleCreatePage(prev, 0));
+        createbutton.setOnAction(e -> mainApp.showArticleCreatePage(prev, 0));
+        updatebutton.setOnAction(e -> handleUpdate());
     }
     
     private void returnToPage(String prev) {
@@ -140,78 +140,15 @@ public class ArticlesPage extends VBox {
     	}
     }
 
-    /**
-     * Handles the submission of the form.
-     * Validates input fields, updates the user's information in the database,
-     * and navigates to the appropriate dashboard upon success.
-     */
-    private void handleSubmit() {
-        /*String email = emailField.getText().trim();
-        String firstName = firstNameField.getText().trim();
-        String middleName = middleNameField.getText().trim();
-        String lastName = lastNameField.getText().trim();
-        String preferredName = preferredNameField.getText().trim();
-
-        if (email.isEmpty() || firstName.isEmpty() || lastName.isEmpty()) {
-            messageLabel.setText("Email, First Name, and Last Name are required.");
-            messageLabel.setTextFill(Color.RED);
-            return;
-        }
-
-        try {
-            // Update user details in the database
-        	mainApp.databaseHelper.displayUsers();
-            boolean success = mainApp.databaseHelper.registerWithEmailAndNames(username, email, firstName, middleName, lastName, preferredName);
-            if (success) {
-                messageLabel.setTextFill(Color.GREEN);
-                messageLabel.setText("Account setup completed successfully!");
-
-                // Redirect to the appropriate page after a short delay
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(2000); // Wait for 2 seconds
-                    } catch (InterruptedException ex) {
-                        // Handle exception
-                    }
-                    javafx.application.Platform.runLater(() -> {
-                        try {
-							// Re-login to fetch updated user roles
-                            User user = mainApp.databaseHelper.getUserByUsername(username);
-                            if (user != null) {
-                                if ((user.isAdmin() && user.isInstructor()) || (user.isAdmin() && user.isStudent()) || (user.isInstructor() && user.isStudent())) {
-                                    mainApp.showRoleChooser(username);
-                                }
-                                else if (user.isInstructor()) {
-                                    mainApp.showInstructorPage();
-                                }
-                                else if (user.isStudent()) {
-                                    mainApp.showStudentPage();
-                                }
-                                else if(user.isAdmin()){
-                                    mainApp.showAdminPage();
-                                }
-                            }
-                            else {
-                                mainApp.showLoginPage();
-                            }
-                        } catch (SQLException ex) {
-                            ex.printStackTrace();
-                            mainApp.showLoginPage();
-                        }
-                    });
-                }).start();
-            }
-            else {
-            	// If updating user details failed, show an error message
-                messageLabel.setTextFill(Color.RED);
-                messageLabel.setText("Failed to update account.");
-            }
-        }
-        catch (SQLException ex) {
-        	// Handle any SQL exceptions that occur during the update
-            ex.printStackTrace();
-            messageLabel.setTextFill(Color.RED);
-            messageLabel.setText("An error occurred during setup.");
-        }*/
+    private void handleUpdate() {
+    	if(updateField.getText().isEmpty()) {
+    		warning.setText("Warning: ID needed");	
+    		warning.setTextFill(Color.RED);
+    	}
+    	else {
+    		String id_s = updateField.getText();
+    		long id = Long.parseLong(id_s);
+    		mainApp.showArticleCreatePage(prev, id);
+    	}
     }
 }

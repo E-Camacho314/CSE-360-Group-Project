@@ -94,7 +94,6 @@ public class DatabaseHelper {
                 + "headers TEXT, "  // Added commas between columns
                 + "groups TEXT, "
                 + "access TEXT, "
-                + "authors TEXT, "  // Using TEXT for multiple authors
                 + "abstract TEXT, "
                 + "keywords TEXT, "
                 + "body TEXT NOT NULL, "
@@ -837,7 +836,7 @@ public class DatabaseHelper {
      
      // inserts the information from the articles table into the user specified file
      public boolean backup(String filePath) throws Exception {
-         String query = "SELECT title, authors, abstract, keywords, body, ref_list FROM articles";
+         String query = "SELECT title, headers, groups, access, abstract, keywords, body, ref_list FROM articles";
          
          // creates a filewriter and buffered writer
          try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
@@ -846,7 +845,9 @@ public class DatabaseHelper {
          	// sets the information next to their corresponding subtitle
              while (resultSet.next()) {
                  writer.write("Title: " + resultSet.getString("title") + "\n");
-                 writer.write("Authors: " + resultSet.getString("authors") + "\n");
+                 writer.write("Headers: " + resultSet.getString("headers") + "\n");
+                 writer.write("Groups: " + resultSet.getString("groups") + "\n");
+                 writer.write("Access: " + resultSet.getString("access") + "\n");
                  writer.write("Abstract: " + resultSet.getString("abstract") + "\n");
                  writer.write("Keywords: " + resultSet.getString("keywords") + "\n");
                  writer.write("Body: " + resultSet.getString("body") + "\n");
@@ -872,7 +873,6 @@ public class DatabaseHelper {
                  + "headers TEXT, "  // Added commas between columns
                  + "groups TEXT, "
                  + "access TEXT, "
-                 + "authors TEXT, "  // Using TEXT for multiple authors
                  + "abstract TEXT, "
                  + "keywords TEXT, "
                  + "body TEXT NOT NULL, "
@@ -886,7 +886,7 @@ public class DatabaseHelper {
              return false;
          }
          // insert the information into the table
-         String insertSQL = "INSERT INTO articles (title, authors, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?)";
+         String insertSQL = "INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?)";
 
          try (BufferedReader br = new BufferedReader(new FileReader(filePath));
               PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
@@ -1068,7 +1068,7 @@ public class DatabaseHelper {
  	}
 
  	// creates a new article, encrypt all the information, inserts the information into the table, and deletes the decrypted information
- 	public boolean insertArticle(String title, String authors, String abstractText, String keywords, String body, String references) throws Exception {
+ 	public boolean insertArticle(String title, String headers, String groups, boolean admin, boolean instructor, boolean student, String abstractText, String keywords, String body, String references) throws Exception {
  		// create new articles table if it does not exist already
         String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
@@ -1088,32 +1088,43 @@ public class DatabaseHelper {
  			e.printStackTrace();
  		}
  		// Encrypt each field and convert to char arrays
- 	    char[] encryptedAuthors = Base64.getEncoder().encodeToString(
- 	            encryptionHelper.encrypt(authors.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
- 	            .toCharArray();
- 	    char[] encryptedAbstract = Base64.getEncoder().encodeToString(
- 	            encryptionHelper.encrypt(abstractText.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
- 	            .toCharArray();
- 	    char[] encryptedKeywords = Base64.getEncoder().encodeToString(
- 	            encryptionHelper.encrypt(keywords.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
- 	            .toCharArray();
- 	    char[] encryptedBody = Base64.getEncoder().encodeToString(
- 	            encryptionHelper.encrypt(body.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
- 	            .toCharArray();
- 	    char[] encryptedReferences = Base64.getEncoder().encodeToString(
- 	            encryptionHelper.encrypt(references.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
- 	            .toCharArray();
+         char[] encryptedHeaders = Base64.getEncoder().encodeToString(
+	        encryptionHelper.encrypt(headers.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+	        .toCharArray();
+	    char[] encryptedGroups = Base64.getEncoder().encodeToString(
+	        encryptionHelper.encrypt(groups.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+	        .toCharArray();
+	    char[] encryptedKeywords = Base64.getEncoder().encodeToString(
+	        encryptionHelper.encrypt(keywords.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+	        .toCharArray();
+	    char[] encryptedBody = Base64.getEncoder().encodeToString(
+	        encryptionHelper.encrypt(body.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+	        .toCharArray();
+	    char[] encryptedReferences = Base64.getEncoder().encodeToString(
+	        encryptionHelper.encrypt(references.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+	        .toCharArray();
+	    
+	    // Convert the boolean values into an access string
+	    String access = "admin:" + (admin ? "1" : "0") + ","
+	                  + "instructor:" + (instructor ? "1" : "0") + ","
+	                  + "student:" + (student ? "1" : "0");
+	    
+	    char[] encryptedAccess = Base64.getEncoder().encodeToString(
+		        encryptionHelper.encrypt(access.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+		        .toCharArray();
 
- 	    String insertSQL = "INSERT INTO articles (title, authors, abstract, keywords, body, references) VALUES (?, ?, ?, ?, ?, ?)";
+ 	    String insertSQL = "INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?)";
 
  	    try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
  	        // Convert char arrays back to strings for the insertion (database requires strings)
  	        preparedStatement.setString(1, new String(title));
- 	        preparedStatement.setString(2, new String(encryptedAuthors));
- 	        preparedStatement.setString(3, new String(encryptedAbstract));
- 	        preparedStatement.setString(4, new String(encryptedKeywords));
- 	        preparedStatement.setString(5, new String(encryptedBody));
- 	        preparedStatement.setString(6, new String(encryptedReferences));
+ 	        preparedStatement.setString(2, new String(encryptedHeaders));
+ 	        preparedStatement.setString(3, new String(encryptedGroups));
+ 	        preparedStatement.setString(5, new String(encryptedAccess));
+ 	        preparedStatement.setString(5, new String(abstractText));
+ 	        preparedStatement.setString(6, new String(encryptedKeywords));
+ 	        preparedStatement.setString(7, new String(encryptedBody));
+ 	        preparedStatement.setString(8, new String(encryptedReferences));
 
  	        int rowsAffected = preparedStatement.executeUpdate();
  	        if (rowsAffected > 0) {
@@ -1128,8 +1139,9 @@ public class DatabaseHelper {
  	        return false;
  	    } finally {
  	        // Clear sensitive data by setting char arrays to blanks
- 	    	Arrays.fill(encryptedAuthors, '0');
- 	    	Arrays.fill(encryptedAbstract, '0');
+ 	    	Arrays.fill(encryptedHeaders, '0');
+ 	    	Arrays.fill(encryptedGroups, '0');
+ 	    	Arrays.fill(encryptedAccess, '0');
  	    	Arrays.fill(encryptedKeywords, '0');
  	    	Arrays.fill(encryptedBody, '0');
  	    	Arrays.fill(encryptedReferences, '0');
