@@ -185,13 +185,13 @@ public class ArticleCreationPage extends VBox {
         grid.add(keywordsField, 1, 8);
         grid.add(referencesLabel, 0, 9);
         grid.add(referencesField, 1, 9);
-        grid.add(backButton, 0, 11);
-        grid.add(messageLabel, 0, 6, 2, 1);
+        grid.add(backButton, 0, 12);
+        grid.add(messageLabel, 0, 10);
         
         // check if a valid id is given
         if(id == 0) {
         	// create article button added if a valid id is not given
-        	grid.add(createButton, 0, 10);
+        	grid.add(createButton, 0, 11);
             GridPane.setMargin(createButton, new Insets(10, 0, 0, 0));
         }
         else {
@@ -222,8 +222,73 @@ public class ArticleCreationPage extends VBox {
         this.setAlignment(Pos.CENTER);
         this.getChildren().add(grid);
 
+        createButton.setOnAction(e -> createHandler());
         backButton.setOnAction(e -> {
             mainApp.showArticlesPage(prev); // Switch back to the login page
         });
+    }
+    
+    private void createHandler() {
+		
+    	// Necessary variables
+    	String title;
+		String header;
+		String groups;
+		String abstracts;
+		String body;
+		String keywords;
+		String references;
+		boolean inserted = false;
+		
+		// Ensure all required fields are filled in
+    	if(titleField.getText().isEmpty() || headersField.getText().isEmpty() || groupsField.getText().isEmpty() || abstractField.getText().isEmpty() || bodyField.getText().isEmpty() || keywordsField.getText().isEmpty() || referencesField.getText().isEmpty()) {
+    		messageLabel.setText("Warning: Information missing");	
+    		messageLabel.setTextFill(Color.RED);
+    		return;
+    	}
+    	
+    	// Obtain all necessary information
+		title = titleField.getText();
+		header = headersField.getText();
+		groups = groupsField.getText();
+		abstracts = abstractField.getText();
+		body = bodyField.getText();
+		keywords = keywordsField.getText();
+		references = referencesField.getText();
+		
+        // Determine selected roles
+        boolean isAdmin = admin.isSelected();
+        boolean isInstructor = instructor.isSelected();
+        boolean isStudent = student.isSelected();
+
+        // Ensure at least one role is selected
+        if (!isAdmin && !isInstructor && !isStudent) {
+            messageLabel.setText("Select at least one role");
+            messageLabel.setTextFill(Color.RED);
+            return;
+        }
+        
+        try {
+			inserted = mainApp.databaseHelper.insertArticle(title, header, groups, isAdmin, isInstructor, isStudent, abstracts, body, keywords, references);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        if(inserted) {
+        	messageLabel.setTextFill(Color.GREEN);
+        	messageLabel.setText("Article created successfully.");
+            // Clear inputs
+            titleField.clear();
+            headersField.clear();
+            groupsField.clear();
+            abstractField.clear();
+            bodyField.clear();
+            keywordsField.clear();
+            referencesField.clear();
+            admin.setSelected(false);
+            instructor.setSelected(false);
+            student.setSelected(false);
+        }
     }
 }

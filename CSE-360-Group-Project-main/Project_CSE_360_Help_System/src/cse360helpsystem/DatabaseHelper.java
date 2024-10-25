@@ -129,6 +129,8 @@ public class DatabaseHelper {
             statement.executeUpdate(dropinviteTable);
             String dropotherTable = "DROP TABLE IF EXISTS password_resets;";
             statement.executeUpdate(dropotherTable);
+            String droparticlesTable = "DROP TABLE IF EXISTS articles;";
+            statement.executeUpdate(droparticlesTable);
 
         } catch (SQLException e) {
             System.err.println("SQL error while emptying the database: " + e.getMessage());
@@ -1069,11 +1071,11 @@ public class DatabaseHelper {
 
  	// creates a new article, encrypt all the information, inserts the information into the table, and deletes the decrypted information
  	public boolean insertArticle(String title, String headers, String groups, boolean admin, boolean instructor, boolean student, String abstractText, String keywords, String body, String references) throws Exception {
- 		// create new articles table if it does not exist already
+        // create new articles table if it does not exist already
         String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
                 + "title TEXT NOT NULL, "
-                + "headers TEXT, "  // Added commas between columns
+                + "headers TEXT, "  
                 + "groups TEXT, "
                 + "access TEXT, "
                 + "abstract TEXT, "
@@ -1081,72 +1083,89 @@ public class DatabaseHelper {
                 + "body TEXT NOT NULL, "
                 + "ref_list TEXT"
                 + ");";
-         try {
- 			statement.execute(createArticlesTableSQL);
- 		} catch (SQLException e) {
- 			// TODO Auto-generated catch block
- 			e.printStackTrace();
- 		}
- 		// Encrypt each field and convert to char arrays
-         char[] encryptedHeaders = Base64.getEncoder().encodeToString(
-	        encryptionHelper.encrypt(headers.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
-	        .toCharArray();
-	    char[] encryptedGroups = Base64.getEncoder().encodeToString(
-	        encryptionHelper.encrypt(groups.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
-	        .toCharArray();
-	    char[] encryptedKeywords = Base64.getEncoder().encodeToString(
-	        encryptionHelper.encrypt(keywords.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
-	        .toCharArray();
-	    char[] encryptedBody = Base64.getEncoder().encodeToString(
-	        encryptionHelper.encrypt(body.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
-	        .toCharArray();
-	    char[] encryptedReferences = Base64.getEncoder().encodeToString(
-	        encryptionHelper.encrypt(references.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
-	        .toCharArray();
-	    
-	    // Convert the boolean values into an access string
-	    String access = "admin:" + (admin ? "1" : "0") + ","
-	                  + "instructor:" + (instructor ? "1" : "0") + ","
-	                  + "student:" + (student ? "1" : "0");
-	    
-	    char[] encryptedAccess = Base64.getEncoder().encodeToString(
-		        encryptionHelper.encrypt(access.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
-		        .toCharArray();
+        try {
+            statement.execute(createArticlesTableSQL);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
- 	    String insertSQL = "INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?)";
+        // Encrypt each field and convert to char arrays
+        System.out.println("Original title: " + title);
+        System.out.println("Original headers: " + headers);
+        System.out.println("Original groups: " + groups);
+        System.out.println("Original keywords: " + keywords);
+        System.out.println("Original body: " + body);
+        System.out.println("Original references: " + references);
 
- 	    try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
- 	        // Convert char arrays back to strings for the insertion (database requires strings)
- 	        preparedStatement.setString(1, new String(title));
- 	        preparedStatement.setString(2, new String(encryptedHeaders));
- 	        preparedStatement.setString(3, new String(encryptedGroups));
- 	        preparedStatement.setString(5, new String(encryptedAccess));
- 	        preparedStatement.setString(5, new String(abstractText));
- 	        preparedStatement.setString(6, new String(encryptedKeywords));
- 	        preparedStatement.setString(7, new String(encryptedBody));
- 	        preparedStatement.setString(8, new String(encryptedReferences));
+        char[] encryptedHeaders = Base64.getEncoder().encodeToString(
+            encryptionHelper.encrypt(headers.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+            .toCharArray();
+        char[] encryptedGroups = Base64.getEncoder().encodeToString(
+            encryptionHelper.encrypt(groups.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+            .toCharArray();
+        char[] encryptedKeywords = Base64.getEncoder().encodeToString(
+            encryptionHelper.encrypt(keywords.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+            .toCharArray();
+        char[] encryptedBody = Base64.getEncoder().encodeToString(
+            encryptionHelper.encrypt(body.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+            .toCharArray();
+        char[] encryptedReferences = Base64.getEncoder().encodeToString(
+            encryptionHelper.encrypt(references.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+            .toCharArray();
+        
+        // Print encrypted values
+        System.out.println("Encrypted headers: " + new String(encryptedHeaders));
+        System.out.println("Encrypted groups: " + new String(encryptedGroups));
+        System.out.println("Encrypted keywords: " + new String(encryptedKeywords));
+        System.out.println("Encrypted body: " + new String(encryptedBody));
+        System.out.println("Encrypted references: " + new String(encryptedReferences));
 
- 	        int rowsAffected = preparedStatement.executeUpdate();
- 	        if (rowsAffected > 0) {
- 	            System.out.println("Article inserted successfully.");
- 	            return true;
- 	        } else {
- 	            System.out.println("Failed to insert article.");
- 	            return false;
- 	        }
- 	    } catch (SQLException e) {
- 	        System.err.println("Error while inserting article: " + e.getMessage());
- 	        return false;
- 	    } finally {
- 	        // Clear sensitive data by setting char arrays to blanks
- 	    	Arrays.fill(encryptedHeaders, '0');
- 	    	Arrays.fill(encryptedGroups, '0');
- 	    	Arrays.fill(encryptedAccess, '0');
- 	    	Arrays.fill(encryptedKeywords, '0');
- 	    	Arrays.fill(encryptedBody, '0');
- 	    	Arrays.fill(encryptedReferences, '0');
- 	    }
- 	}
+        // Convert the boolean values into an access string
+        String access = "admin:" + (admin ? "1" : "0") + ","
+                      + "instructor:" + (instructor ? "1" : "0") + ","
+                      + "student:" + (student ? "1" : "0");
+        char[] encryptedAccess = Base64.getEncoder().encodeToString(
+            encryptionHelper.encrypt(access.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+            .toCharArray();
+
+        // Print access and encrypted access values
+        System.out.println("Access string: " + access);
+        System.out.println("Encrypted access: " + new String(encryptedAccess));
+
+        String insertSQL = "INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
+            // Insert encrypted values into the database
+            preparedStatement.setString(1, title);
+            preparedStatement.setString(2, new String(encryptedHeaders));
+            preparedStatement.setString(3, new String(encryptedGroups));
+            preparedStatement.setString(4, new String(encryptedAccess));
+            preparedStatement.setString(5, abstractText);
+            preparedStatement.setString(6, new String(encryptedKeywords));
+            preparedStatement.setString(7, new String(encryptedBody));
+            preparedStatement.setString(8, new String(encryptedReferences));
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Article inserted successfully.");
+                return true;
+            } else {
+                System.out.println("Failed to insert article.");
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error while inserting article: " + e.getMessage());
+            return false;
+        } finally {
+            // Clear sensitive data by setting char arrays to blanks
+            Arrays.fill(encryptedHeaders, '0');
+            Arrays.fill(encryptedGroups, '0');
+            Arrays.fill(encryptedAccess, '0');
+            Arrays.fill(encryptedKeywords, '0');
+            Arrays.fill(encryptedBody, '0');
+            Arrays.fill(encryptedReferences, '0');
+        }
+    }
  	
  	// deletes a given article given a valid id
  	public boolean deleteArticleByID(int ID) throws Exception {
