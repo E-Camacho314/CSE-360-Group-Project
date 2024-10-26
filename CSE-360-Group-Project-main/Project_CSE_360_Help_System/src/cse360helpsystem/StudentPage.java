@@ -38,11 +38,11 @@ public class StudentPage extends HBox {
 		BorderPane mainPane = new BorderPane();
 		
 		// Configure the welcome label
-		welcome.setTextFill(Color.BLACK);
-        welcome.setFont(Font.font(null, 16));
+		welcome.setTextFill(Color.BLUE);
+        welcome.setFont(Font.font(null, 14));
 
         // Configure the logout button
-        logoutbutton.setTextFill(Color.BLACK);
+        logoutbutton.setTextFill(Color.BLUE);
         logoutbutton.setFont(Font.font(null, 14));
         
         // Create a VBox to hold the welcome message and logout button

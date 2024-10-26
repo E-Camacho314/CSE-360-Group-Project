@@ -88,8 +88,8 @@ public class ArticlesPage extends VBox {
         viewbutton.setFont(Font.font(null, 14));
         
         // Set prompt texts for text fields
-        deleteField.setPromptText("Article ID to delete");
-        updateField.setPromptText("Article ID to update");   
+        deleteField.setPromptText("Article to delete");
+        updateField.setPromptText("Article to update");   
         backupField.setPromptText("File to backup to"); 
         restoreField.setPromptText("File to restore from"); 
         
@@ -106,8 +106,7 @@ public class ArticlesPage extends VBox {
         articlesPane.add(codetype, 0, 2);
         articlesPane.add(code, 1, 2);
         articlesPane.add(createbutton, 0, 3);
-        articlesPane.add(updateField, 0, 4);
-        articlesPane.add(updatebutton, 1, 4);
+        articlesPane.add(updatebutton, 0, 4);
         articlesPane.add(deleteField, 0, 5);
         articlesPane.add(deletebutton, 1, 5);
         articlesPane.add(listbutton, 0, 6);
@@ -129,9 +128,6 @@ public class ArticlesPage extends VBox {
         returnbutton.setOnAction(e -> returnToPage(prev));
         createbutton.setOnAction(e -> mainApp.showArticleCreatePage(prev, 0));
         updatebutton.setOnAction(e -> handleUpdate());
-        deletebutton.setOnAction(e -> handleDelete());
-        listbutton.setOnAction(e -> listArticles());
-        viewbutton.setOnAction(e -> viewArticle());
     }
     
     private void returnToPage(String prev) {
@@ -154,69 +150,78 @@ public class ArticlesPage extends VBox {
     		mainApp.showArticleCreatePage(prev, id);
     	}
     }
-    
-    // Method to delete an article
-    private void handleDelete() {
-        if (deleteField.getText().isEmpty()) {
-            warning.setText("Warning: ID needed to delete");
-            warning.setTextFill(Color.RED);
+    /**
+     * Handles the submission of the form.
+     * Validates input fields, updates the user's information in the database,
+     * and navigates to the appropriate dashboard upon success.
+     */
+    private void handleSubmit() {
+        /*String email = emailField.getText().trim();
+        String firstName = firstNameField.getText().trim();
+        String middleName = middleNameField.getText().trim();
+        String lastName = lastNameField.getText().trim();
+        String preferredName = preferredNameField.getText().trim();
+
+        if (email.isEmpty() || firstName.isEmpty() || lastName.isEmpty()) {
+            messageLabel.setText("Email, First Name, and Last Name are required.");
+            messageLabel.setTextFill(Color.RED);
             return;
         }
+
         try {
-            long id = Long.parseLong(deleteField.getText());
-            boolean deleted = mainApp.databaseHelper.deleteArticleById(id);
-            if (deleted) {
-                warning.setText("Article deleted successfully.");
-                warning.setTextFill(Color.GREEN);
-            } else {
-                warning.setText("Article not found.");
-                warning.setTextFill(Color.RED);
+            // Update user details in the database
+        	mainApp.databaseHelper.displayUsers();
+            boolean success = mainApp.databaseHelper.registerWithEmailAndNames(username, email, firstName, middleName, lastName, preferredName);
+            if (success) {
+                messageLabel.setTextFill(Color.GREEN);
+                messageLabel.setText("Account setup completed successfully!");
+
+                // Redirect to the appropriate page after a short delay
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(2000); // Wait for 2 seconds
+                    } catch (InterruptedException ex) {
+                        // Handle exception
+                    }
+                    javafx.application.Platform.runLater(() -> {
+                        try {
+							// Re-login to fetch updated user roles
+                            User user = mainApp.databaseHelper.getUserByUsername(username);
+                            if (user != null) {
+                                if ((user.isAdmin() && user.isInstructor()) || (user.isAdmin() && user.isStudent()) || (user.isInstructor() && user.isStudent())) {
+                                    mainApp.showRoleChooser(username);
+                                }
+                                else if (user.isInstructor()) {
+                                    mainApp.showInstructorPage();
+                                }
+                                else if (user.isStudent()) {
+                                    mainApp.showStudentPage();
+                                }
+                                else if(user.isAdmin()){
+                                    mainApp.showAdminPage();
+                                }
+                            }
+                            else {
+                                mainApp.showLoginPage();
+                            }
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                            mainApp.showLoginPage();
+                        }
+                    });
+                }).start();
             }
-            deleteField.clear();
-        } catch (NumberFormatException e) {
-            warning.setText("Invalid ID format.");
-            warning.setTextFill(Color.RED);
-        }
-    }
-
-    // Method to list all articles
-    private void listArticles() {
-        try {
-            List<String> articles = mainApp.databaseHelper.getAllArticlesLimited();
-            articlesList.clear();
-            for (String article : articles) {
-                articlesList.appendText(article + "\n");
+            else {
+            	// If updating user details failed, show an error message
+                messageLabel.setTextFill(Color.RED);
+                messageLabel.setText("Failed to update account.");
             }
-            warning.setText("Articles listed successfully.");
-            warning.setTextFill(Color.GREEN);
-        } catch (SQLException e) {
-            warning.setText("Failed to retrieve articles.");
-            warning.setTextFill(Color.RED);
-            e.printStackTrace();
         }
+        catch (SQLException ex) {
+        	// Handle any SQL exceptions that occur during the update
+            ex.printStackTrace();
+            messageLabel.setTextFill(Color.RED);
+            messageLabel.setText("An error occurred during setup.");
+        }*/
     }
-
-    // Method to list a specific article by id
-    private void viewArticle() {
-        if (updateField.getText().isEmpty()) {
-            warning.setText("Warning: ID needed to view");
-            warning.setTextFill(Color.RED);
-            return;
-        }
-        try {
-            long id = Long.parseLong(updateField.getText());
-            String articleDetailsStr = mainApp.databaseHelper.getArticleDetailsById(id);
-            articleDetails.setText(articleDetailsStr);
-            warning.setText("Article details displayed.");
-            warning.setTextFill(Color.GREEN);
-        } catch (NumberFormatException e) {
-            warning.setText("Invalid ID format.");
-            warning.setTextFill(Color.RED);
-        } catch (SQLException e) {
-            warning.setText("Failed to retrieve article details.");
-            warning.setTextFill(Color.RED);
-            e.printStackTrace();
-        }
-    }
-
 }
