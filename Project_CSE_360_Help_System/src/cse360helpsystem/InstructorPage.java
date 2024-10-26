@@ -45,7 +45,7 @@ public class InstructorPage extends HBox {
 		
 		// Configure the welcome label
 		welcome.setTextFill(Color.BLACK);
-        welcome.setFont(Font.font(null, 14));
+        welcome.setFont(Font.font(null, 16));
         
         // Configure the articles button
         articlesbutton.setTextFill(Color.BLACK);

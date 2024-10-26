@@ -11,7 +11,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 import org.bouncycastle.util.Arrays;
 
@@ -88,16 +90,18 @@ public class DatabaseHelper {
         statement.execute(resetTable);
         
 		// table for all the articles
-		String articleTable = "CREATE TABLE IF NOT EXISTS articles ("
-		        + "id INT AUTO_INCREMENT PRIMARY KEY, "
-		        + "title VARCHAR(255) NOT NULL, "
-		        + "authors TEXT, "  // Using TEXT for multiple authors
-		        + "abstract TEXT, "
-		        + "keywords TEXT, "
-		        + "body TEXT NOT NULL, "
-		        + "ref_list TEXT"
-		        + ");";
-		statement.execute(articleTable);
+        String articleTable = "CREATE TABLE IF NOT EXISTS articles ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
+                + "title TEXT NOT NULL, "
+                + "headers TEXT, "  // Added commas between columns
+                + "groups TEXT, "
+                + "access TEXT, "
+                + "abstract TEXT, "
+                + "keywords TEXT, "
+                + "body TEXT NOT NULL, "
+                + "ref_list TEXT"
+                + ");";
+        statement.execute(articleTable);
     }
 
     /**
@@ -127,6 +131,8 @@ public class DatabaseHelper {
             statement.executeUpdate(dropinviteTable);
             String dropotherTable = "DROP TABLE IF EXISTS password_resets;";
             statement.executeUpdate(dropotherTable);
+            String droparticlesTable = "DROP TABLE IF EXISTS articles;";
+            statement.executeUpdate(droparticlesTable);
 
         } catch (SQLException e) {
             System.err.println("SQL error while emptying the database: " + e.getMessage());
@@ -796,14 +802,18 @@ public class DatabaseHelper {
  // Check if articles is empty
  	public boolean isArticlesEmpty() throws SQLException {
  		// creates new articles table if the table is already empty
- 	    String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
-                 + "id INT AUTO_INCREMENT PRIMARY KEY, "
-                 + "title VARCHAR(255) NOT NULL, "
-                 + "authors TEXT, "
-                 + "abstract TEXT, "
-                 + "keywords TEXT, "
-                 + "body TEXT NOT NULL, "
-                 + "ref_list TEXT)";
+        String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
+                + "title TEXT NOT NULL, "
+                + "headers TEXT, "  // Added commas between columns
+                + "groups TEXT, "
+                + "access TEXT, "
+                + "authors TEXT, "  // Using TEXT for multiple authors
+                + "abstract TEXT, "
+                + "keywords TEXT, "
+                + "body TEXT NOT NULL, "
+                + "ref_list TEXT"
+                + ");";
          statement.execute(createArticlesTableSQL);
  		String query = "SELECT COUNT(*) AS count FROM articles";
  		ResultSet resultSet = statement.executeQuery(query);
@@ -830,7 +840,7 @@ public class DatabaseHelper {
      
      // inserts the information from the articles table into the user specified file
      public boolean backup(String filePath) throws Exception {
-         String query = "SELECT title, authors, abstract, keywords, body, ref_list FROM articles";
+         String query = "SELECT title, headers, groups, access, abstract, keywords, body, ref_list FROM articles";
          
          // creates a filewriter and buffered writer
          try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
@@ -839,7 +849,9 @@ public class DatabaseHelper {
          	// sets the information next to their corresponding subtitle
              while (resultSet.next()) {
                  writer.write("Title: " + resultSet.getString("title") + "\n");
-                 writer.write("Authors: " + resultSet.getString("authors") + "\n");
+                 writer.write("Headers: " + resultSet.getString("headers") + "\n");
+                 writer.write("Groups: " + resultSet.getString("groups") + "\n");
+                 writer.write("Access: " + resultSet.getString("access") + "\n");
                  writer.write("Abstract: " + resultSet.getString("abstract") + "\n");
                  writer.write("Keywords: " + resultSet.getString("keywords") + "\n");
                  writer.write("Body: " + resultSet.getString("body") + "\n");
@@ -860,13 +872,16 @@ public class DatabaseHelper {
      public boolean restore(String filePath) throws Exception {
          // Recreate the articles table if it doesn't exist
          String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
-                     + "id INT AUTO_INCREMENT PRIMARY KEY, "
-                     + "title VARCHAR(255) NOT NULL, "
-                     + "authors TEXT, "
-                     + "abstract TEXT, "
-                     + "keywords TEXT, "
-                     + "body TEXT NOT NULL, "
-                     + "ref_list TEXT)";
+                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
+                 + "title TEXT NOT NULL, "
+                 + "headers TEXT, "  // Added commas between columns
+                 + "groups TEXT, "
+                 + "access TEXT, "
+                 + "abstract TEXT, "
+                 + "keywords TEXT, "
+                 + "body TEXT NOT NULL, "
+                 + "ref_list TEXT"
+                 + ");";
          
          try {
              statement.execute(createArticlesTableSQL);
@@ -875,7 +890,7 @@ public class DatabaseHelper {
              return false;
          }
          // insert the information into the table
-         String insertSQL = "INSERT INTO articles (title, authors, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?)";
+         String insertSQL = "INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?)";
 
          try (BufferedReader br = new BufferedReader(new FileReader(filePath));
               PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
@@ -932,216 +947,173 @@ public class DatabaseHelper {
          }
      }
      
-  // displays the id, title, and authors of all articles
- 	public void displayArticles() throws Exception{
- 		String sql = "SELECT * FROM articles"; 
- 		Statement stmt = connection.createStatement();
- 		ResultSet rs = stmt.executeQuery(sql); 
+     // Method to retrieve a limited list of articles (ID, title)
+     public List<String> getAllArticlesLimited() throws SQLException {
+         List<String> articles = new ArrayList<>();
+         String query = "SELECT id, title FROM articles";
+         try (Statement stmt = connection.createStatement();
+              ResultSet rs = stmt.executeQuery(query)) {
+             while (rs.next()) {
+                 long id = rs.getLong("id");
+                 String title = rs.getString("title");
+                 // Format the string to include ID, title
+                 articles.add("ID: " + id + " | Title: " + title);
+             }
+         }
+         return articles;
+     }
+ 
+     
+     // Decrypt a field with a specified IV, assuming the data is Base64 encoded
+     private String decryptField(String encryptedData, byte[] iv) throws Exception {
+         byte[] cipherText = Base64.getDecoder().decode(encryptedData);
+         return new String(encryptionHelper.decrypt(cipherText, iv));
+     }
+     
+     // Method to retrieve detailed information about a specific article
+     public String getArticleDetailsById(long id) throws SQLException {
+         String query = "SELECT * FROM articles WHERE id = ?";
+         try (PreparedStatement stmt = connection.prepareStatement(query)) {
+             stmt.setLong(1, id);
+             try (ResultSet rs = stmt.executeQuery()) {
+                 if (rs.next()) {
+                	 StringBuilder details = new StringBuilder();
+                     details.append("ID: ").append(rs.getLong("id")).append("\n")
+                            .append("Title: ").append(rs.getString("title")).append("\n");
 
- 		while(rs.next()) { 
- 			// Retrieve by column name 
- 			int id  = rs.getInt("id"); 
- 			String  title = rs.getString("title"); 
- 			String authors = rs.getString("authors");  
- 			char[] decryptedAuthors = EncryptionUtils.toCharArray(
- 					encryptionHelper.decrypt(
- 							Base64.getDecoder().decode(
- 									authors
- 							), 
- 							EncryptionUtils.getInitializationVector(title.toCharArray())
- 					)	
- 			);
+                     byte[] iv = EncryptionUtils.getInitializationVector(rs.getString("title").toCharArray());
+                     
+                     // Decrypt each field with proper error handling
+                     details.append("Headers: ").append(decryptField(rs.getString("headers"), iv)).append("\n")
+                            .append("Groups: ").append(decryptField(rs.getString("groups"), iv)).append("\n")
+                            .append("Accessibility: ").append(decryptField(rs.getString("access"), iv)).append("\n")
+                            .append("Abstract: ").append(rs.getString("abstract")).append("\n")
+                            .append("Keywords: ").append(decryptField(rs.getString("keywords"), iv)).append("\n")
+                            .append("Body: ").append(decryptField(rs.getString("body"), iv)).append("\n")
+                            .append("References: ").append(decryptField(rs.getString("ref_list"), iv)).append("\n");
 
- 			// Display values 
- 			System.out.print("ID: " + id);
- 			System.out.print(", Title: " + title); 
- 			System.out.print(", Author(s): "); 
- 			EncryptionUtils.printCharArray(decryptedAuthors);
- 			System.out.println();			
- 			Arrays.fill(decryptedAuthors, '0');
- 		} 
- 	}
- 	
- 	// displays all the information of an article given a valid id
- 	public boolean displayArticle(int ID) throws Exception {
- 	    String sql = "SELECT * FROM articles WHERE id = ?"; 
- 	    try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
- 	        preparedStatement.setInt(1, ID); // Set the ID parameter
- 	        
- 	        try (ResultSet rs = preparedStatement.executeQuery()) {
- 	            if (rs.next()) { // Check if an article was found
- 	                // Retrieve by column name 
- 	                int id = rs.getInt("id"); 
- 	                String title = rs.getString("title"); 
- 	                String authors = rs.getString("authors");
- 	    			char[] decryptedAuthors = EncryptionUtils.toCharArray(
- 	    					encryptionHelper.decrypt(
- 	    							Base64.getDecoder().decode(
- 	    									authors
- 	    							), 
- 	    							EncryptionUtils.getInitializationVector(title.toCharArray())
- 	    					)	
- 	    			);
- 	                String abstracts = rs.getString("abstract"); 
- 	    			char[] decryptedAbstract = EncryptionUtils.toCharArray(
- 	    					encryptionHelper.decrypt(
- 	    							Base64.getDecoder().decode(
- 	    									abstracts
- 	    							), 
- 	    							EncryptionUtils.getInitializationVector(title.toCharArray())
- 	    					)	
- 	    			);
- 	                String body = rs.getString("body");
- 	    			char[] decryptedBody = EncryptionUtils.toCharArray(
- 	    					encryptionHelper.decrypt(
- 	    							Base64.getDecoder().decode(
- 	    									body
- 	    							), 
- 	    							EncryptionUtils.getInitializationVector(title.toCharArray())
- 	    					)	
- 	    			);
- 	                String keywords = rs.getString("keywords"); 
- 	    			char[] decryptedKeywords = EncryptionUtils.toCharArray(
- 	    					encryptionHelper.decrypt(
- 	    							Base64.getDecoder().decode(
- 	    									keywords
- 	    							), 
- 	    							EncryptionUtils.getInitializationVector(title.toCharArray())
- 	    					)	
- 	    			);
- 	                String references = rs.getString("ref_list");
- 	    			char[] decryptedReferences = EncryptionUtils.toCharArray(
- 	    					encryptionHelper.decrypt(
- 	    							Base64.getDecoder().decode(
- 	    									references
- 	    							), 
- 	    							EncryptionUtils.getInitializationVector(title.toCharArray())
- 	    					)	
- 	    			);
-
- 	                // Display values 
- 	                System.out.println("ID: " + id);
- 	                System.out.println("Title: " + title); 
- 	                System.out.print("Author(s): "); 
- 	    			EncryptionUtils.printCharArray(decryptedAuthors);
- 	    			System.out.println();
- 	                System.out.print("Abstract: ");
- 	    			EncryptionUtils.printCharArray(decryptedAbstract);
- 	    			System.out.println();
- 	                System.out.print("Body: ");
- 	    			EncryptionUtils.printCharArray(decryptedBody);
- 	    			System.out.println();
- 	                System.out.print("Keyword(s): ");
- 	    			EncryptionUtils.printCharArray(decryptedKeywords);
- 	    			System.out.println();
- 	                System.out.print("References: ");
- 	    			EncryptionUtils.printCharArray(decryptedReferences);
- 	    			System.out.println();
-
- 	    			Arrays.fill(decryptedAuthors, '0');
- 	    			Arrays.fill(decryptedAbstract, '0');
- 	    			Arrays.fill(decryptedBody, '0');
- 	    			Arrays.fill(decryptedKeywords, '0');
- 	    			Arrays.fill(decryptedReferences, '0');
- 	    			
- 	                return true; // Article was found and displayed
- 	            } else {
- 	                System.out.println("No article found with ID: " + ID);
- 	                return false; // No article found
- 	            }
- 	        }
- 	    } catch (SQLException e) {
- 	        System.err.println("Error while retrieving article: " + e.getMessage());
- 	        return false; // Error occurred
- 	    }
- 	}
+                     return details.toString();
+                 } else {
+                     return "Article not found.";
+                 }
+             } catch (Exception e) {
+            	System.err.println("Error while printing article");
+				e.printStackTrace();
+			}
+         }
+		return query;
+     }
 
  	// creates a new article, encrypt all the information, inserts the information into the table, and deletes the decrypted information
- 	public boolean insertArticle(String title, String authors, String abstractText, String keywords, String body, String references) throws Exception {
- 		// create new articles table if it does not exist already
- 		String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
-                 + "id INT AUTO_INCREMENT PRIMARY KEY, "
-                 + "title VARCHAR(255) NOT NULL, "
-                 + "authors TEXT, "
-                 + "abstract TEXT, "
-                 + "keywords TEXT, "
-                 + "body TEXT NOT NULL, "
-                 + "ref_list TEXT)";
-         try {
- 			statement.execute(createArticlesTableSQL);
- 		} catch (SQLException e) {
- 			// TODO Auto-generated catch block
- 			e.printStackTrace();
- 		}
- 		// Encrypt each field and convert to char arrays
- 	    char[] encryptedAuthors = Base64.getEncoder().encodeToString(
- 	            encryptionHelper.encrypt(authors.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
- 	            .toCharArray();
- 	    char[] encryptedAbstract = Base64.getEncoder().encodeToString(
- 	            encryptionHelper.encrypt(abstractText.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
- 	            .toCharArray();
- 	    char[] encryptedKeywords = Base64.getEncoder().encodeToString(
- 	            encryptionHelper.encrypt(keywords.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
- 	            .toCharArray();
- 	    char[] encryptedBody = Base64.getEncoder().encodeToString(
- 	            encryptionHelper.encrypt(body.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
- 	            .toCharArray();
- 	    char[] encryptedReferences = Base64.getEncoder().encodeToString(
- 	            encryptionHelper.encrypt(references.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
- 	            .toCharArray();
+ 	public boolean insertArticle(String title, String headers, String groups, boolean admin, boolean instructor, boolean student, String abstractText, String keywords, String body, String references) throws Exception {
+        // create new articles table if it does not exist already
+        String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
+                + "title TEXT NOT NULL, "
+                + "headers TEXT, "  
+                + "groups TEXT, "
+                + "access TEXT, "
+                + "abstract TEXT, "
+                + "keywords TEXT, "
+                + "body TEXT NOT NULL, "
+                + "ref_list TEXT"
+                + ");";
+        try {
+            statement.execute(createArticlesTableSQL);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
- 	    String insertSQL = "INSERT INTO articles (title, authors, abstract, keywords, body, references) VALUES (?, ?, ?, ?, ?, ?)";
+        // Encrypt each field and convert to char arrays
+        System.out.println("Original title: " + title);
+        System.out.println("Original headers: " + headers);
+        System.out.println("Original groups: " + groups);
+        System.out.println("Original keywords: " + keywords);
+        System.out.println("Original body: " + body);
+        System.out.println("Original references: " + references);
 
- 	    try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
- 	        // Convert char arrays back to strings for the insertion (database requires strings)
- 	        preparedStatement.setString(1, new String(title));
- 	        preparedStatement.setString(2, new String(encryptedAuthors));
- 	        preparedStatement.setString(3, new String(encryptedAbstract));
- 	        preparedStatement.setString(4, new String(encryptedKeywords));
- 	        preparedStatement.setString(5, new String(encryptedBody));
- 	        preparedStatement.setString(6, new String(encryptedReferences));
+        char[] encryptedHeaders = Base64.getEncoder().encodeToString(
+            encryptionHelper.encrypt(headers.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+            .toCharArray();
+        char[] encryptedGroups = Base64.getEncoder().encodeToString(
+            encryptionHelper.encrypt(groups.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+            .toCharArray();
+        char[] encryptedKeywords = Base64.getEncoder().encodeToString(
+            encryptionHelper.encrypt(keywords.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+            .toCharArray();
+        char[] encryptedBody = Base64.getEncoder().encodeToString(
+            encryptionHelper.encrypt(body.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+            .toCharArray();
+        char[] encryptedReferences = Base64.getEncoder().encodeToString(
+            encryptionHelper.encrypt(references.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+            .toCharArray();
+        
+        // Print encrypted values
+        System.out.println("Encrypted headers: " + new String(encryptedHeaders));
+        System.out.println("Encrypted groups: " + new String(encryptedGroups));
+        System.out.println("Encrypted keywords: " + new String(encryptedKeywords));
+        System.out.println("Encrypted body: " + new String(encryptedBody));
+        System.out.println("Encrypted references: " + new String(encryptedReferences));
 
- 	        int rowsAffected = preparedStatement.executeUpdate();
- 	        if (rowsAffected > 0) {
- 	            System.out.println("Article inserted successfully.");
- 	            return true;
- 	        } else {
- 	            System.out.println("Failed to insert article.");
- 	            return false;
- 	        }
- 	    } catch (SQLException e) {
- 	        System.err.println("Error while inserting article: " + e.getMessage());
- 	        return false;
- 	    } finally {
- 	        // Clear sensitive data by setting char arrays to blanks
- 	    	Arrays.fill(encryptedAuthors, '0');
- 	    	Arrays.fill(encryptedAbstract, '0');
- 	    	Arrays.fill(encryptedKeywords, '0');
- 	    	Arrays.fill(encryptedBody, '0');
- 	    	Arrays.fill(encryptedReferences, '0');
- 	    }
- 	}
+        // Convert the boolean values into an access string
+        String access = "admin:" + (admin ? "1" : "0") + ","
+                      + "instructor:" + (instructor ? "1" : "0") + ","
+                      + "student:" + (student ? "1" : "0");
+        char[] encryptedAccess = Base64.getEncoder().encodeToString(
+            encryptionHelper.encrypt(access.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
+            .toCharArray();
+
+        // Print access and encrypted access values
+        System.out.println("Access string: " + access);
+        System.out.println("Encrypted access: " + new String(encryptedAccess));
+
+        String insertSQL = "INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
+            // Insert encrypted values into the database
+            preparedStatement.setString(1, title);
+            preparedStatement.setString(2, new String(encryptedHeaders));
+            preparedStatement.setString(3, new String(encryptedGroups));
+            preparedStatement.setString(4, new String(encryptedAccess));
+            preparedStatement.setString(5, abstractText);
+            preparedStatement.setString(6, new String(encryptedKeywords));
+            preparedStatement.setString(7, new String(encryptedBody));
+            preparedStatement.setString(8, new String(encryptedReferences));
+
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Article inserted successfully.");
+                return true;
+            } else {
+                System.out.println("Failed to insert article.");
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error while inserting article: " + e.getMessage());
+            return false;
+        } finally {
+            // Clear sensitive data by setting char arrays to blanks
+            Arrays.fill(encryptedHeaders, '0');
+            Arrays.fill(encryptedGroups, '0');
+            Arrays.fill(encryptedAccess, '0');
+            Arrays.fill(encryptedKeywords, '0');
+            Arrays.fill(encryptedBody, '0');
+            Arrays.fill(encryptedReferences, '0');
+        }
+    }
  	
- 	// deletes a given article given a valid id
- 	public boolean deleteArticleByID(int ID) throws Exception {
- 	    String deleteSQL = "DELETE FROM articles WHERE id = ?";
- 	    
- 	    try (PreparedStatement preparedStatement = connection.prepareStatement(deleteSQL)) {
- 	        preparedStatement.setInt(1, ID);
- 	        
- 	        int rowsAffected = preparedStatement.executeUpdate();
- 	        if (rowsAffected > 0) {
- 	            System.out.println("Article deleted successfully.");
- 	            return true; // Article was deleted
- 	        } else {
- 	            System.out.println("No article found with the given title.");
- 	            return false; // No article found
- 	        }
- 	    } catch (SQLException e) {
- 	        System.err.println("Error while deleting article: " + e.getMessage());
- 	        return false; // Error occurred during deletion
- 	    }
- 	}
+ 	// Method to delete an article by ID
+    public boolean deleteArticleById(long id) {
+        String query = "DELETE FROM articles WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setLong(1, id);
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0; // Return true if an article was deleted
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // Return false on failure
+        }
+    }
     
     /**
      * Closes the database connection and associated statement.

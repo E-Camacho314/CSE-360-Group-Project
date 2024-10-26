@@ -13,7 +13,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
 
 import org.bouncycastle.util.Arrays;
 
@@ -946,48 +945,62 @@ public class DatabaseHelper {
          }
      }
      
-     // Method to retrieve a limited list of articles (ID, title, and author)
-     public List<String> getAllArticlesLimited() throws SQLException {
-         List<String> articles = new ArrayList<>();
-         // Adjust the SQL query to select the author along with ID and title
-         String query = "SELECT id, title, author FROM articles"; // Make sure 'author' is a valid column in your table
-         try (Statement stmt = connection.createStatement();
-              ResultSet rs = stmt.executeQuery(query)) {
-             while (rs.next()) {
-                 long id = rs.getLong("id");
-                 String title = rs.getString("title");
-                 String author = rs.getString("author");
-                 // Format the string to include ID, title, and author
-                 articles.add("ID: " + id + " | Title: " + title + " | Author: " + author);
-             }
-         }
-         return articles;
-     }
+     // Method to retrieve a limited list of articles (title)
+     public void getAllArticlesLimited() throws SQLException {
+    	    String query = "SELECT title FROM articles";
+    	    try (Statement stmt = connection.createStatement();
+    	         ResultSet rs = stmt.executeQuery(query)) {
+    	        while (rs.next()) {
+    	            String title = rs.getString("title");
+    	            // Format the string to include title
+    	            System.out.println("Title: " + title);
+    	        }
+    	    }
+    	}
  	
   // Method to retrieve detailed information about a specific article
      public String getArticleDetailsById(long id) throws SQLException {
          String query = "SELECT * FROM articles WHERE id = ?";
-         try (PreparedStatement stmt = connection.prepareStatement(query)) {
-             stmt.setLong(1, id);
-             try (ResultSet rs = stmt.executeQuery()) {
+         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+             preparedStatement.setLong(1, id);
+             try (ResultSet rs = preparedStatement.executeQuery()) {
                  if (rs.next()) {
-                     StringBuilder details = new StringBuilder();
-                     details.append("ID: ").append(rs.getLong("id")).append("\n")
-                            .append("Title: ").append(rs.getString("title")).append("\n")
-                            .append("Headers: ").append(rs.getString("headers")).append("\n")
-                            .append("Groups: ").append(rs.getString("groups")).append("\n")
-                            .append("Abstract: ").append(rs.getString("abstract")).append("\n")
-                            .append("Body: ").append(rs.getString("body")).append("\n")
-                            .append("Keywords: ").append(rs.getString("keywords")).append("\n")
-                            .append("References: ").append(rs.getString("ref_list")).append("\n")
-                            .append("Accessibility: ").append(rs.getBoolean("isAdmin") ? "Admin " : "")
-                            .append(rs.getBoolean("isInstructor") ? "Instructor " : "")
-                            .append(rs.getBoolean("isStudent") ? "Student" : "");
-                     return details.toString();
+                	 // Assuming you have the corresponding decrypted fields ready to use
+                	 String title = rs.getString("title");
+                     String headers = rs.getString("headers");
+                     String groups = rs.getString("groups");
+                     String access = rs.getString("access");
+                     String abstractText = rs.getString("abstract");
+                     String keywords = rs.getString("keywords");
+                     String body = rs.getString("body");
+                     String references = rs.getString("ref_list");
+
+                     // Decrypt the fields (assuming you have a decrypt method)
+                     String decryptedTitle = encryptionHelper.decrypt(title);
+                     String decryptedHeaders = encryptionHelper.decrypt(headers);
+                     String decryptedGroups = encryptionHelper.decrypt(groups);
+                     String decryptedAccess = encryptionHelper.decrypt(access);
+                     String decryptedAbstract = encryptionHelper.decrypt(abstractText);
+                     String decryptedKeywords = encryptionHelper.decrypt(keywords);
+                     String decryptedBody = encryptionHelper.decrypt(body);
+                     String decryptedReferences = encryptionHelper.decrypt(references);
+                     
+                     // Print the detailed information
+                     System.out.println("Article Details:");
+                     System.out.println("Title: " + title);
+                     System.out.println("Headers: " + headers);
+                     System.out.println("Groups: " + groups);
+                     System.out.println("Access: " + access);
+                     System.out.println("Abstract: " + abstractText);
+                     System.out.println("Keywords: " + keywords);
+                     System.out.println("Body: " + body);
+                     System.out.println("References: " + references);
                  } else {
-                     return "Article not found."; // Handle case when article does not exist
+                     System.out.println("No article found with ID: " + id);
                  }
              }
+         } catch (SQLException e) {
+             System.err.println("Failed to retrieve article details: " + e.getMessage());
          }
      }
 

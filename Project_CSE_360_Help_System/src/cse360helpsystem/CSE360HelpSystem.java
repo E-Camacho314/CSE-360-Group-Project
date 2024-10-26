@@ -117,6 +117,14 @@ public class CSE360HelpSystem extends Application
         System.out.println("Switched to Login Page"); // For debugging
     }
     
+    // Displays the login page
+    public void showArticleCreatePage(String prev, long id) {
+        ArticleCreationPage articlecreatePage = new ArticleCreationPage(this, prev, id); // Pass it to ArticlesPage
+        root.getChildren().clear();
+        root.getChildren().add(articlecreatePage);
+        System.out.println("Switched to Login Page"); // For debugging
+    }
+    
     // Displays the admin page for admin users
     public void showAdminPage() {
         root.getChildren().clear();

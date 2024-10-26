@@ -1,7 +1,6 @@
 package cse360helpsystem;
 
 import java.sql.SQLException;
-import java.util.List;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -186,11 +185,7 @@ public class ArticlesPage extends VBox {
     // Method to list all articles
     private void listArticles() {
         try {
-            List<String> articles = mainApp.databaseHelper.getAllArticlesLimited();
-            //articlesList.clear();
-            for (String article : articles) {
-                //articlesList.appendText(article + "\n");
-            }
+            mainApp.databaseHelper.getAllArticlesLimited(); // Call the modified method that prints directly
             warning.setText("Articles listed successfully.");
             warning.setTextFill(Color.GREEN);
         } catch (SQLException e) {
@@ -210,7 +205,7 @@ public class ArticlesPage extends VBox {
         try {
             long id = Long.parseLong(viewField.getText());
             String articleDetailsStr = mainApp.databaseHelper.getArticleDetailsById(id);
-            //articleDetails.setText(articleDetailsStr);
+            System.out.println(articleDetailStr);
             warning.setText("Article details displayed.");
             warning.setTextFill(Color.GREEN);
         } catch (NumberFormatException e) {

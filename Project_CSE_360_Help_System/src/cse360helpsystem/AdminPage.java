@@ -71,7 +71,7 @@ public class AdminPage extends HBox {
 		
 		// Configure the welcome label
 		welcome.setTextFill(Color.BLACK);
-        welcome.setFont(Font.font(null, 14));
+        welcome.setFont(Font.font(null, 16));
         
         // Configure the userinfo label
         userinfo.setTextFill(Color.BLACK);
