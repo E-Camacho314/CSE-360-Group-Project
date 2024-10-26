@@ -129,6 +129,9 @@ public class ArticlesPage extends VBox {
         returnbutton.setOnAction(e -> returnToPage(prev));
         createbutton.setOnAction(e -> mainApp.showArticleCreatePage(prev, 0));
         updatebutton.setOnAction(e -> handleUpdate());
+        deletebutton.setOnAction(e -> handleDelete());
+        listbutton.setOnAction(e -> listArticles());
+        viewbutton.setOnAction(e -> viewArticle());
     }
     
     private void returnToPage(String prev) {
@@ -151,4 +154,69 @@ public class ArticlesPage extends VBox {
     		mainApp.showArticleCreatePage(prev, id);
     	}
     }
+    
+    // Method to delete an article
+    private void handleDelete() {
+        if (deleteField.getText().isEmpty()) {
+            warning.setText("Warning: ID needed to delete");
+            warning.setTextFill(Color.RED);
+            return;
+        }
+        try {
+            long id = Long.parseLong(deleteField.getText());
+            boolean deleted = mainApp.databaseHelper.deleteArticleById(id);
+            if (deleted) {
+                warning.setText("Article deleted successfully.");
+                warning.setTextFill(Color.GREEN);
+            } else {
+                warning.setText("Article not found.");
+                warning.setTextFill(Color.RED);
+            }
+            deleteField.clear();
+        } catch (NumberFormatException e) {
+            warning.setText("Invalid ID format.");
+            warning.setTextFill(Color.RED);
+        }
+    }
+
+    // Method to list all articles
+    private void listArticles() {
+        try {
+            List<String> articles = mainApp.databaseHelper.getAllArticlesLimited();
+            articlesList.clear();
+            for (String article : articles) {
+                articlesList.appendText(article + "\n");
+            }
+            warning.setText("Articles listed successfully.");
+            warning.setTextFill(Color.GREEN);
+        } catch (SQLException e) {
+            warning.setText("Failed to retrieve articles.");
+            warning.setTextFill(Color.RED);
+            e.printStackTrace();
+        }
+    }
+
+    // Method to list a specific article by id
+    private void viewArticle() {
+        if (updateField.getText().isEmpty()) {
+            warning.setText("Warning: ID needed to view");
+            warning.setTextFill(Color.RED);
+            return;
+        }
+        try {
+            long id = Long.parseLong(updateField.getText());
+            String articleDetailsStr = mainApp.databaseHelper.getArticleDetailsById(id);
+            articleDetails.setText(articleDetailsStr);
+            warning.setText("Article details displayed.");
+            warning.setTextFill(Color.GREEN);
+        } catch (NumberFormatException e) {
+            warning.setText("Invalid ID format.");
+            warning.setTextFill(Color.RED);
+        } catch (SQLException e) {
+            warning.setText("Failed to retrieve article details.");
+            warning.setTextFill(Color.RED);
+            e.printStackTrace();
+        }
+    }
+
 }
