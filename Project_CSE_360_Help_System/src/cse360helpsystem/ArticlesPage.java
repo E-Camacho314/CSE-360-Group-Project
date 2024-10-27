@@ -133,7 +133,7 @@ public class ArticlesPage extends VBox {
         createbutton.setOnAction(e -> mainApp.showArticleCreatePage(prev, 0));
         updatebutton.setOnAction(e -> handleUpdate());
         deletebutton.setOnAction(e -> handleDelete());
-        listbutton.setOnAction(e -> listArticles());
+        listbutton.setOnAction(e -> mainApp.showArticlesListPage(prev, 0));
         viewbutton.setOnAction(e -> viewArticle());
     }
     
@@ -204,16 +204,7 @@ public class ArticlesPage extends VBox {
         }
         try {
             long id = Long.parseLong(viewField.getText());
-            String articleDetailsStr = "";
-			try {
-				articleDetailsStr = mainApp.databaseHelper.getArticleDetailsById(id);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-            System.out.println(articleDetailsStr);
-            warning.setText("Article details displayed.");
-            warning.setTextFill(Color.GREEN);
+            mainApp.showArticlesListPage(prev, id);
         } catch (NumberFormatException e) {
             warning.setText("Invalid ID format.");
             warning.setTextFill(Color.RED);

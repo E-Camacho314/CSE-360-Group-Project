@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 import org.bouncycastle.util.Arrays;
 
@@ -946,19 +947,26 @@ public class DatabaseHelper {
      }
      
      // Method to retrieve a limited list of articles (title)
-     public void getAllArticlesLimited() throws SQLException {
+     public List<String> getAllArticlesLimited() throws SQLException {
     	    String query = "SELECT * FROM articles";
+    	    List<String> articles = new ArrayList<>(); // List to store article information
+
     	    try (Statement stmt = connection.createStatement();
     	         ResultSet rs = stmt.executeQuery(query)) {
     	        while (rs.next()) {
     	            long id = rs.getLong("id"); // Retrieve the article id
     	            String title = rs.getString("title"); // Retrieve the article title
     	            String abstractText = rs.getString("abstract"); // Retrieve the article abstract
+
     	            // Format the output to include id, title, and abstract
-    	            System.out.println("ID: " + id + ", Title: " + title + ", Abstract: " + abstractText);
+    	            String articleInfo = "ID: " + id + ", Title: " + title + ", Abstract: " + abstractText;
+    	            articles.add(articleInfo); // Add formatted string to the list
     	        }
     	    }
+    	    
+    	    return articles; // Return the list of articles
     	}
+
 
  	
      // Method to retrieve detailed information about a specific article

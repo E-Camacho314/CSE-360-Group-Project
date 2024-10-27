@@ -170,6 +170,14 @@ public class CSE360HelpSystem extends Application
         System.out.println("Switched to List Page"); // For debugging
     }
     
+    // Displays a page containing a list of information for the articles
+    public void showArticlesListPage(String prev, long id) {
+        ArticleListPage articlelistPage = new ArticleListPage(this, prev, id); // Create a new ListPage instance
+        root.getChildren().clear();
+        root.getChildren().add(articlelistPage);
+        System.out.println("Switched to List Page"); // For debugging
+    }
+    
     // Provides access to the database helper for other parts of the application
     public DatabaseHelper getDatabaseHelper() {
         return databaseHelper;
