@@ -947,27 +947,32 @@ public class DatabaseHelper {
      
      // Method to retrieve a limited list of articles (title)
      public void getAllArticlesLimited() throws SQLException {
-    	    String query = "SELECT title FROM articles";
+    	    String query = "SELECT * FROM articles";
     	    try (Statement stmt = connection.createStatement();
     	         ResultSet rs = stmt.executeQuery(query)) {
     	        while (rs.next()) {
-    	            String title = rs.getString("title");
-    	            // Format the string to include title
-    	            System.out.println("Title: " + title);
+    	            long id = rs.getLong("id"); // Retrieve the article id
+    	            String title = rs.getString("title"); // Retrieve the article title
+    	            String abstractText = rs.getString("abstract"); // Retrieve the article abstract
+    	            // Format the output to include id, title, and abstract
+    	            System.out.println("ID: " + id + ", Title: " + title + ", Abstract: " + abstractText);
     	        }
     	    }
     	}
+
  	
-  // Method to retrieve detailed information about a specific article
+     // Method to retrieve detailed information about a specific article
      public String getArticleDetailsById(long id) throws Exception {
-    	 StringBuilder articleDetails = new StringBuilder();
-    	 String query = "SELECT * FROM articles WHERE id = ?";
+         String query = "SELECT * FROM articles WHERE id = ?";
+         StringBuilder articleDetails = new StringBuilder();
+         
          try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
              preparedStatement.setLong(1, id);
+             
              try (ResultSet rs = preparedStatement.executeQuery()) {
                  if (rs.next()) {
-                	 // Assuming you have the corresponding decrypted fields ready to use
-                	 String title = rs.getString("title");
+                     // Assuming you have the corresponding decrypted fields ready to use
+                     String title = rs.getString("title");
                      String headers = rs.getString("headers");
                      String groups = rs.getString("groups");
                      String access = rs.getString("access");
@@ -975,191 +980,93 @@ public class DatabaseHelper {
                      String keywords = rs.getString("keywords");
                      String body = rs.getString("body");
                      String references = rs.getString("ref_list");
-
-                     // Decrypt the fields (assuming you have a decrypt method)
-                     char[] decryptedHeaders = EncryptionUtils.toCharArray(
-	    					encryptionHelper.decrypt(
-	    							Base64.getDecoder().decode(
-	    									headers
-	    							), 
-	    							EncryptionUtils.getInitializationVector(title.toCharArray())
-	    					)	
-	    			);
-                     char[] decryptedGroups = EncryptionUtils.toCharArray(
-	    					encryptionHelper.decrypt(
-	    							Base64.getDecoder().decode(
-	    									groups
-	    							), 
-	    							EncryptionUtils.getInitializationVector(title.toCharArray())
-	    					)	
-	    			);
-                     char[] decryptedAccess = EncryptionUtils.toCharArray(
-	    					encryptionHelper.decrypt(
-	    							Base64.getDecoder().decode(
-	    									access
-	    							), 
-	    							EncryptionUtils.getInitializationVector(title.toCharArray())
-	    					)	
-	    			);
-                     char[] decryptedAbstract = EncryptionUtils.toCharArray(
-	    					encryptionHelper.decrypt(
-	    							Base64.getDecoder().decode(
-	    									abstractText
-	    							), 
-	    							EncryptionUtils.getInitializationVector(title.toCharArray())
-	    					)	
-	    			);
-                     char[] decryptedKeywords = EncryptionUtils.toCharArray(
-	    					encryptionHelper.decrypt(
-	    							Base64.getDecoder().decode(
-	    									keywords
-	    							), 
-	    							EncryptionUtils.getInitializationVector(title.toCharArray())
-	    					)	
-	    			);
-                     char[] decryptedBody = EncryptionUtils.toCharArray(
-	    					encryptionHelper.decrypt(
-	    							Base64.getDecoder().decode(
-	    									body
-	    							), 
-	    							EncryptionUtils.getInitializationVector(title.toCharArray())
-	    					)	
-	    			);
-                     char[] decryptedReferences = EncryptionUtils.toCharArray(
-	    					encryptionHelper.decrypt(
-	    							Base64.getDecoder().decode(
-	    									references
-	    							), 
-	    							EncryptionUtils.getInitializationVector(title.toCharArray())
-	    					)	
-	    			);
                      
-                  // Build the detailed information string
-                  articleDetails.append("Article Details:\n")
+                     // Build the detailed information string
+                     articleDetails.append("Article Details:\n")
                          .append("Title: ").append(title).append("\n")
-                         .append("Headers: ").append(new String(decryptedHeaders)).append("\n")
-                         .append("Groups: ").append(new String(decryptedGroups)).append("\n")
-                         .append("Access: ").append(new String(decryptedAccess)).append("\n")
-                         .append("Abstract: ").append(new String(decryptedAbstract)).append("\n")
-                         .append("Keywords: ").append(new String(decryptedKeywords)).append("\n")
-                         .append("Body: ").append(new String(decryptedBody)).append("\n")
-                         .append("References: ").append(new String(decryptedReferences)).append("\n");
+                         .append("Headers: ").append(new String(headers)).append("\n")
+                         .append("Groups: ").append(new String(groups)).append("\n")
+                         .append("Access: ").append(new String(access)).append("\n")
+                         .append("Abstract: ").append(new String(abstractText)).append("\n")
+                         .append("Keywords: ").append(new String(keywords)).append("\n")
+                         .append("Body: ").append(new String(body)).append("\n")
+                         .append("References: ").append(new String(references)).append("\n");
                      
-                     // Clear sensitive data by setting char arrays to blanks
-                     Arrays.fill(decryptedHeaders, '0');
-                     Arrays.fill(decryptedGroups, '0');
-                     Arrays.fill(decryptedAccess, '0');
-                     Arrays.fill(decryptedAbstract, '0');
-                     Arrays.fill(decryptedKeywords, '0');
-                     Arrays.fill(decryptedBody, '0');
-                     Arrays.fill(decryptedReferences, '0');
                  } else {
-                     System.out.println("No article found with ID: " + id);
+                     articleDetails.append("No article found with ID: ").append(id);
                  }
              }
          } catch (SQLException e) {
              System.err.println("Failed to retrieve article details: " + e.getMessage());
+             return "Error retrieving article details: " + e.getMessage();
          }
+         
          return articleDetails.toString();
      }
 
- 	// creates a new article, encrypt all the information, inserts the information into the table, and deletes the decrypted information
- 	public boolean insertArticle(String title, String headers, String groups, boolean admin, boolean instructor, boolean student, String abstractText, String keywords, String body, String references) throws Exception {
-        // create new articles table if it does not exist already
-        String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
-                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
-                + "title TEXT NOT NULL, "
-                + "headers TEXT, "  
-                + "groups TEXT, "
-                + "access TEXT, "
-                + "abstract TEXT, "
-                + "keywords TEXT, "
-                + "body TEXT NOT NULL, "
-                + "ref_list TEXT"
-                + ");";
-        try {
-            statement.execute(createArticlesTableSQL);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+     public boolean insertArticle(String title, String headers, String groups, boolean admin, boolean instructor, boolean student, String abstractText, String keywords, String body, String references) throws Exception {
+    	    // Create the articles table if it does not exist already
+    	    String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
+    	            + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+    	            + "title TEXT NOT NULL, "
+    	            + "headers TEXT, "
+    	            + "groups TEXT, "
+    	            + "access TEXT, "
+    	            + "abstract TEXT, "
+    	            + "keywords TEXT, "
+    	            + "body TEXT NOT NULL, "
+    	            + "ref_list TEXT"
+    	            + ");";
+    	    try {
+    	        statement.execute(createArticlesTableSQL);
+    	    } catch (SQLException e) {
+    	        e.printStackTrace();
+    	    }
 
-        // Encrypt each field and convert to char arrays
-        System.out.println("Original title: " + title);
-        System.out.println("Original headers: " + headers);
-        System.out.println("Original groups: " + groups);
-        System.out.println("Original keywords: " + keywords);
-        System.out.println("Original body: " + body);
-        System.out.println("Original references: " + references);
+    	    // Print original values for debugging purposes
+    	    System.out.println("Original title: " + title);
+    	    System.out.println("Original headers: " + headers);
+    	    System.out.println("Original groups: " + groups);
+    	    System.out.println("Original keywords: " + keywords);
+    	    System.out.println("Original body: " + body);
+    	    System.out.println("Original references: " + references);
 
-        char[] encryptedHeaders = Base64.getEncoder().encodeToString(
-            encryptionHelper.encrypt(headers.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
-            .toCharArray();
-        char[] encryptedGroups = Base64.getEncoder().encodeToString(
-            encryptionHelper.encrypt(groups.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
-            .toCharArray();
-        char[] encryptedKeywords = Base64.getEncoder().encodeToString(
-            encryptionHelper.encrypt(keywords.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
-            .toCharArray();
-        char[] encryptedBody = Base64.getEncoder().encodeToString(
-            encryptionHelper.encrypt(body.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
-            .toCharArray();
-        char[] encryptedReferences = Base64.getEncoder().encodeToString(
-            encryptionHelper.encrypt(references.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
-            .toCharArray();
-        
-        // Print encrypted values
-        System.out.println("Encrypted headers: " + new String(encryptedHeaders));
-        System.out.println("Encrypted groups: " + new String(encryptedGroups));
-        System.out.println("Encrypted keywords: " + new String(encryptedKeywords));
-        System.out.println("Encrypted body: " + new String(encryptedBody));
-        System.out.println("Encrypted references: " + new String(encryptedReferences));
+    	    // Convert boolean values into an access string
+    	    String access = "admin:" + (admin ? "1" : "0") + ","
+    	                  + "instructor:" + (instructor ? "1" : "0") + ","
+    	                  + "student:" + (student ? "1" : "0");
 
-        // Convert the boolean values into an access string
-        String access = "admin:" + (admin ? "1" : "0") + ","
-                      + "instructor:" + (instructor ? "1" : "0") + ","
-                      + "student:" + (student ? "1" : "0");
-        char[] encryptedAccess = Base64.getEncoder().encodeToString(
-            encryptionHelper.encrypt(access.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray())))
-            .toCharArray();
+    	    // Print access string for debugging purposes
+    	    System.out.println("Access string: " + access);
 
-        // Print access and encrypted access values
-        System.out.println("Access string: " + access);
-        System.out.println("Encrypted access: " + new String(encryptedAccess));
+    	    // SQL query to insert the article into the database
+    	    String insertSQL = "INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        String insertSQL = "INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    	    try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
+    	        // Set parameters for insertion
+    	        preparedStatement.setString(1, title);
+    	        preparedStatement.setString(2, headers);
+    	        preparedStatement.setString(3, groups);
+    	        preparedStatement.setString(4, access);
+    	        preparedStatement.setString(5, abstractText);
+    	        preparedStatement.setString(6, keywords);
+    	        preparedStatement.setString(7, body);
+    	        preparedStatement.setString(8, references);
 
-        try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
-            // Insert encrypted values into the database
-            preparedStatement.setString(1, title);
-            preparedStatement.setString(2, new String(encryptedHeaders));
-            preparedStatement.setString(3, new String(encryptedGroups));
-            preparedStatement.setString(4, new String(encryptedAccess));
-            preparedStatement.setString(5, abstractText);
-            preparedStatement.setString(6, new String(encryptedKeywords));
-            preparedStatement.setString(7, new String(encryptedBody));
-            preparedStatement.setString(8, new String(encryptedReferences));
+    	        int rowsAffected = preparedStatement.executeUpdate();
+    	        if (rowsAffected > 0) {
+    	            System.out.println("Article inserted successfully.");
+    	            return true;
+    	        } else {
+    	            System.out.println("Failed to insert article.");
+    	            return false;
+    	        }
+    	    } catch (SQLException e) {
+    	        System.err.println("Error while inserting article: " + e.getMessage());
+    	        return false;
+    	    }
+    	}
 
-            int rowsAffected = preparedStatement.executeUpdate();
-            if (rowsAffected > 0) {
-                System.out.println("Article inserted successfully.");
-                return true;
-            } else {
-                System.out.println("Failed to insert article.");
-                return false;
-            }
-        } catch (SQLException e) {
-            System.err.println("Error while inserting article: " + e.getMessage());
-            return false;
-        } finally {
-            // Clear sensitive data by setting char arrays to blanks
-            Arrays.fill(encryptedHeaders, '0');
-            Arrays.fill(encryptedGroups, '0');
-            Arrays.fill(encryptedAccess, '0');
-            Arrays.fill(encryptedKeywords, '0');
-            Arrays.fill(encryptedBody, '0');
-            Arrays.fill(encryptedReferences, '0');
-        }
-    }
  	
  	// Method to delete an article by ID
     public boolean deleteArticleById(long id) {
