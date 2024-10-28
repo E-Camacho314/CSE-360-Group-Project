@@ -1089,6 +1089,28 @@ public class DatabaseHelper {
         }
     }
     
+    public boolean updateArticleField(long articleId, String field, String newValue) {
+        String updateSQL = "UPDATE articles SET " + field + " = ? WHERE id = ?";
+        
+        try (PreparedStatement pstmt = connection.prepareStatement(updateSQL)) {
+            pstmt.setString(1, newValue);
+            pstmt.setLong(2, articleId);
+            
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println(field + " updated successfully for article ID: " + articleId);
+                return true;
+            } else {
+                System.out.println("No article found with ID: " + articleId);
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while updating article: " + e.getMessage());
+            return false;
+        }
+    }
+
+    
     /**
      * Closes the database connection and associated statement.
      * Should be called when the application is shutting down to release resources.

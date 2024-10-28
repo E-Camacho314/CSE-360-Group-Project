@@ -77,21 +77,19 @@ public class ArticleCreationPage extends VBox {
     
     // Method to initialize the user interface components and layout
     private void initializeUI() {
-        
-    	//check if a valid id is given
-    	if(id == 0) {
-        	// Title if Creating a new Article
+        // Check if a valid id is given
+        if (id == 0) {
+            // Title if Creating a new Article
             titleLabel = new Label("Create Article");
-            
+
             // Create Article Button
             createButton = new Button("Create Article");
             createButton.setFont(Font.font(14));
-        }
-        else {
-        	// Title if Updating an Existing Article
+        } else {
+            // Title if Updating an Existing Article
             titleLabel = new Label("Update Article");
         }
-        
+
         titleLabel.setTextFill(Color.BLACK);
         titleLabel.setFont(Font.font(16));
 
@@ -115,33 +113,33 @@ public class ArticleCreationPage extends VBox {
         groupsLabel.setFont(Font.font(14));
         groupsField = new TextField();
         groupsField.setPromptText("Enter Groups (If multiple, separate with a comma)");
-        
+
         // Access
         accessLabel = new Label("Accessibility:");
         accessLabel.setTextFill(Color.BLACK);
         accessLabel.setFont(Font.font(14));
-        
+
         // Abstract
         abstractLabel = new Label("Abstract:");
         abstractLabel.setTextFill(Color.BLACK);
         abstractLabel.setFont(Font.font(14));
         abstractField = new TextField();
         abstractField.setPromptText("Enter Abstract of Article");
-        
+
         // Body
         bodyLabel = new Label("Body:");
         bodyLabel.setTextFill(Color.BLACK);
         bodyLabel.setFont(Font.font(14));
         bodyField = new TextField();
         bodyField.setPromptText("Enter Body of Article");
-        
+
         // Keywords
         keywordsLabel = new Label("Keywords:");
         keywordsLabel.setTextFill(Color.BLACK);
         keywordsLabel.setFont(Font.font(14));
         keywordsField = new TextField();
         keywordsField.setPromptText("Enter Keywords (If multiple, separate with a comma)");
-        
+
         // References
         referencesLabel = new Label("References:");
         referencesLabel.setTextFill(Color.BLACK);
@@ -157,14 +155,14 @@ public class ArticleCreationPage extends VBox {
         messageLabel = new Label();
         messageLabel.setTextFill(Color.BLACK);
         messageLabel.setFont(Font.font(14));
-        
+
         // Layout using GridPane
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
         grid.setVgap(10);
         grid.setHgap(10);
         grid.setPadding(new Insets(20, 20, 20, 20));
-        
+
         // Adding components to the grid
         grid.add(titleLabel, 0, 0, 2, 1);
         grid.add(title2Label, 0, 1);
@@ -187,25 +185,25 @@ public class ArticleCreationPage extends VBox {
         grid.add(referencesField, 1, 9);
         grid.add(backButton, 0, 12);
         grid.add(messageLabel, 0, 10);
-        
-        // check if a valid id is given
-        if(id == 0) {
-        	// create article button added if a valid id is not given
-        	grid.add(createButton, 0, 11);
+
+        // Check if a valid id is given
+        if (id == 0) {
+            // Create article button if a valid id is not given
+            grid.add(createButton, 0, 11);
             GridPane.setMargin(createButton, new Insets(10, 0, 0, 0));
-        }
-        else {
-        	// update buttons added if the id is given
-        	titleButton.setFont(Font.font(14));
-        	headersButton.setFont(Font.font(14));
-        	groupsButton.setFont(Font.font(14));
-        	accessButton.setFont(Font.font(14));
-        	abstractButton.setFont(Font.font(14));
-        	bodyButton.setFont(Font.font(14));
-        	keywordsButton.setFont(Font.font(14));
-        	referencesButton.setFont(Font.font(14));
-        	
-        	grid.add(titleButton, 2, 1);
+            createButton.setOnAction(e -> createHandler());
+        } else {
+            // Update buttons added if the id is given
+            titleButton.setFont(Font.font(14));
+            headersButton.setFont(Font.font(14));
+            groupsButton.setFont(Font.font(14));
+            accessButton.setFont(Font.font(14));
+            abstractButton.setFont(Font.font(14));
+            bodyButton.setFont(Font.font(14));
+            keywordsButton.setFont(Font.font(14));
+            referencesButton.setFont(Font.font(14));
+
+            grid.add(titleButton, 2, 1);
             grid.add(headersButton, 2, 2);
             grid.add(groupsButton, 2, 3);
             grid.add(accessButton, 2, 4);
@@ -213,6 +211,16 @@ public class ArticleCreationPage extends VBox {
             grid.add(bodyButton, 2, 7);
             grid.add(keywordsButton, 2, 8);
             grid.add(referencesButton, 2, 9);
+
+            // Set action handlers to update database fields
+            titleButton.setOnAction(e -> updateArticleField("title", titleField.getText()));
+            headersButton.setOnAction(e -> updateArticleField("headers", headersField.getText()));
+            groupsButton.setOnAction(e -> updateArticleField("groups", groupsField.getText()));
+            accessButton.setOnAction(e -> updateArticleField("access", getAccessString()));
+            abstractButton.setOnAction(e -> updateArticleField("abstract", abstractField.getText()));
+            bodyButton.setOnAction(e -> updateArticleField("body", bodyField.getText()));
+            keywordsButton.setOnAction(e -> updateArticleField("keywords", keywordsField.getText()));
+            referencesButton.setOnAction(e -> updateArticleField("ref_list", referencesField.getText()));
         }
 
         // Align buttons to the right
@@ -222,11 +230,49 @@ public class ArticleCreationPage extends VBox {
         this.setAlignment(Pos.CENTER);
         this.getChildren().add(grid);
 
-        createButton.setOnAction(e -> createHandler());
         backButton.setOnAction(e -> {
-            mainApp.showArticlesPage(prev); // Switch back to the login page
+            mainApp.showArticlesPage(prev); // Switch back to the articles page
         });
     }
+
+    
+    private void updateArticleField(String field, String newValue) {
+        if (newValue.isEmpty()) {
+            messageLabel.setText("Please enter a value for " + field);
+            messageLabel.setTextFill(Color.RED);
+            return;
+        }
+        
+        try {
+            // Call the DatabaseHelper method to update the field in the database
+            boolean success = CSE360HelpSystem.databaseHelper.updateArticleField(id, field, newValue);
+            if (success) {
+                messageLabel.setText(field + " updated successfully.");
+                messageLabel.setTextFill(Color.GREEN);
+            } else {
+                messageLabel.setText("Failed to update " + field + ". Invalid article ID.");
+                messageLabel.setTextFill(Color.RED);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            messageLabel.setText("Error updating " + field + ": " + e.getMessage());
+            messageLabel.setTextFill(Color.RED);
+        }
+    }
+    
+    /**
+     * Builds a string representation of the access levels based on checkbox selections.
+     * 
+     * @return A comma-separated string of access levels for admin, instructor, and student.
+     */
+    private String getAccessString() {
+        return "admin:" + (admin.isSelected() ? "1" : "0") + "," +
+               "instructor:" + (instructor.isSelected() ? "1" : "0") + "," +
+               "student:" + (student.isSelected() ? "1" : "0");
+    }
+
+
+
     
     private void createHandler() {
 		
@@ -269,7 +315,7 @@ public class ArticleCreationPage extends VBox {
         }
         
         try {
-			inserted = mainApp.databaseHelper.insertArticle(title, header, groups, isAdmin, isInstructor, isStudent, abstracts, body, keywords, references);
+			inserted = CSE360HelpSystem.databaseHelper.insertArticle(title, header, groups, isAdmin, isInstructor, isStudent, abstracts, body, keywords, references);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
