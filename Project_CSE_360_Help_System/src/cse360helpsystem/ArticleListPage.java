@@ -78,6 +78,7 @@ public class ArticleListPage extends VBox {
         }
         return articles;
     }
+    // 
 
     // Displays articles in the GridPane
     private void displayArticles(List<String> articles) {
@@ -109,4 +110,40 @@ public class ArticleListPage extends VBox {
             e.printStackTrace();
         }
     }
+    
+    // View all of the articles belonging to a specific group
+ 	private void viewArticlesInGroup(String groupName) {
+ 		try {
+ 		// list that holds articles in group
+ 		List<String[]> articles = mainApp.databaseHelper.getGroupedArticles();
+ 		List<String> groupedArticles = new ArrayList<>(); 
+ 		// if article group == groupName add to grouped Articles
+ 		for (String[] article : articles) {
+ 			String id = article[0];
+ 			String title = article[1];
+ 			String groups = article[2];
+ 			
+ 			if (groups != null && groups.contains(groupName) ) {
+ 				groupedArticles.add("ID: " + id + ", Title: " + title);
+ 			}
+ 		}
+ 		
+ 		if (groupedArticles.isEmpty()) {
+            warning.setText("No articles found in " + groupName + ".");
+            warning.setTextFill(Color.RED);
+        } else {
+            warning.setText("Displaying articles for group: " + groupName + "\n");
+            warning.setTextFill(Color.GREEN);
+            displayArticles(groupedArticles);  // Show only articles in the specified group
+        }
+ 		
+ 		} catch (Exception e) {
+            warning.setText("Failed to retrieve grouped article details.");
+            warning.setTextFill(Color.RED);
+            e.printStackTrace();
+        }
+ 	    
+ 	}
+ 	
 }
+

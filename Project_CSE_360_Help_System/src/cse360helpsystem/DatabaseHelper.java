@@ -1057,7 +1057,6 @@ public class DatabaseHelper {
     	    return articles; // Return the list of articles
     	}
 
-
  	
      // Method to retrieve detailed information about a specific article
      public String getArticleDetailsById(long id) throws Exception {
@@ -1101,6 +1100,29 @@ public class DatabaseHelper {
          
          return articleDetails.toString();
      }
+     
+     // method to get all grouped articles
+     public List<String[]> getGroupedArticles() throws SQLException {
+ 	    String query = "SELECT id, title, groups FROM articles";
+ 	    List<String[]> articles = new ArrayList<>(); // List to store article information
+
+ 	    try (Statement stmt = connection.createStatement();
+ 	         ResultSet rs = stmt.executeQuery(query)) {
+ 	    	
+ 	        while (rs.next()) {
+ 	        	String id = rs.getString("id");         // Retrieve the article id
+ 	            String title = rs.getString("title");   // Retrieve the article title
+ 	            String groups = rs.getString("groups"); // Retrieve the article groups
+ 	            
+ 	            // array to store grouped articles
+ 	            String[] articleInfo = {id, title, groups};
+ 	            articles.add(articleInfo); // Add array to the list
+
+ 	        }
+ 	    }
+ 	    
+ 	    return articles; // Return the list of articles
+ 	}
 
      public boolean insertArticle(String title, String headers, String groups, boolean admin, boolean instructor, boolean student, String abstractText, String keywords, String body, String references) throws Exception {
     	    // Create the articles table if it does not exist already

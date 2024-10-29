@@ -37,12 +37,14 @@ public class ArticlesPage extends VBox {
 	private Button listbutton = new Button ("List Articles");
 	private Button updatebutton = new Button ("Update Article");
 	private Button returnbutton = new Button ("Return to Main");
+	private Button listGroupButton = new Button ("List Grouped Articles");
 	private TextField deleteField = new TextField();
 	private TextField viewField = new TextField();
 	private TextField updateField = new TextField();
 	private TextField backupField = new TextField();
 	private TextField backupGroupField = new TextField();
 	private TextField restoreField = new TextField();
+	private TextField listGroupField = new TextField();
 	
 	// String to know which page to return to
 	private String prev;
@@ -95,6 +97,8 @@ public class ArticlesPage extends VBox {
         updatebutton.setFont(Font.font(null, 14));
         viewbutton.setTextFill(Color.BLACK);
         viewbutton.setFont(Font.font(null, 14));
+        listGroupButton.setTextFill(Color.BLACK);
+        listGroupButton.setFont(Font.font(null, 14));
         
         // Set prompt texts for text fields
         deleteField.setPromptText("Article ID to delete");
@@ -102,7 +106,8 @@ public class ArticlesPage extends VBox {
         viewField.setPromptText("Article ID to view");
         backupField.setPromptText("File to backup to"); 
         backupGroupField.setPromptText("");
-        restoreField.setPromptText("File to restore from"); 
+        restoreField.setPromptText("File to restore from");
+        listGroupField.setPromptText("Group Name to List");
         
         // Create a GridPane to arrange the UI components
         GridPane articlesPane = new GridPane();
@@ -129,6 +134,8 @@ public class ArticlesPage extends VBox {
         articlesPane.add(restoreField, 0, 9);
         articlesPane.add(restorebutton, 1, 9);
         articlesPane.add(returnbutton, 0, 12);
+        articlesPane.add(listGroupField, 0, 10);
+        articlesPane.add(listGroupButton, 1, 10);
 
         // Set the VBox to the center of the BorderPane
         mainPane.setCenter(articlesPane);
@@ -146,6 +153,7 @@ public class ArticlesPage extends VBox {
         viewbutton.setOnAction(e -> viewArticle());
         backupbutton.setOnAction(e -> backupArticles());
         restorebutton.setOnAction(e -> restoreArticles());
+        listGroupButton.setOnAction(e -> viewArticleGroup());
     }
     
     private void returnToPage(String prev) {
@@ -218,6 +226,29 @@ public class ArticlesPage extends VBox {
 			e.printStackTrace();
 		}
     }
+    
+    // Method to view the articles within a group (Not working)
+    private void viewArticleGroup() {
+    	 if (listGroupField.getText().isEmpty()) {
+             warning.setText("Warning: group name needed to view");
+             warning.setTextFill(Color.RED);
+             return;
+         }
+    	 try {
+    	        // Get the group name from listGroupField
+    	        String groupName = listGroupField.getText();
+    	        //mainApp.viewGroupedArticles(groupName);
+    	       
+
+    	    } catch (Exception e) {
+    	    	String groupName = listGroupField.getText();
+    	        warning.setText("Failed to retrieve articles for " + groupName);
+    	        warning.setTextFill(Color.RED);
+    	        e.printStackTrace();
+    	    }
+    }
+    
+    
     // Method to backup to file
     private void backupArticles() {
     	if (backupField.getText().isEmpty()) {
