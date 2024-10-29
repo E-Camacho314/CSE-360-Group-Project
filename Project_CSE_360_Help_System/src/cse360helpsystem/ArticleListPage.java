@@ -17,13 +17,15 @@ public class ArticleListPage extends VBox {
     private CSE360HelpSystem mainApp;
     private String prev;
     private long id;
+    private List<Long> idList;
     private Label pageTitle = new Label("All Articles");
     private Label warning = new Label("");
     private Button returnButton = new Button("Return to Main");
     private GridPane articlesGrid = new GridPane(); 
 
-    public ArticleListPage(CSE360HelpSystem mainApp, String prev, long id) {
+    public ArticleListPage(CSE360HelpSystem mainApp, String prev, long id, List<Long> idList) {
         this.mainApp = mainApp;
+        this.idList = idList;
         this.prev = prev;
         this.id = id;
         initializeUI();
@@ -50,7 +52,11 @@ public class ArticleListPage extends VBox {
         if (id == 0) {
             List<String> articles = fetchAllArticles();
             displayArticles(articles);
-        } else {
+        } else if(id == -1){
+            pageTitle.setText("Showing Groups");
+        	List<String> articles = fetchAllArticleGroup(idList);
+            displayArticles(articles);
+        }else {
         	pageTitle.setText("Showing Article: " + id);
             viewArticleById(id);
         }
@@ -78,11 +84,27 @@ public class ArticleListPage extends VBox {
         }
         return articles;
     }
-    // 
+    
+    // Fetches a list of all articles with titles, IDs, and abstracts
+    private List<String> fetchAllArticleGroup(List<Long> idList) {
+    	List<String> articles = new ArrayList<>();
+        try {
+            articles = mainApp.databaseHelper.getAllArticlesGroups(idList); 
+        } catch (SQLException e) {
+            warning.setText("Failed to retrieve articles.");
+            e.printStackTrace();
+        }
+        return articles;
+    }
 
     // Displays articles in the GridPane
     private void displayArticles(List<String> articles) {
-        int row = 0;
+        if(articles.isEmpty()) {
+        	pageTitle.setText("No Articles Found");
+        	pageTitle.setTextFill(Color.RED);
+        	return;
+        }
+    	int row = 0;
         articlesGrid.getChildren().clear();
         
         for (String articleInfo : articles) {
@@ -109,41 +131,6 @@ public class ArticleListPage extends VBox {
             warning.setTextFill(Color.RED);
             e.printStackTrace();
         }
-    }
-    
-    // View all of the articles belonging to a specific group
- 	private void viewArticlesInGroup(String groupName) {
- 		try {
- 		// list that holds articles in group
- 		List<String[]> articles = mainApp.databaseHelper.getGroupedArticles();
- 		List<String> groupedArticles = new ArrayList<>(); 
- 		// if article group == groupName add to grouped Articles
- 		for (String[] article : articles) {
- 			String id = article[0];
- 			String title = article[1];
- 			String groups = article[2];
- 			
- 			if (groups != null && groups.contains(groupName) ) {
- 				groupedArticles.add("ID: " + id + ", Title: " + title);
- 			}
- 		}
- 		
- 		if (groupedArticles.isEmpty()) {
-            warning.setText("No articles found in " + groupName + ".");
-            warning.setTextFill(Color.RED);
-        } else {
-            warning.setText("Displaying articles for group: " + groupName + "\n");
-            warning.setTextFill(Color.GREEN);
-            displayArticles(groupedArticles);  // Show only articles in the specified group
-        }
- 		
- 		} catch (Exception e) {
-            warning.setText("Failed to retrieve grouped article details.");
-            warning.setTextFill(Color.RED);
-            e.printStackTrace();
-        }
- 	    
- 	}
- 	
+    }	
 }
 

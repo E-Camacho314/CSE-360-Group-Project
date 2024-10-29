@@ -13,7 +13,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.bouncycastle.util.Arrays;
 
@@ -866,6 +868,55 @@ public class DatabaseHelper {
              return false;
          }
      }
+     
+     // inserts the information from the specified groups in articles table into the user specified file
+     public boolean backupGroup(String filePath, List<Long> idList) throws Exception {
+ 	    if (idList == null || idList.isEmpty()) {
+	        return false;
+	    }
+ 	    
+ 	    // Build the SQL query with IN clause
+	    StringBuilder query = new StringBuilder("SELECT * FROM articles WHERE id IN (");
+	    for (int i = 0; i < idList.size(); i++) {
+	        query.append("?");
+	        if (i < idList.size() - 1) {
+	            query.append(", ");
+	        }
+	    }
+	    query.append(")");
+
+	    // Prepare and execute the statement
+	    try (PreparedStatement stmt = connection.prepareStatement(query.toString())) {
+	        for (int i = 0; i < idList.size(); i++) {
+	            stmt.setLong(i + 1, idList.get(i)); // Set each id in the IN clause
+	        }
+
+	        // creates a filewriter and buffered writer
+	         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
+	              ResultSet resultSet = stmt.executeQuery()) {
+
+	         	// sets the information next to their corresponding subtitle
+	             while (resultSet.next()) {
+	                 writer.write("Title: " + resultSet.getString("title") + "\n");
+	                 writer.write("Headers: " + resultSet.getString("headers") + "\n");
+	                 writer.write("Groups: " + resultSet.getString("groups") + "\n");
+	                 writer.write("Access: " + resultSet.getString("access") + "\n");
+	                 writer.write("Abstract: " + resultSet.getString("abstract") + "\n");
+	                 writer.write("Keywords: " + resultSet.getString("keywords") + "\n");
+	                 writer.write("Body: " + resultSet.getString("body") + "\n");
+	                 writer.write("References: " + resultSet.getString("ref_list") + "\n");
+	                 writer.write("\n");  // Blank line between articles
+	             }
+	             
+	             System.out.println("Articles backup completed successfully.");
+	             return true;
+	             
+	         } catch (SQLException | IOException e) {
+	             System.err.println("Error while backing up articles: " + e.getMessage());
+	             return false;
+	         }
+	    }
+     }
 
      // places information from the user specified file into the articles table
      public boolean restore(String filePath) throws Exception {
@@ -1101,28 +1152,75 @@ public class DatabaseHelper {
          return articleDetails.toString();
      }
      
-     // method to get all grouped articles
-     public List<String[]> getGroupedArticles() throws SQLException {
- 	    String query = "SELECT id, title, groups FROM articles";
- 	    List<String[]> articles = new ArrayList<>(); // List to store article information
+  // Method to get unique article IDs that belong to the specified group(s)
+     public List<Long> getArticlesByGroups(String groupsString) throws SQLException {
+         Set<Long> uniqueArticleIds = new HashSet<>();  // Use a Set to avoid duplicates
+         String[] groupsArray = groupsString.split(","); // Split input groups by comma
 
- 	    try (Statement stmt = connection.createStatement();
- 	         ResultSet rs = stmt.executeQuery(query)) {
- 	    	
- 	        while (rs.next()) {
- 	        	String id = rs.getString("id");         // Retrieve the article id
- 	            String title = rs.getString("title");   // Retrieve the article title
- 	            String groups = rs.getString("groups"); // Retrieve the article groups
- 	            
- 	            // array to store grouped articles
- 	            String[] articleInfo = {id, title, groups};
- 	            articles.add(articleInfo); // Add array to the list
+         String query = "SELECT id, groups FROM articles";
 
- 	        }
- 	    }
- 	    
- 	    return articles; // Return the list of articles
- 	}
+         try (Statement stmt = connection.createStatement();
+              ResultSet rs = stmt.executeQuery(query)) {
+
+             while (rs.next()) {
+                 long articleId = rs.getLong("id");
+                 String articleGroups = rs.getString("groups");
+
+                 for (String group : groupsArray) {
+                     if (articleGroups.contains(group.trim())) { // Check if articleGroups has any of the input groups
+                         uniqueArticleIds.add(articleId);  // Add to Set to ensure uniqueness
+                         break; // Move to the next article if a match is found
+                     }
+                 }
+             }
+         } catch (SQLException e) {
+             System.err.println("Failed to retrieve articles by group(s): " + e.getMessage());
+             throw e;
+         }
+
+         // Convert Set to List and return
+         return new ArrayList<>(uniqueArticleIds);
+     }
+     
+     public List<String> getAllArticlesGroups(List<Long> idList) throws SQLException {
+    	    List<String> articles = new ArrayList<>(); // List to store article information
+
+    	    // Check if idList is empty to avoid unnecessary query
+    	    if (idList == null || idList.isEmpty()) {
+    	        return articles;
+    	    }
+
+    	    // Build the SQL query with IN clause
+    	    StringBuilder query = new StringBuilder("SELECT * FROM articles WHERE id IN (");
+    	    for (int i = 0; i < idList.size(); i++) {
+    	        query.append("?");
+    	        if (i < idList.size() - 1) {
+    	            query.append(", ");
+    	        }
+    	    }
+    	    query.append(")");
+
+    	    // Prepare and execute the statement
+    	    try (PreparedStatement stmt = connection.prepareStatement(query.toString())) {
+    	        for (int i = 0; i < idList.size(); i++) {
+    	            stmt.setLong(i + 1, idList.get(i)); // Set each id in the IN clause
+    	        }
+
+    	        try (ResultSet rs = stmt.executeQuery()) {
+    	            while (rs.next()) {
+    	                long id = rs.getLong("id");
+    	                String title = rs.getString("title");
+    	                String abstractText = rs.getString("abstract");
+
+    	                // Format and add article information to the list
+    	                String articleInfo = "ID: " + id + ", Title: " + title + ", Abstract: " + abstractText;
+    	                articles.add(articleInfo);
+    	            }
+    	        }
+    	    }
+
+    	    return articles; // Return the list of articles
+    }
 
      public boolean insertArticle(String title, String headers, String groups, boolean admin, boolean instructor, boolean student, String abstractText, String keywords, String body, String references) throws Exception {
     	    // Create the articles table if it does not exist already

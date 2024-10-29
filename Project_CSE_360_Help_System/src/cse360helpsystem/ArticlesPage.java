@@ -15,12 +15,17 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+
+import java.util.List;
 import java.util.Optional;
 
 
 public class ArticlesPage extends VBox {
 	// Reference to the main application to facilitate navigation between pages
     private CSE360HelpSystem mainApp;
+    
+    // List of IDs used for group functions
+    private List<Long> idList;
     
     // UI Components
 	private Label welcome = new Label("Articles View");
@@ -43,19 +48,13 @@ public class ArticlesPage extends VBox {
 	private TextField updateField = new TextField();
 	private TextField backupField = new TextField();
 	private TextField backupGroupField = new TextField();
+	private TextField backupFileField = new TextField();
 	private TextField restoreField = new TextField();
 	private TextField listGroupField = new TextField();
 	
 	// String to know which page to return to
 	private String prev;
 
-    /**
-     * Constructor for FinishSetupPage.
-     * Initializes the UI components and sets up the layout.
-     * 
-     * @param mainApp the main application instance for navigation
-     * @param username the username of the user completing the setup
-     */
     public ArticlesPage(CSE360HelpSystem mainApp, String prev) {
         this.mainApp = mainApp;
         this.prev = prev;
@@ -105,7 +104,8 @@ public class ArticlesPage extends VBox {
         updateField.setPromptText("Article ID to update"); 
         viewField.setPromptText("Article ID to view");
         backupField.setPromptText("File to backup to"); 
-        backupGroupField.setPromptText("");
+        backupGroupField.setPromptText("Group(s) to backup");
+        backupFileField.setPromptText("File to backup to");
         restoreField.setPromptText("File to restore from");
         listGroupField.setPromptText("Group Name to List");
         
@@ -131,11 +131,14 @@ public class ArticlesPage extends VBox {
         articlesPane.add(viewbutton, 1, 7);
         articlesPane.add(backupField, 0, 8);
         articlesPane.add(backupbutton, 1, 8);
-        articlesPane.add(restoreField, 0, 9);
-        articlesPane.add(restorebutton, 1, 9);
+        articlesPane.add(backupGroupField, 0, 9);
+        articlesPane.add(backupFileField, 1, 9);
+        articlesPane.add(backupgroupbutton, 2, 9);
+        articlesPane.add(restoreField, 0, 10);
+        articlesPane.add(restorebutton, 1, 10);
         articlesPane.add(returnbutton, 0, 12);
-        articlesPane.add(listGroupField, 0, 10);
-        articlesPane.add(listGroupButton, 1, 10);
+        articlesPane.add(listGroupField, 0, 11);
+        articlesPane.add(listGroupButton, 1, 11);
 
         // Set the VBox to the center of the BorderPane
         mainPane.setCenter(articlesPane);
@@ -149,11 +152,12 @@ public class ArticlesPage extends VBox {
         createbutton.setOnAction(e -> mainApp.showArticleCreatePage(prev, 0));
         updatebutton.setOnAction(e -> handleUpdate());
         deletebutton.setOnAction(e -> handleDelete());
-        listbutton.setOnAction(e -> mainApp.showArticlesListPage(prev, 0));
+        listbutton.setOnAction(e -> mainApp.showArticlesListPage(prev, 0, idList));
         viewbutton.setOnAction(e -> viewArticle());
         backupbutton.setOnAction(e -> backupArticles());
         restorebutton.setOnAction(e -> restoreArticles());
         listGroupButton.setOnAction(e -> viewArticleGroup());
+        backupgroupbutton.setOnAction(e -> backupGroup());
     }
     
     private void returnToPage(String prev) {
@@ -211,7 +215,7 @@ public class ArticlesPage extends VBox {
         try {
             long id = Long.parseLong(viewField.getText());
             if(mainApp.databaseHelper.canUserViewArticle(prev, id)) {
-                mainApp.showArticlesListPage(prev, id);
+                mainApp.showArticlesListPage(prev, id, idList);
             }
             else {
                 warning.setText("Warning: " + prev + " cannot view Article: " + id);
@@ -230,16 +234,15 @@ public class ArticlesPage extends VBox {
     // Method to view the articles within a group (Not working)
     private void viewArticleGroup() {
     	 if (listGroupField.getText().isEmpty()) {
-             warning.setText("Warning: group name needed to view");
+             warning.setText("Warning: Group needed to view");
              warning.setTextFill(Color.RED);
              return;
          }
     	 try {
     	        // Get the group name from listGroupField
     	        String groupName = listGroupField.getText();
-    	        //mainApp.viewGroupedArticles(groupName);
-    	       
-
+    	        idList = mainApp.databaseHelper.getArticlesByGroups(groupName);
+    	        mainApp.showArticlesListPage(prev, -1, idList);
     	    } catch (Exception e) {
     	    	String groupName = listGroupField.getText();
     	        warning.setText("Failed to retrieve articles for " + groupName);
@@ -265,6 +268,38 @@ public class ArticlesPage extends VBox {
 			e.printStackTrace();
 		}
     }
+    
+    // Method to backup groups to file
+    private void backupGroup() {
+    	boolean known = false;
+    	if (backupGroupField.getText().isEmpty()) {
+    		warning.setText("Warning: No Group specified!");
+    		warning.setTextFill(Color.RED);
+    		return;
+    	}
+    	if (backupFileField.getText().isEmpty()) {
+    		warning.setText("Warning: No File specified!");
+    		warning.setTextFill(Color.RED);
+    		return;
+    	}
+    	String file = backupFileField.getText();
+    	String group = backupGroupField.getText();
+    	try {
+    		idList = mainApp.databaseHelper.getArticlesByGroups(group);
+    		known = mainApp.databaseHelper.backupGroup(file, idList);
+    		if(!known) {
+    			warning.setText("No articles found in " + group);
+        		warning.setTextFill(Color.RED);
+    		}
+    		warning.setText("Backed up " + group + " to " + file + "!");
+    		warning.setTextFill(Color.GREEN);
+    		backupGroupField.clear();
+    		backupFileField.clear();
+    	} catch (Exception e) {
+			e.printStackTrace();
+		}
+    }
+    
     private void restoreArticles() {
     	if (restoreField.getText().isEmpty()) {
     		warning.setText("Warning: No file specified!");
@@ -274,12 +309,9 @@ public class ArticlesPage extends VBox {
     	String file = restoreField.getText();
     	
     	Alert firstAlert = new Alert(Alert.AlertType.CONFIRMATION);
-    	Alert secondAlert = new Alert(Alert.AlertType.CONFIRMATION);
     	ButtonType deleteButton = new ButtonType("Delete");
     	ButtonType mergeButton = new ButtonType("Merge");
         ButtonType cancelButton = new ButtonType("Cancel");
-//        ButtonType yesButton = new ButtonType("Accept");
-//        ButtonType noButton = new ButtonType("Cancel");
         
     	firstAlert.setTitle("Confirmation Dialog");
         firstAlert.setHeaderText("Delete current table or merge?");
@@ -309,30 +341,5 @@ public class ArticlesPage extends VBox {
         		System.out.println("User cancelled.");
         	}
         }
-        
-        
-//        if (result.isPresent() && result.get() == acceptButton) {
-//            System.out.println("Delete Tables");
-//            try {
-//            	mainApp.databaseHelper.emptyArticles();
-//            	mainApp.databaseHelper.restore(file);
-//            } catch( Exception e) {
-//            	System.out.println("Not able to do empty/restore operation.");
-//            }
-//        } else {
-//            System.out.println("Don't Delete Tables");
-//            Optional<ButtonType> secondResult = secondAlert.showAndWait();
-//            if (secondResult.isPresent() && secondResult.get() == yesButton) {
-//                System.out.println("Merge Tables");
-//                try {
-//                	mainApp.databaseHelper.mergeArticles(file);
-//                } catch(Exception e){
-//                	System.out.println("Not able to do merge operation.");
-//                }
-//            } else {
-//                System.out.println("Don't Merge Tables.");
-//            }
-//        }
-        
     }
 }

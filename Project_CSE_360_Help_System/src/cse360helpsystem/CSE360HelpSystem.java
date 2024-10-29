@@ -1,6 +1,8 @@
 package cse360helpsystem;
 
 import java.sql.SQLException;
+import java.util.List;
+
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -171,8 +173,8 @@ public class CSE360HelpSystem extends Application
     }
     
     // Displays a page containing a list of information for the articles
-    public void showArticlesListPage(String prev, long id) {
-        ArticleListPage articlelistPage = new ArticleListPage(this, prev, id); // Create a new ListPage instance
+    public void showArticlesListPage(String prev, long id, List<Long> idList) {
+        ArticleListPage articlelistPage = new ArticleListPage(this, prev, id, idList); // Create a new ListPage instance
         root.getChildren().clear();
         root.getChildren().add(articlelistPage);
         System.out.println("Switched to List Page"); // For debugging
