@@ -889,44 +889,47 @@ public class DatabaseHelper {
              return false;
          }
          // insert the information into the table
-         String insertSQL = "INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?)";
+         String insertSQL = "INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?, ? ,?)";
 
          try (BufferedReader br = new BufferedReader(new FileReader(filePath));
-              PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
+        	    PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
 
-             String line;
-             String title = "", authors = "", abstractText = "", keywords = "", body = "", references = "";
-             // parses off the subtitles and grabs the necessary information
-             while ((line = br.readLine()) != null) {
-                 if (line.startsWith("Title: ")) {
-                     title = line.substring(7).trim();
-                 } else if (line.startsWith("Authors: ")) {
-                     authors = line.substring(9).trim();
-                 } else if (line.startsWith("Abstract: ")) {
-                     abstractText = line.substring(10).trim();
-                 } else if (line.startsWith("Keywords: ")) {
-                     keywords = line.substring(10).trim();
-                 } else if (line.startsWith("Body: ")) {
-                     body = line.substring(6).trim();
-                 } else if (line.startsWith("References: ")) {
-                     references = line.substring(11).trim();
-                 } else if (line.isEmpty()) {
-                     // Blank line indicates end of one article, insert into database
-                     preparedStatement.setString(1, title);
-                     preparedStatement.setString(2, authors);
-                     preparedStatement.setString(3, abstractText);
-                     preparedStatement.setString(4, keywords);
-                     preparedStatement.setString(5, body);
-                     preparedStatement.setString(6, references);
-                     preparedStatement.addBatch();  // Add to batch for performance
-                     
-                     // Clear the variables for the next article
-                     title = "";
-                     authors = "";
-                     abstractText = "";
-                     keywords = "";
-                     body = "";
-                     references = "";
+        	    String line;
+        	    String title = "", headers = "", groups = "", access = "";
+        	    String abstractText = "", keywords = "", body = "", references = "";
+
+        	    // Parse the input file line by line
+        	    while ((line = br.readLine()) != null) {
+        	        if (line.startsWith("Title: ")) {
+        	            title = line.substring(7).trim();
+        	        } else if (line.startsWith("Headers: ")) {
+        	            headers = line.substring(9).trim();
+        	        } else if (line.startsWith("Groups: ")) {
+        	            groups = line.substring(8).trim();
+        	        } else if (line.startsWith("Access: ")) {
+        	            access = line.substring(8).trim();
+        	        } else if (line.startsWith("Abstract: ")) {
+        	            abstractText = line.substring(10).trim();
+        	        } else if (line.startsWith("Keywords: ")) {
+        	            keywords = line.substring(10).trim();
+        	        } else if (line.startsWith("Body: ")) {
+        	            body = line.substring(6).trim();
+        	        } else if (line.startsWith("References: ")) {
+        	            references = line.substring(11).trim();
+        	        } else if (line.isEmpty()) {
+        	            // Insert collected data into the database
+        	            preparedStatement.setString(1, title);
+        	            preparedStatement.setString(2, headers);
+        	            preparedStatement.setString(3, groups);
+        	            preparedStatement.setString(4, access);
+        	            preparedStatement.setString(5, abstractText);
+        	            preparedStatement.setString(6, keywords);
+        	            preparedStatement.setString(7, body);
+        	            preparedStatement.setString(8, references);
+        	            preparedStatement.addBatch();  // Add to batch for performance
+
+        	            // Reset variables for the next article
+        	            title = headers = groups = access = abstractText = keywords = body = references = "";
                  }
              }
 
@@ -945,6 +948,93 @@ public class DatabaseHelper {
              return false;
          }
      }
+     
+     public boolean mergeArticles(String filePath) {
+    	    String createTempTableSQL = "CREATE TEMP TABLE IF NOT EXISTS TempArticles ("
+    	            + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+    	            + "title TEXT NOT NULL, "
+    	            + "headers TEXT, "
+    	            + "groups TEXT, "
+    	            + "access TEXT, "
+    	            + "abstract TEXT, "
+    	            + "keywords TEXT, "
+    	            + "body TEXT NOT NULL, "
+    	            + "ref_list TEXT);";
+
+    	    String insertTempSQL = "INSERT INTO TempArticles (title, headers, groups, access, abstract, keywords, body, ref_list) "
+    	                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+    	    String mergeSQL = """
+    	        INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list)
+    	        SELECT t.title, t.headers, t.groups, t.access, t.abstract, t.keywords, t.body, t.ref_list
+    	        FROM TempArticles t
+    	        WHERE NOT EXISTS (
+    	            SELECT 1 FROM articles a WHERE a.title = t.title
+    	        );
+    	    """;
+    	    try {
+    	    	// Create the temporary table
+	             statement.execute(createTempTableSQL);
+	        } catch (SQLException e) {
+	             System.err.println("Error creating articles table: " + e.getMessage());
+	             return false;
+	        }
+    	    try (BufferedReader br = new BufferedReader(new FileReader(filePath));
+            	    PreparedStatement tempStmt = connection.prepareStatement(insertTempSQL)) {
+
+    	        // Read and load the new articles into the temporary table
+    	        String line;
+    	        String title = "", headers = "", groups = "", access = "";
+    	        String abstractText = "", keywords = "", body = "", references = "";
+
+    	        while ((line = br.readLine()) != null) {
+    	            if (line.startsWith("Title: ")) {
+    	                title = line.substring(7).trim();
+    	            } else if (line.startsWith("Headers: ")) {
+    	                headers = line.substring(9).trim();
+    	            } else if (line.startsWith("Groups: ")) {
+    	                groups = line.substring(8).trim();
+    	            } else if (line.startsWith("Access: ")) {
+    	                access = line.substring(8).trim();
+    	            } else if (line.startsWith("Abstract: ")) {
+    	                abstractText = line.substring(10).trim();
+    	            } else if (line.startsWith("Keywords: ")) {
+    	                keywords = line.substring(10).trim();
+    	            } else if (line.startsWith("Body: ")) {
+    	                body = line.substring(6).trim();
+    	            } else if (line.startsWith("References: ")) {
+    	                references = line.substring(11).trim();
+    	            } else if (line.isEmpty()) {
+    	                // Insert the article into the temporary table
+    	                tempStmt.setString(1, title);
+    	                tempStmt.setString(2, headers);
+    	                tempStmt.setString(3, groups);
+    	                tempStmt.setString(4, access);
+    	                tempStmt.setString(5, abstractText);
+    	                tempStmt.setString(6, keywords);
+    	                tempStmt.setString(7, body);
+    	                tempStmt.setString(8, references);
+    	                tempStmt.addBatch();
+
+    	                // Reset the variables for the next article
+    	                title = headers = groups = access = abstractText = keywords = body = references = "";
+    	            }
+    	        }
+
+    	        // Execute batch insertion into the temporary table
+    	        tempStmt.executeBatch();
+
+    	        // Merge the data from TempArticles into the main articles table
+    	        statement.executeUpdate(mergeSQL);
+    	        System.out.println("Merge completed successfully.");
+
+    	        return true;
+
+    	    } catch (SQLException | IOException e) {
+    	        System.err.println("Error during merging: " + e.getMessage());
+    	        return false;
+    	    }
+    	}
      
      // Method to retrieve a limited list of articles (title)
      public List<String> getAllArticlesLimited() throws SQLException {
