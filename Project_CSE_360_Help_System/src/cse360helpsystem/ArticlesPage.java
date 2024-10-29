@@ -5,14 +5,18 @@ import java.sql.SQLException;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Alert;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import java.util.Optional;
+
 
 public class ArticlesPage extends VBox {
 	// Reference to the main application to facilitate navigation between pages
@@ -27,6 +31,7 @@ public class ArticlesPage extends VBox {
 	private Button createbutton = new Button ("Create Article");
 	private Button viewbutton = new Button ("View Article");
 	private Button backupbutton = new Button ("Backup Articles");
+	private Button backupgroupbutton = new Button ("Backup Group");
 	private Button restorebutton = new Button ("Restore Articles");
 	private Button deletebutton = new Button ("Delete Articles");
 	private Button listbutton = new Button ("List Articles");
@@ -36,6 +41,7 @@ public class ArticlesPage extends VBox {
 	private TextField viewField = new TextField();
 	private TextField updateField = new TextField();
 	private TextField backupField = new TextField();
+	private TextField backupGroupField = new TextField();
 	private TextField restoreField = new TextField();
 	
 	// String to know which page to return to
@@ -74,7 +80,9 @@ public class ArticlesPage extends VBox {
         createbutton.setTextFill(Color.BLACK);
         createbutton.setFont(Font.font(null, 14));        
         backupbutton.setTextFill(Color.BLACK);
-        backupbutton.setFont(Font.font(null, 14));    
+        backupbutton.setFont(Font.font(null, 14));
+        backupgroupbutton.setFont(Font.font(null, 14));
+        backupgroupbutton.setTextFill(Color.BLACK);
         restorebutton.setTextFill(Color.BLACK);
         restorebutton.setFont(Font.font(null, 14)); 
         deletebutton.setTextFill(Color.RED);
@@ -93,6 +101,7 @@ public class ArticlesPage extends VBox {
         updateField.setPromptText("Article ID to update"); 
         viewField.setPromptText("Article ID to view");
         backupField.setPromptText("File to backup to"); 
+        backupGroupField.setPromptText("");
         restoreField.setPromptText("File to restore from"); 
         
         // Create a GridPane to arrange the UI components
@@ -135,6 +144,8 @@ public class ArticlesPage extends VBox {
         deletebutton.setOnAction(e -> handleDelete());
         listbutton.setOnAction(e -> mainApp.showArticlesListPage(prev, 0));
         viewbutton.setOnAction(e -> viewArticle());
+        backupbutton.setOnAction(e -> backupArticles());
+        restorebutton.setOnAction(e -> restoreArticles());
     }
     
     private void returnToPage(String prev) {
@@ -210,5 +221,90 @@ public class ArticlesPage extends VBox {
             warning.setTextFill(Color.RED);
         }
     }
+    // Method to backup to file
+    private void backupArticles() {
+    	if (backupField.getText().isEmpty()) {
+    		warning.setText("Warning: No file specified!");
+    		warning.setTextFill(Color.RED);
+    		return;
+    	}
+    	String file = backupField.getText();
+    	try {
+    		mainApp.databaseHelper.backup(file);
+    		warning.setText("Backed up to " + file + "!");
+    		warning.setTextFill(Color.GREEN);
+    	} catch (Exception e) {
+			e.printStackTrace();
+		}
+    }
+    private void restoreArticles() {
+    	if (restoreField.getText().isEmpty()) {
+    		warning.setText("Warning: No file specified!");
+    		warning.setTextFill(Color.RED);
+    		return;
+    	}
+    	String file = restoreField.getText();
+    	
+    	Alert firstAlert = new Alert(Alert.AlertType.CONFIRMATION);
+    	Alert secondAlert = new Alert(Alert.AlertType.CONFIRMATION);
+    	ButtonType deleteButton = new ButtonType("Delete");
+    	ButtonType mergeButton = new ButtonType("Merge");
+        ButtonType cancelButton = new ButtonType("Cancel");
+//        ButtonType yesButton = new ButtonType("Accept");
+//        ButtonType noButton = new ButtonType("Cancel");
+        
+    	firstAlert.setTitle("Confirmation Dialog");
+        firstAlert.setHeaderText("Delete current table or merge?");
+        firstAlert.setContentText("Please choose an option.");
+        firstAlert.getButtonTypes().setAll(deleteButton, mergeButton, cancelButton);
+        
+        // Wait for the user's response
+        Optional<ButtonType> result = firstAlert.showAndWait();
 
+        if (result.isPresent()) {
+        	if (result.get() == deleteButton) {
+        		System.out.println("Delete Table");
+        		try {
+                	mainApp.databaseHelper.emptyArticles();
+                	mainApp.databaseHelper.restore(file);
+                } catch( Exception e) {
+                	System.out.println("Not able to do empty/restore operation.");
+                }
+        	} else if(result.get() == mergeButton) {
+        		System.out.println("Merge Table");
+        		try {
+                	mainApp.databaseHelper.mergeArticles(file);
+                } catch(Exception e){
+                	System.out.println("Not able to do merge operation.");
+                }
+        	} else {
+        		System.out.println("User cancelled.");
+        	}
+        }
+        
+        
+//        if (result.isPresent() && result.get() == acceptButton) {
+//            System.out.println("Delete Tables");
+//            try {
+//            	mainApp.databaseHelper.emptyArticles();
+//            	mainApp.databaseHelper.restore(file);
+//            } catch( Exception e) {
+//            	System.out.println("Not able to do empty/restore operation.");
+//            }
+//        } else {
+//            System.out.println("Don't Delete Tables");
+//            Optional<ButtonType> secondResult = secondAlert.showAndWait();
+//            if (secondResult.isPresent() && secondResult.get() == yesButton) {
+//                System.out.println("Merge Tables");
+//                try {
+//                	mainApp.databaseHelper.mergeArticles(file);
+//                } catch(Exception e){
+//                	System.out.println("Not able to do merge operation.");
+//                }
+//            } else {
+//                System.out.println("Don't Merge Tables.");
+//            }
+//        }
+        
+    }
 }
