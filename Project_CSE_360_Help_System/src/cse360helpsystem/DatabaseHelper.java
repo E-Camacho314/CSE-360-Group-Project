@@ -1179,6 +1179,68 @@ public class DatabaseHelper {
         }
     }
     
+    public boolean updateArticleField(long articleId, String field, String newValue) {
+        String updateSQL = "UPDATE articles SET " + field + " = ? WHERE id = ?";
+        
+        try (PreparedStatement pstmt = connection.prepareStatement(updateSQL)) {
+            pstmt.setString(1, newValue);
+            pstmt.setLong(2, articleId);
+            
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println(field + " updated successfully for article ID: " + articleId);
+                return true;
+            } else {
+                System.out.println("No article found with ID: " + articleId);
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while updating article: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    public boolean canUserViewArticle(String userRole, long articleId) throws SQLException {
+        String query = "SELECT access FROM articles WHERE id = ?";
+        boolean hasAccess = false;
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setLong(1, articleId);
+            
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    String accessRoles = rs.getString("access"); // Get the access string
+
+                    if (accessRoles != null) {
+                        // Split by comma to handle each role-access level pair
+                        String[] rolesAllowed = accessRoles.split(",");
+
+                        for (String roleAccess : rolesAllowed) {
+                            // Split each role-access pair by colon to separate role and access level
+                            String[] roleAccessPair = roleAccess.split(":");
+                            if (roleAccessPair.length == 2) {
+                                String role = roleAccessPair[0].trim();
+                                String accessLevel = roleAccessPair[1].trim();
+
+                                // Check if the user role matches and if access level is '1' (full access)
+                                if (role.equalsIgnoreCase(userRole) && "1".equals(accessLevel)) {
+                                    hasAccess = true;
+                                    break; // Stop loop if access is granted
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Failed to check access: " + e.getMessage());
+            throw e; // Rethrow exception for handling in the calling code
+        }
+        
+        return hasAccess; // Returns true if the user has full access (level '1'), false otherwise
+    }
+
+    
     /**
      * Closes the database connection and associated statement.
      * Should be called when the application is shutting down to release resources.

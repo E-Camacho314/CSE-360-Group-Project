@@ -193,6 +193,7 @@ public class ArticleCreationPage extends VBox {
         	// create article button added if a valid id is not given
         	grid.add(createButton, 0, 11);
             GridPane.setMargin(createButton, new Insets(10, 0, 0, 0));
+            createButton.setOnAction(e -> createHandler());
         }
         else {
         	// update buttons added if the id is given
@@ -213,6 +214,16 @@ public class ArticleCreationPage extends VBox {
             grid.add(bodyButton, 2, 7);
             grid.add(keywordsButton, 2, 8);
             grid.add(referencesButton, 2, 9);
+            
+            // Set action handlers to update database fields
+            titleButton.setOnAction(e -> updateArticleField("title", titleField.getText()));
+            headersButton.setOnAction(e -> updateArticleField("headers", headersField.getText()));
+            groupsButton.setOnAction(e -> updateArticleField("groups", groupsField.getText()));
+            accessButton.setOnAction(e -> updateArticleField("access", getAccessString()));
+            abstractButton.setOnAction(e -> updateArticleField("abstract", abstractField.getText()));
+            bodyButton.setOnAction(e -> updateArticleField("body", bodyField.getText()));
+            keywordsButton.setOnAction(e -> updateArticleField("keywords", keywordsField.getText()));
+            referencesButton.setOnAction(e -> updateArticleField("ref_list", referencesField.getText()));
         }
 
         // Align buttons to the right
@@ -222,10 +233,44 @@ public class ArticleCreationPage extends VBox {
         this.setAlignment(Pos.CENTER);
         this.getChildren().add(grid);
 
-        createButton.setOnAction(e -> createHandler());
         backButton.setOnAction(e -> {
             mainApp.showArticlesPage(prev); // Switch back to the login page
         });
+    }
+    
+    private void updateArticleField(String field, String newValue) {
+        if (newValue.isEmpty()) {
+            messageLabel.setText("Please enter a value for " + field);
+            messageLabel.setTextFill(Color.RED);
+            return;
+        }
+        
+        try {
+            // Call the DatabaseHelper method to update the field in the database
+            boolean success = CSE360HelpSystem.databaseHelper.updateArticleField(id, field, newValue);
+            if (success) {
+                messageLabel.setText(field + " updated successfully.");
+                messageLabel.setTextFill(Color.GREEN);
+            } else {
+                messageLabel.setText("Failed to update " + field + ". Invalid article ID.");
+                messageLabel.setTextFill(Color.RED);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            messageLabel.setText("Error updating " + field + ": " + e.getMessage());
+            messageLabel.setTextFill(Color.RED);
+        }
+    }
+    
+    /**
+     * Builds a string representation of the access levels based on checkbox selections.
+     * 
+     * @return A comma-separated string of access levels for admin, instructor, and student.
+     */
+    private String getAccessString() {
+        return "admin:" + (admin.isSelected() ? "1" : "0") + "," +
+               "instructor:" + (instructor.isSelected() ? "1" : "0") + "," +
+               "student:" + (student.isSelected() ? "1" : "0");
     }
     
     private void createHandler() {

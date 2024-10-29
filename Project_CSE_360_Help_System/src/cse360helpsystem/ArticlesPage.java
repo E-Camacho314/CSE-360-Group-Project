@@ -193,19 +193,6 @@ public class ArticlesPage extends VBox {
         }
     }
 
-    // Method to list all articles
-    private void listArticles() {
-        try {
-            mainApp.databaseHelper.getAllArticlesLimited(); // Call the modified method that prints directly
-            warning.setText("Articles listed successfully.");
-            warning.setTextFill(Color.GREEN);
-        } catch (SQLException e) {
-            warning.setText("Failed to retrieve articles.");
-            warning.setTextFill(Color.RED);
-            e.printStackTrace();
-        }
-    }
-
     // Method to list a specific article by id
     private void viewArticle() {
         if (viewField.getText().isEmpty()) {
@@ -215,11 +202,21 @@ public class ArticlesPage extends VBox {
         }
         try {
             long id = Long.parseLong(viewField.getText());
-            mainApp.showArticlesListPage(prev, id);
+            if(mainApp.databaseHelper.canUserViewArticle(prev, id)) {
+                mainApp.showArticlesListPage(prev, id);
+            }
+            else {
+                warning.setText("Warning: " + prev + " cannot view Article: " + id);
+                warning.setTextFill(Color.RED);
+                return;
+            }
         } catch (NumberFormatException e) {
             warning.setText("Invalid ID format.");
             warning.setTextFill(Color.RED);
-        }
+        } catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
     // Method to backup to file
     private void backupArticles() {
