@@ -19,6 +19,13 @@ import javafx.scene.text.Font;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * <p>ArticlesPage Class</p>
+ * 
+ * <p>Description: The ArticlesPage class manages the Articles Page where users can create, view, update, delete, backup, and restore articles.</p>
+ * 
+ * <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
+ */
 
 public class ArticlesPage extends VBox {
 	// Reference to the main application to facilitate navigation between pages
@@ -55,6 +62,13 @@ public class ArticlesPage extends VBox {
 	// String to know which page to return to
 	private String prev;
 
+	 /**
+     * Constructor for ArticlesPage.
+     * Initializes the UI components and sets up the layout.
+     * 
+     * @param mainApp the main application instance to facilitate page navigation and database access
+     * @param prev string to point at previous page
+     */
     public ArticlesPage(CSE360HelpSystem mainApp, String prev) {
         this.mainApp = mainApp;
         this.prev = prev;
@@ -160,6 +174,7 @@ public class ArticlesPage extends VBox {
         backupgroupbutton.setOnAction(e -> backupGroup());
     }
     
+    // Method to handle switching to previous page
     private void returnToPage(String prev) {
     	if(prev.equals("admin")) {
     		mainApp.showAdminPage();
@@ -169,6 +184,7 @@ public class ArticlesPage extends VBox {
     	}
     }
 
+    // Method to update an article
     private void handleUpdate() {
     	if(updateField.getText().isEmpty()) {
     		warning.setText("Warning: ID needed");	
@@ -226,7 +242,6 @@ public class ArticlesPage extends VBox {
             warning.setText("Invalid ID format.");
             warning.setTextFill(Color.RED);
         } catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }
@@ -300,6 +315,7 @@ public class ArticlesPage extends VBox {
 		}
     }
     
+    // Method to restore an article
     private void restoreArticles() {
     	if (restoreField.getText().isEmpty()) {
     		warning.setText("Warning: No file specified!");

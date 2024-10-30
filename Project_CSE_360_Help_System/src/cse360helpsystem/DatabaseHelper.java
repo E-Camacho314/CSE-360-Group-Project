@@ -801,7 +801,7 @@ public class DatabaseHelper {
         }
     }
     
- // Check if articles is empty
+    // Check if articles is empty
  	public boolean isArticlesEmpty() throws SQLException {
  		// creates new articles table if the table is already empty
         String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
@@ -1000,6 +1000,7 @@ public class DatabaseHelper {
          }
      }
      
+     // Method to create an article from a file
      public boolean mergeArticles(String filePath) {
     	    String createTempTableSQL = "CREATE TEMP TABLE IF NOT EXISTS TempArticles ("
     	            + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -1152,7 +1153,7 @@ public class DatabaseHelper {
          return articleDetails.toString();
      }
      
-  // Method to get unique article IDs that belong to the specified group(s)
+     // Method to get unique article IDs that belong to the specified group(s)
      public List<Long> getArticlesByGroups(String groupsString) throws SQLException {
          Set<Long> uniqueArticleIds = new HashSet<>();  // Use a Set to avoid duplicates
          String[] groupsArray = groupsString.split(","); // Split input groups by comma
@@ -1222,6 +1223,7 @@ public class DatabaseHelper {
     	    return articles; // Return the list of articles
     }
 
+     // Method to insert an article into the table of articles
      public boolean insertArticle(String title, String headers, String groups, boolean admin, boolean instructor, boolean student, String abstractText, String keywords, String body, String references) throws Exception {
     	    // Create the articles table if it does not exist already
     	    String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
@@ -1299,6 +1301,7 @@ public class DatabaseHelper {
         }
     }
     
+    // Method to update a specific entry of an article
     public boolean updateArticleField(long articleId, String field, String newValue) {
         String updateSQL = "UPDATE articles SET " + field + " = ? WHERE id = ?";
         
@@ -1320,6 +1323,7 @@ public class DatabaseHelper {
         }
     }
     
+    // Method to compare user access to a specifc article
     public boolean canUserViewArticle(String userRole, long articleId) throws SQLException {
         String query = "SELECT access FROM articles WHERE id = ?";
         boolean hasAccess = false;

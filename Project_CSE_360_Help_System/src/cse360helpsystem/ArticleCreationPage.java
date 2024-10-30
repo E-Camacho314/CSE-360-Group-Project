@@ -14,9 +14,9 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- * <p>ArticleCreationPAge Class</p>
+ * <p>ArticleCreationPage Class</p>
  * 
- * <p>Description: </p>
+ * <p>Description: The ArticleCreationPage class represents a page in the CSE360HelpSystem that handles the creation of an article.</p>
  * 
  * <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
  */
@@ -25,9 +25,11 @@ public class ArticleCreationPage extends VBox {
 	// Reference to the main application instance
     private CSE360HelpSystem mainApp;
     
-    // UI Components
+    // Class variables
     private String prev;
-    private long id; 
+    private long id;
+    
+    // UI Components for input fields
     private Label titleLabel;
     private Label title2Label;
     private Label headersLabel;
@@ -37,6 +39,8 @@ public class ArticleCreationPage extends VBox {
     private Label bodyLabel;
     private Label keywordsLabel;
     private Label referencesLabel;
+    
+    // UI Components for data entry
     private TextField titleField;
     private TextField headersField;
     private TextField groupsField;
@@ -44,6 +48,8 @@ public class ArticleCreationPage extends VBox {
     private TextField bodyField;
     private TextField keywordsField;
     private TextField referencesField;
+    
+    // Buttons for updating individual fields and submitting forms
     private Button titleButton = new Button ("Update Title");
     private Button headersButton = new Button ("Update Headers");
     private Button groupsButton = new Button ("Update Groups");
@@ -54,6 +60,8 @@ public class ArticleCreationPage extends VBox {
     private Button referencesButton = new Button ("Update References");
     private Button createButton;
     private Button backButton;
+    
+    // CheckBoxes for role-based access control
 	private CheckBox admin = new CheckBox ("Admin");
 	private CheckBox instructor = new CheckBox ("Instructor");
 	private CheckBox student = new CheckBox ("Student");
@@ -92,6 +100,7 @@ public class ArticleCreationPage extends VBox {
             titleLabel = new Label("Update Article");
         }
         
+    	// Setting font and color for title label
         titleLabel.setTextFill(Color.BLACK);
         titleLabel.setFont(Font.font(16));
 
@@ -238,6 +247,7 @@ public class ArticleCreationPage extends VBox {
         });
     }
     
+    // Method to handle updating a specifc data entry of an article
     private void updateArticleField(String field, String newValue) {
         if (newValue.isEmpty()) {
             messageLabel.setText("Please enter a value for " + field);
@@ -273,6 +283,7 @@ public class ArticleCreationPage extends VBox {
                "student:" + (student.isSelected() ? "1" : "0");
     }
     
+    // Method that handles the creation of a new article entry into the database
     private void createHandler() {
 		
     	// Necessary variables

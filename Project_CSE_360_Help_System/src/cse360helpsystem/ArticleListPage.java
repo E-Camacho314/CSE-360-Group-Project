@@ -13,7 +13,17 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
+/**
+ * <p>ArticleListPage Class</p>
+ * 
+ * <p>Description: The ArticleListPage class represents a page in the CSE360HelpSystem that displays a list of articles from the database. </p>
+ * 
+ * <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
+ */
+
 public class ArticleListPage extends VBox {
+	
+	// UI components
     private CSE360HelpSystem mainApp;
     private String prev;
     private long id;
@@ -23,6 +33,15 @@ public class ArticleListPage extends VBox {
     private Button returnButton = new Button("Return to Main");
     private GridPane articlesGrid = new GridPane(); 
 
+     /**
+     * Constructor for ArticleListPage.
+     * Initializes the page, sets up the table with columns, loads the data, and configures the layout.
+     * 
+     * @param mainApp the main application instance to facilitate page navigation and database access
+     * @param prev string to point at previous page
+     * @param id ID of the article to display
+     * @param idList list of articles to be displayed by id
+     */
     public ArticleListPage(CSE360HelpSystem mainApp, String prev, long id, List<Long> idList) {
         this.mainApp = mainApp;
         this.idList = idList;
@@ -31,13 +50,16 @@ public class ArticleListPage extends VBox {
         initializeUI();
     }
 
+    // Method to initialize the UI components and layout
     private void initializeUI() {
         BorderPane mainPane = new BorderPane();
         
+        // Set page title properties
         pageTitle.setTextFill(Color.BLACK);
         pageTitle.setFont(Font.font(null, 20));
         warning.setTextFill(Color.RED);
 
+        // Set return button properties and action
         returnButton.setTextFill(Color.BLACK);
         returnButton.setFont(Font.font(null, 14));
         returnButton.setOnAction(e -> mainApp.showArticlesPage(prev));
