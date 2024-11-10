@@ -1,18 +1,9 @@
-Title: 3
-Headers: 3
-Groups: 2
-Access: admin:1,instructor:0,student:1
-Abstract: 3
-Keywords: 3
-Body: 3
-References: 3
-
-Title: 2
+Title: 1
 Headers: 2
 Groups: 1,2
 Access: admin:1,instructor:0,student:1
-Abstract: 2
-Keywords: 2
-Body: 2
-References: 2
+Abstract: 1
+Keywords: 1
+Body: 1
+References: 1
 

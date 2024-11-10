@@ -46,7 +46,8 @@ public class AdminPage extends HBox {
 	private Button listbutton = new Button ("List Users");
 	private Button changepermsbutton = new Button ("Update Roles");
 	private Button logoutbutton = new Button ("Log Out");
-	private Button articlesbutton = new Button ("Articles");
+	private Button articlesbutton = new Button ("Article View");
+	private Button specialbutton = new Button ("Special Access View");
 	private CheckBox admin1 = new CheckBox ("Admin");
 	private CheckBox instructor1 = new CheckBox ("Instructor");
 	private CheckBox student1 = new CheckBox ("Student");
@@ -57,6 +58,7 @@ public class AdminPage extends HBox {
 	private TextField permsField = new TextField();
 	private TextField resetField = new TextField();
 	private TextField inviteField = new TextField();
+	private TextField specialField = new TextField();
 	private String user;
 	private String current = "admin";
 	private boolean confirmation;
@@ -96,12 +98,15 @@ public class AdminPage extends HBox {
         logoutbutton.setFont(Font.font(null, 14));
         articlesbutton.setTextFill(Color.BLACK);
         articlesbutton.setFont(Font.font(null, 14));
+        specialbutton.setTextFill(Color.BLACK);
+        specialbutton.setFont(Font.font(null, 14));
         
         // Set prompt texts for text fields
         deleteField.setPromptText("Username to delete");
         inviteField.setPromptText("User to invite");
         resetField.setPromptText("Username to reset");
         permsField.setPromptText("User to change Roles");     
+        specialField.setPromptText("Select Group to View");   
         
         // Create a GridPane to arrange the UI components
         GridPane adminPane = new GridPane();
@@ -131,8 +136,10 @@ public class AdminPage extends HBox {
         adminPane.add(instructor, 0, 10);
         adminPane.add(student, 1, 10);
         adminPane.add(admin, 0, 11);
-        adminPane.add(logoutbutton, 0, 12);
-        adminPane.add(articlesbutton, 1, 12);
+        adminPane.add(specialField, 0, 12);
+        adminPane.add(specialbutton, 1, 12);
+        adminPane.add(logoutbutton, 0, 13);
+        adminPane.add(articlesbutton, 1, 13);
 
         // Set the VBox to the center of the BorderPane
         mainPane.setCenter(adminPane);
