@@ -32,7 +32,7 @@ import javafx.geometry.Pos;
 public class CSE360HelpSystem extends Application
 {
 	// Constants for window dimensions
-    public static final int WIDTH = 500, HEIGHT = 500;
+    public static final int WIDTH = 600, HEIGHT = 600;
     
     // Singleton instance of the DatabaseHelper class to manage database connections
     public static DatabaseHelper databaseHelper;
@@ -110,6 +110,13 @@ public class CSE360HelpSystem extends Application
         ArticlesPage articlesPage = new ArticlesPage(this, prev); // Pass it to ArticlesPage
         root.getChildren().clear();
         root.getChildren().add(articlesPage);
+    }
+	
+	// Displays the Search page for searching articles
+	public void showSearchPage(String prev) {
+        SearchPage searchPage = new SearchPage(this, prev); // Pass it to ArticlesPage
+        root.getChildren().clear();
+        root.getChildren().add(searchPage);
     }
 	    
     // Displays the login page
@@ -200,6 +207,7 @@ public class CSE360HelpSystem extends Application
 			databaseHelper.emptyDatabase();		// Empty the database for testing purposes
 			databaseHelper.closeConnection();
 			databaseHelper.connectToDatabase();  // Connect to the database
+			databaseHelper.logoutAllUsers();
 		    launch(args);
 		} catch (SQLException e) {
 			// Handle SQL exceptions and print error message

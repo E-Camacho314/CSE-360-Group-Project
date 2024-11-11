@@ -67,7 +67,8 @@ public class DatabaseHelper {
                 + "admin INTEGER, "
                 + "instructor INTEGER, "
                 + "student INTEGER, "
-                + "flag INTEGER"
+                + "flag INTEGER, "
+                + "isloggedin INTEGER"
                 + ");";
         statement.execute(userTable);
         
@@ -98,6 +99,10 @@ public class DatabaseHelper {
                 + "headers TEXT, "  // Added commas between columns
                 + "groups TEXT, "
                 + "access TEXT, "
+                + "beginner INTEGER, "
+                + "intermediate INTEGER, "
+                + "advanced INTEGER, "
+                + "expert INTEGER, "
                 + "abstract TEXT, "
                 + "keywords TEXT, "
                 + "body TEXT NOT NULL, "
@@ -153,6 +158,127 @@ public class DatabaseHelper {
         }
         System.out.println("Empty");
         return true;
+    }
+    
+    /**
+     * Logs in a user by setting the isloggedin column to 1.
+     * @param username the username of the user to log in
+     * @param password the password of the user to log in
+     * @return true if login is successful, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
+    public boolean loginUser(String username, String password) throws SQLException {
+        String query = "SELECT * FROM cse360users WHERE username = ? AND password = ?";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, username);
+            statement.setString(2, password);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                // Check if the user is already logged in
+                if (resultSet.getInt("isloggedin") == 1) {
+                    System.out.println("User is already logged in.");
+                    return false;
+                }
+
+                // Update the user's isloggedin status to 1
+                String updateQuery = "UPDATE cse360users SET isloggedin = 1 WHERE username = ?";
+                try (PreparedStatement updateStatement = connection.prepareStatement(updateQuery)) {
+                    updateStatement.setString(1, username);
+                    updateStatement.executeUpdate();
+                }
+
+                System.out.println("Login successful for user: " + username);
+                return true;
+            } else {
+                System.out.println("Invalid username or password.");
+                return false;
+            }
+        }
+    }
+
+    /**
+     * Logs out a user by setting the isloggedin column to 0.
+     * @param username the username of the user to log out
+     * @return true if logout is successful, false otherwise
+     * @throws SQLException if a database access error occurs
+     */
+    public void logoutUser() {
+        String findLoggedInUser = "SELECT id FROM cse360users WHERE isloggedin = 1;";
+        String updateLogout = "UPDATE cse360users SET isloggedin = 0 WHERE id = ?;";
+        
+        try (PreparedStatement findUserStmt = connection.prepareStatement(findLoggedInUser);
+             PreparedStatement updateLogoutStmt = connection.prepareStatement(updateLogout)) {
+            
+            ResultSet rs = findUserStmt.executeQuery();
+            
+            if (rs.next()) {  // If a logged-in user is found
+                int userId = rs.getInt("id");
+                
+                // Set the isloggedin flag to 0 for the current user
+                updateLogoutStmt.setInt(1, userId);
+                updateLogoutStmt.executeUpdate();
+                System.out.println("User with ID " + userId + " has been logged out.");
+            } else {
+                System.out.println("No user is currently logged in.");
+            }
+            
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    /**
+     * Logs out all users by setting the isloggedin column to 0 for all users.
+     * @throws SQLException if a database access error occurs
+     */
+    public void logoutAllUsers() throws SQLException {
+        String query = "UPDATE cse360users SET isloggedin = 0";
+        try (Statement statement = connection.createStatement()) {
+            int rowsAffected = statement.executeUpdate(query);
+            System.out.println("Logged out all users. Total affected rows: " + rowsAffected);
+        }
+    }
+    
+    // Finds and returns the username of the user who is currently logged in
+    public String findLoggedInUser() {
+        String findLoggedInUserQuery = "SELECT username FROM cse360users WHERE isloggedin = 1;";
+        
+        try (PreparedStatement findUserStmt = connection.prepareStatement(findLoggedInUserQuery)) {
+            
+            ResultSet rs = findUserStmt.executeQuery();
+            
+            if (rs.next()) {  // If a logged-in user is found
+                return rs.getString("username");
+            }
+            
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        
+        // If no user is logged in
+        return null;
+    }
+    
+    // checks if there is more than one admin in existence, returns true if so
+    public boolean moreThanOneAdmin() {
+        String countAdminsQuery = "SELECT COUNT(*) AS adminCount FROM cse360users WHERE admin = 1;";
+        
+        try (PreparedStatement countAdminsStmt = connection.prepareStatement(countAdminsQuery)) {
+            
+            ResultSet rs = countAdminsStmt.executeQuery();
+            
+            if (rs.next()) {  // Check if we got a result
+                int adminCount = rs.getInt("adminCount");
+                return adminCount > 1;  // Return true if more than one admin exists
+            }
+            
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        
+        // Return false if there's one or zero admins
+        return false;
     }
     
     // Method to update database with a different password in the case of resetting
@@ -810,6 +936,10 @@ public class DatabaseHelper {
                 + "headers TEXT, "  // Added commas between columns
                 + "groups TEXT, "
                 + "access TEXT, "
+                + "beginner INTEGER, "
+                + "intermediate INTEGER, "
+                + "advanced INTEGER, "
+                + "expert INTEGER, "
                 + "abstract TEXT, "
                 + "keywords TEXT, "
                 + "body TEXT NOT NULL, "
@@ -841,7 +971,7 @@ public class DatabaseHelper {
      
      // inserts the information from the articles table into the user specified file
      public boolean backup(String filePath) throws Exception {
-         String query = "SELECT title, headers, groups, access, abstract, keywords, body, ref_list FROM articles";
+         String query = "SELECT title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list FROM articles";
          
          // creates a filewriter and buffered writer
          try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
@@ -853,6 +983,10 @@ public class DatabaseHelper {
                  writer.write("Headers: " + resultSet.getString("headers") + "\n");
                  writer.write("Groups: " + resultSet.getString("groups") + "\n");
                  writer.write("Access: " + resultSet.getString("access") + "\n");
+                 writer.write("Beginner: " + resultSet.getInt("beginner") + "\n");
+                 writer.write("Intermediate: " + resultSet.getInt("intermediate") + "\n");
+                 writer.write("Advanced: " + resultSet.getInt("advanced") + "\n");
+                 writer.write("Expert: " + resultSet.getInt("expert") + "\n");
                  writer.write("Abstract: " + resultSet.getString("abstract") + "\n");
                  writer.write("Keywords: " + resultSet.getString("keywords") + "\n");
                  writer.write("Body: " + resultSet.getString("body") + "\n");
@@ -901,6 +1035,10 @@ public class DatabaseHelper {
 	                 writer.write("Headers: " + resultSet.getString("headers") + "\n");
 	                 writer.write("Groups: " + resultSet.getString("groups") + "\n");
 	                 writer.write("Access: " + resultSet.getString("access") + "\n");
+	                 writer.write("Beginner: " + resultSet.getInt("beginner") + "\n");
+	                 writer.write("Intermediate: " + resultSet.getInt("intermediate") + "\n");
+	                 writer.write("Advanced: " + resultSet.getInt("advanced") + "\n");
+	                 writer.write("Expert: " + resultSet.getInt("expert") + "\n");
 	                 writer.write("Abstract: " + resultSet.getString("abstract") + "\n");
 	                 writer.write("Keywords: " + resultSet.getString("keywords") + "\n");
 	                 writer.write("Body: " + resultSet.getString("body") + "\n");
@@ -918,73 +1056,87 @@ public class DatabaseHelper {
 	    }
      }
 
-     // places information from the user specified file into the articles table
+  // Method to restore articles from a file into the main articles table
      public boolean restore(String filePath) throws Exception {
-         // Recreate the articles table if it doesn't exist
          String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
-                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
+                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                  + "title TEXT NOT NULL, "
-                 + "headers TEXT, "  // Added commas between columns
+                 + "headers TEXT, "
                  + "groups TEXT, "
                  + "access TEXT, "
+                 + "beginner INTEGER, "
+                 + "intermediate INTEGER, "
+                 + "advanced INTEGER, "
+                 + "expert INTEGER, "
                  + "abstract TEXT, "
                  + "keywords TEXT, "
                  + "body TEXT NOT NULL, "
                  + "ref_list TEXT"
                  + ");";
-         
+
          try {
              statement.execute(createArticlesTableSQL);
          } catch (SQLException e) {
              System.err.println("Error creating articles table: " + e.getMessage());
              return false;
          }
-         // insert the information into the table
-         String insertSQL = "INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?, ? ,?)";
+
+         String insertSQL = "INSERT INTO articles (title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
          try (BufferedReader br = new BufferedReader(new FileReader(filePath));
-        	    PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
+              PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
 
-        	    String line;
-        	    String title = "", headers = "", groups = "", access = "";
-        	    String abstractText = "", keywords = "", body = "", references = "";
+             String line;
+             String title = "", headers = "", groups = "", access = "";
+             int beginner = 0, intermediate = 0, advanced = 0, expert = 0;
+             String abstractText = "", keywords = "", body = "", references = "";
 
-        	    // Parse the input file line by line
-        	    while ((line = br.readLine()) != null) {
-        	        if (line.startsWith("Title: ")) {
-        	            title = line.substring(7).trim();
-        	        } else if (line.startsWith("Headers: ")) {
-        	            headers = line.substring(9).trim();
-        	        } else if (line.startsWith("Groups: ")) {
-        	            groups = line.substring(8).trim();
-        	        } else if (line.startsWith("Access: ")) {
-        	            access = line.substring(8).trim();
-        	        } else if (line.startsWith("Abstract: ")) {
-        	            abstractText = line.substring(10).trim();
-        	        } else if (line.startsWith("Keywords: ")) {
-        	            keywords = line.substring(10).trim();
-        	        } else if (line.startsWith("Body: ")) {
-        	            body = line.substring(6).trim();
-        	        } else if (line.startsWith("References: ")) {
-        	            references = line.substring(11).trim();
-        	        } else if (line.isEmpty()) {
-        	            // Insert collected data into the database
-        	            preparedStatement.setString(1, title);
-        	            preparedStatement.setString(2, headers);
-        	            preparedStatement.setString(3, groups);
-        	            preparedStatement.setString(4, access);
-        	            preparedStatement.setString(5, abstractText);
-        	            preparedStatement.setString(6, keywords);
-        	            preparedStatement.setString(7, body);
-        	            preparedStatement.setString(8, references);
-        	            preparedStatement.addBatch();  // Add to batch for performance
+             while ((line = br.readLine()) != null) {
+                 if (line.startsWith("Title: ")) {
+                     title = line.substring(7).trim();
+                 } else if (line.startsWith("Headers: ")) {
+                     headers = line.substring(9).trim();
+                 } else if (line.startsWith("Groups: ")) {
+                     groups = line.substring(8).trim();
+                 } else if (line.startsWith("Access: ")) {
+                     access = line.substring(8).trim();
+                 } else if (line.startsWith("Beginner: ")) {
+                     beginner = Integer.parseInt(line.substring(10).trim());
+                 } else if (line.startsWith("Intermediate: ")) {
+                     intermediate = Integer.parseInt(line.substring(14).trim());
+                 } else if (line.startsWith("Advanced: ")) {
+                     advanced = Integer.parseInt(line.substring(10).trim());
+                 } else if (line.startsWith("Expert: ")) {
+                     expert = Integer.parseInt(line.substring(8).trim());
+                 } else if (line.startsWith("Abstract: ")) {
+                     abstractText = line.substring(10).trim();
+                 } else if (line.startsWith("Keywords: ")) {
+                     keywords = line.substring(10).trim();
+                 } else if (line.startsWith("Body: ")) {
+                     body = line.substring(6).trim();
+                 } else if (line.startsWith("References: ")) {
+                     references = line.substring(11).trim();
+                 } else if (line.isEmpty()) {
+                     preparedStatement.setString(1, title);
+                     preparedStatement.setString(2, headers);
+                     preparedStatement.setString(3, groups);
+                     preparedStatement.setString(4, access);
+                     preparedStatement.setInt(5, beginner);
+                     preparedStatement.setInt(6, intermediate);
+                     preparedStatement.setInt(7, advanced);
+                     preparedStatement.setInt(8, expert);
+                     preparedStatement.setString(9, abstractText);
+                     preparedStatement.setString(10, keywords);
+                     preparedStatement.setString(11, body);
+                     preparedStatement.setString(12, references);
+                     preparedStatement.addBatch();
 
-        	            // Reset variables for the next article
-        	            title = headers = groups = access = abstractText = keywords = body = references = "";
+                     // Reset variables
+                     title = headers = groups = access = abstractText = keywords = body = references = "";
+                     beginner = intermediate = advanced = expert = 0;
                  }
              }
 
-             // Execute the batch insertion
              int[] rowsAffected = preparedStatement.executeBatch();
              if (rowsAffected.length > 0) {
                  System.out.println("Articles restored successfully.");
@@ -999,94 +1151,105 @@ public class DatabaseHelper {
              return false;
          }
      }
-     
-     // Method to create an article from a file
+
+     // Method to merge articles from a file into the main articles table
      public boolean mergeArticles(String filePath) {
-    	    String createTempTableSQL = "CREATE TEMP TABLE IF NOT EXISTS TempArticles ("
-    	            + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-    	            + "title TEXT NOT NULL, "
-    	            + "headers TEXT, "
-    	            + "groups TEXT, "
-    	            + "access TEXT, "
-    	            + "abstract TEXT, "
-    	            + "keywords TEXT, "
-    	            + "body TEXT NOT NULL, "
-    	            + "ref_list TEXT);";
+         String createTempTableSQL = "CREATE TEMP TABLE IF NOT EXISTS TempArticles ("
+                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                 + "title TEXT NOT NULL, "
+                 + "headers TEXT, "
+                 + "groups TEXT, "
+                 + "access TEXT, "
+                 + "beginner INTEGER, "
+                 + "intermediate INTEGER, "
+                 + "advanced INTEGER, "
+                 + "expert INTEGER, "
+                 + "abstract TEXT, "
+                 + "keywords TEXT, "
+                 + "body TEXT NOT NULL, "
+                 + "ref_list TEXT);";
 
-    	    String insertTempSQL = "INSERT INTO TempArticles (title, headers, groups, access, abstract, keywords, body, ref_list) "
-    	                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+         String insertTempSQL = "INSERT INTO TempArticles (title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    	    String mergeSQL = """
-    	        INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list)
-    	        SELECT t.title, t.headers, t.groups, t.access, t.abstract, t.keywords, t.body, t.ref_list
-    	        FROM TempArticles t
-    	        WHERE NOT EXISTS (
-    	            SELECT 1 FROM articles a WHERE a.title = t.title
-    	        );
-    	    """;
-    	    try {
-    	    	// Create the temporary table
-	             statement.execute(createTempTableSQL);
-	        } catch (SQLException e) {
-	             System.err.println("Error creating articles table: " + e.getMessage());
-	             return false;
-	        }
-    	    try (BufferedReader br = new BufferedReader(new FileReader(filePath));
-            	    PreparedStatement tempStmt = connection.prepareStatement(insertTempSQL)) {
+         String mergeSQL = """
+             INSERT INTO articles (title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list)
+             SELECT t.title, t.headers, t.groups, t.access, t.beginner, t.intermediate, t.advanced, t.expert, t.abstract, t.keywords, t.body, t.ref_list
+             FROM TempArticles t
+             WHERE NOT EXISTS (
+                 SELECT 1 FROM articles a WHERE a.title = t.title
+             );
+         """;
 
-    	        // Read and load the new articles into the temporary table
-    	        String line;
-    	        String title = "", headers = "", groups = "", access = "";
-    	        String abstractText = "", keywords = "", body = "", references = "";
+         try {
+             statement.execute(createTempTableSQL);
+         } catch (SQLException e) {
+             System.err.println("Error creating temporary articles table: " + e.getMessage());
+             return false;
+         }
 
-    	        while ((line = br.readLine()) != null) {
-    	            if (line.startsWith("Title: ")) {
-    	                title = line.substring(7).trim();
-    	            } else if (line.startsWith("Headers: ")) {
-    	                headers = line.substring(9).trim();
-    	            } else if (line.startsWith("Groups: ")) {
-    	                groups = line.substring(8).trim();
-    	            } else if (line.startsWith("Access: ")) {
-    	                access = line.substring(8).trim();
-    	            } else if (line.startsWith("Abstract: ")) {
-    	                abstractText = line.substring(10).trim();
-    	            } else if (line.startsWith("Keywords: ")) {
-    	                keywords = line.substring(10).trim();
-    	            } else if (line.startsWith("Body: ")) {
-    	                body = line.substring(6).trim();
-    	            } else if (line.startsWith("References: ")) {
-    	                references = line.substring(11).trim();
-    	            } else if (line.isEmpty()) {
-    	                // Insert the article into the temporary table
-    	                tempStmt.setString(1, title);
-    	                tempStmt.setString(2, headers);
-    	                tempStmt.setString(3, groups);
-    	                tempStmt.setString(4, access);
-    	                tempStmt.setString(5, abstractText);
-    	                tempStmt.setString(6, keywords);
-    	                tempStmt.setString(7, body);
-    	                tempStmt.setString(8, references);
-    	                tempStmt.addBatch();
+         try (BufferedReader br = new BufferedReader(new FileReader(filePath));
+              PreparedStatement tempStmt = connection.prepareStatement(insertTempSQL)) {
 
-    	                // Reset the variables for the next article
-    	                title = headers = groups = access = abstractText = keywords = body = references = "";
-    	            }
-    	        }
+             String line;
+             String title = "", headers = "", groups = "", access = "";
+             int beginner = 0, intermediate = 0, advanced = 0, expert = 0;
+             String abstractText = "", keywords = "", body = "", references = "";
 
-    	        // Execute batch insertion into the temporary table
-    	        tempStmt.executeBatch();
+             while ((line = br.readLine()) != null) {
+                 if (line.startsWith("Title: ")) {
+                     title = line.substring(7).trim();
+                 } else if (line.startsWith("Headers: ")) {
+                     headers = line.substring(9).trim();
+                 } else if (line.startsWith("Groups: ")) {
+                     groups = line.substring(8).trim();
+                 } else if (line.startsWith("Access: ")) {
+                     access = line.substring(8).trim();
+                 } else if (line.startsWith("Beginner: ")) {
+                     beginner = Integer.parseInt(line.substring(10).trim());
+                 } else if (line.startsWith("Intermediate: ")) {
+                     intermediate = Integer.parseInt(line.substring(14).trim());
+                 } else if (line.startsWith("Advanced: ")) {
+                     advanced = Integer.parseInt(line.substring(10).trim());
+                 } else if (line.startsWith("Expert: ")) {
+                     expert = Integer.parseInt(line.substring(8).trim());
+                 } else if (line.startsWith("Abstract: ")) {
+                     abstractText = line.substring(10).trim();
+                 } else if (line.startsWith("Keywords: ")) {
+                     keywords = line.substring(10).trim();
+                 } else if (line.startsWith("Body: ")) {
+                     body = line.substring(6).trim();
+                 } else if (line.startsWith("References: ")) {
+                     references = line.substring(11).trim();
+                 } else if (line.isEmpty()) {
+                     tempStmt.setString(1, title);
+                     tempStmt.setString(2, headers);
+                     tempStmt.setString(3, groups);
+                     tempStmt.setString(4, access);
+                     tempStmt.setInt(5, beginner);
+                     tempStmt.setInt(6, intermediate);
+                     tempStmt.setInt(7, advanced);
+                     tempStmt.setInt(8, expert);
+                     tempStmt.setString(9, abstractText);
+                     tempStmt.setString(10, keywords);
+                     tempStmt.setString(11, body);
+                     tempStmt.setString(12, references);
+                     tempStmt.addBatch();
 
-    	        // Merge the data from TempArticles into the main articles table
-    	        statement.executeUpdate(mergeSQL);
-    	        System.out.println("Merge completed successfully.");
+                     title = headers = groups = access = abstractText = keywords = body = references = "";
+                     beginner = intermediate = advanced = expert = 0;
+                 }
+             }
 
-    	        return true;
+             tempStmt.executeBatch();
+             statement.executeUpdate(mergeSQL);
+             System.out.println("Merge completed successfully.");
+             return true;
 
-    	    } catch (SQLException | IOException e) {
-    	        System.err.println("Error during merging: " + e.getMessage());
-    	        return false;
-    	    }
-    	}
+         } catch (SQLException | IOException e) {
+             System.err.println("Error during merging: " + e.getMessage());
+             return false;
+         }
+     }
      
      // Method to retrieve a limited list of articles (title)
      public List<String> getAllArticlesLimited() throws SQLException {
@@ -1125,6 +1288,10 @@ public class DatabaseHelper {
                      String headers = rs.getString("headers");
                      String groups = rs.getString("groups");
                      String access = rs.getString("access");
+                     int beginner = rs.getInt("beginner");
+                     int intermediate = rs.getInt("intermediate");
+                     int advanced = rs.getInt("advanced");
+                     int expert = rs.getInt("expert");
                      String abstractText = rs.getString("abstract");
                      String keywords = rs.getString("keywords");
                      String body = rs.getString("body");
@@ -1136,6 +1303,10 @@ public class DatabaseHelper {
                          .append("Headers: ").append(new String(headers)).append("\n")
                          .append("Groups: ").append(new String(groups)).append("\n")
                          .append("Access: ").append(new String(access)).append("\n")
+                         .append("Beginner: ").append(new String(Integer.toString(beginner))).append("\n")
+                         .append("Intermediate: ").append(new String(Integer.toString(intermediate))).append("\n")
+                         .append("Advanced: ").append(new String(Integer.toString(advanced))).append("\n")
+                         .append("Expert: ").append(new String(Integer.toString(expert))).append("\n")
                          .append("Abstract: ").append(new String(abstractText)).append("\n")
                          .append("Keywords: ").append(new String(keywords)).append("\n")
                          .append("Body: ").append(new String(body)).append("\n")
@@ -1224,7 +1395,7 @@ public class DatabaseHelper {
     }
 
      // Method to insert an article into the table of articles
-     public boolean insertArticle(String title, String headers, String groups, boolean admin, boolean instructor, boolean student, String abstractText, String keywords, String body, String references) throws Exception {
+     public boolean insertArticle(String title, String headers, String groups, boolean admin, boolean instructor, boolean student, boolean beginner, boolean intermediate, boolean advanced, boolean expert, String abstractText, String keywords, String body, String references) throws Exception {
     	    // Create the articles table if it does not exist already
     	    String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
     	            + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -1232,6 +1403,10 @@ public class DatabaseHelper {
     	            + "headers TEXT, "
     	            + "groups TEXT, "
     	            + "access TEXT, "
+    	            + "beginner INTEGER, "
+                    + "intermediate INTEGER, "
+                    + "advanced INTEGER, "
+                    + "expert INTEGER, "
     	            + "abstract TEXT, "
     	            + "keywords TEXT, "
     	            + "body TEXT NOT NULL, "
@@ -1259,8 +1434,8 @@ public class DatabaseHelper {
     	    // Print access string for debugging purposes
     	    System.out.println("Access string: " + access);
 
-    	    // SQL query to insert the article into the database
-    	    String insertSQL = "INSERT INTO articles (title, headers, groups, access, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    	    // SQL query to insert the article into the database, including the beginner, intermediate, advanced, and expert levels
+    	    String insertSQL = "INSERT INTO articles (title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     	    try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
     	        // Set parameters for insertion
@@ -1268,10 +1443,14 @@ public class DatabaseHelper {
     	        preparedStatement.setString(2, headers);
     	        preparedStatement.setString(3, groups);
     	        preparedStatement.setString(4, access);
-    	        preparedStatement.setString(5, abstractText);
-    	        preparedStatement.setString(6, keywords);
-    	        preparedStatement.setString(7, body);
-    	        preparedStatement.setString(8, references);
+    	        preparedStatement.setInt(5, beginner ? 1 : 0);
+    	        preparedStatement.setInt(6, intermediate ? 1 : 0);
+    	        preparedStatement.setInt(7, advanced ? 1 : 0);
+    	        preparedStatement.setInt(8, expert ? 1 : 0);
+    	        preparedStatement.setString(9, abstractText);
+    	        preparedStatement.setString(10, keywords);
+    	        preparedStatement.setString(11, body);
+    	        preparedStatement.setString(12, references);
 
     	        int rowsAffected = preparedStatement.executeUpdate();
     	        if (rowsAffected > 0) {
@@ -1322,6 +1501,36 @@ public class DatabaseHelper {
             return false;
         }
     }
+    
+    // updates the different levels all at once
+    public boolean updateLevels(long id, boolean isBeginner, boolean isIntermediate, boolean isAdvanced, boolean isExpert) {
+        // SQL statement to update levels based on the provided title
+        String updateSQL = "UPDATE articles SET beginner = ?, intermediate = ?, advanced = ?, expert = ? WHERE id = ?";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(updateSQL)) {
+            // Set the levels based on boolean values (1 for true, 0 for false)
+            preparedStatement.setInt(1, isBeginner ? 1 : 0);
+            preparedStatement.setInt(2, isIntermediate ? 1 : 0);
+            preparedStatement.setInt(3, isAdvanced ? 1 : 0);
+            preparedStatement.setInt(4, isExpert ? 1 : 0);
+            preparedStatement.setLong(5, id);
+
+            // Execute the update and check if any rows were affected
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Levels updated successfully for article: " + id);
+                return true;
+            } else {
+                System.out.println("No article found with the id: " + id);
+                return false;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error updating levels: " + e.getMessage());
+            return false;
+        }
+    }
+
     
     // Method to compare user access to a specifc article
     public boolean canUserViewArticle(String userRole, long articleId) throws SQLException {

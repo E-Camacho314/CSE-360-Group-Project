@@ -169,9 +169,21 @@ public class AdminPage extends HBox {
 	            deleteConfirmation(user);
 	            
 	            if (confirmation == true) {
-	            	mainApp.databaseHelper.deleteUser(user);
-	            	warning.setText("User deleted.");
-	            	warning.setTextFill(Color.GREEN);
+	            	if(mainApp.databaseHelper.moreThanOneAdmin()) {
+	            		String current = mainApp.databaseHelper.findLoggedInUser();
+		            	mainApp.databaseHelper.deleteUser(user);
+		            	warning.setText("User deleted.");
+		            	warning.setTextFill(Color.GREEN);
+		            	if(user.equals(current)){
+		            		logout();
+		            	}
+	            	}
+	            	else {
+	            		warning.setText("Only One Admin Exists");
+		            	warning.setTextFill(Color.RED);
+		            	deleteField.clear();
+		            	return;
+	            	}
 	            }
 	        } 
 	        else {
@@ -205,6 +217,7 @@ public class AdminPage extends HBox {
     	codetype.setText("");
     	inviteField.clear();
     	resetField.clear();
+    	mainApp.databaseHelper.logoutUser();
     	mainApp.showLoginPage();
     }
 	

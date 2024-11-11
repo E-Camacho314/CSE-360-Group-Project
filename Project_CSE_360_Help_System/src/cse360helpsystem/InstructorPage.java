@@ -114,8 +114,11 @@ public class InstructorPage extends HBox {
         });
         
         logoutbutton.setOnAction(e -> {
+        	mainApp.databaseHelper.logoutUser();
             mainApp.showLoginPage(); // Switch back to the login page
         });
-
+        searchbutton.setOnAction(e -> {
+        	mainApp.showSearchPage(current);
+        });
 	}
 }

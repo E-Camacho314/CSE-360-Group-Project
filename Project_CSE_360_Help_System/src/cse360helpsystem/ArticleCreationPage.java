@@ -35,6 +35,7 @@ public class ArticleCreationPage extends VBox {
     private Label headersLabel;
     private Label groupsLabel;
     private Label accessLabel;
+    private Label levelLabel;
     private Label abstractLabel;
     private Label bodyLabel;
     private Label keywordsLabel;
@@ -56,6 +57,7 @@ public class ArticleCreationPage extends VBox {
     private Button accessButton = new Button ("Update Access");
     private Button abstractButton = new Button ("Update Abstract");
     private Button bodyButton = new Button ("Update Body");
+    private Button levelButton = new Button ("Update Level");
     private Button keywordsButton = new Button ("Update Keywords");
     private Button referencesButton = new Button ("Update References");
     private Button createButton;
@@ -65,6 +67,11 @@ public class ArticleCreationPage extends VBox {
 	private CheckBox admin = new CheckBox ("Admin");
 	private CheckBox instructor = new CheckBox ("Instructor");
 	private CheckBox student = new CheckBox ("Student");
+	private CheckBox beginner = new CheckBox ("Beginner");
+	private CheckBox intermediate = new CheckBox ("Intermediate");
+	private CheckBox advanced = new CheckBox ("Advanced");
+	private CheckBox expert = new CheckBox ("Expert");
+	private CheckBox all = new CheckBox ("All");
     private Label messageLabel;
 
     /**
@@ -130,6 +137,11 @@ public class ArticleCreationPage extends VBox {
         accessLabel.setTextFill(Color.BLACK);
         accessLabel.setFont(Font.font(14));
         
+        // Level
+        levelLabel = new Label("Difficulty Level:");
+        levelLabel.setTextFill(Color.BLACK);
+        levelLabel.setFont(Font.font(14));
+        
         // Abstract
         abstractLabel = new Label("Abstract:");
         abstractLabel.setTextFill(Color.BLACK);
@@ -188,19 +200,25 @@ public class ArticleCreationPage extends VBox {
         grid.add(student, 1, 5);
         grid.add(abstractLabel, 0, 6);
         grid.add(abstractField, 1, 6);
-        grid.add(bodyLabel, 0, 7);
-        grid.add(bodyField, 1, 7);
-        grid.add(keywordsLabel, 0, 8);
-        grid.add(keywordsField, 1, 8);
-        grid.add(referencesLabel, 0, 9);
-        grid.add(referencesField, 1, 9);
-        grid.add(backButton, 0, 12);
-        grid.add(messageLabel, 0, 10);
+        grid.add(levelLabel, 0, 7);
+        grid.add(beginner, 1, 7);
+        grid.add(intermediate, 2, 7);
+        grid.add(advanced, 0, 8);
+        grid.add(expert, 1, 8);
+        grid.add(all, 2, 8);
+        grid.add(bodyLabel, 0, 9);
+        grid.add(bodyField, 1, 9);
+        grid.add(keywordsLabel, 0, 10);
+        grid.add(keywordsField, 1, 10);
+        grid.add(referencesLabel, 0, 11);
+        grid.add(referencesField, 1, 11);
+        grid.add(backButton, 0, 14);
+        grid.add(messageLabel, 0, 12);
         
         // check if a valid id is given
         if(id == 0) {
         	// create article button added if a valid id is not given
-        	grid.add(createButton, 0, 11);
+        	grid.add(createButton, 0, 13);
             GridPane.setMargin(createButton, new Insets(10, 0, 0, 0));
             createButton.setOnAction(e -> createHandler());
         }
@@ -214,15 +232,17 @@ public class ArticleCreationPage extends VBox {
         	bodyButton.setFont(Font.font(14));
         	keywordsButton.setFont(Font.font(14));
         	referencesButton.setFont(Font.font(14));
+        	levelButton.setFont(Font.font(14));
         	
         	grid.add(titleButton, 2, 1);
             grid.add(headersButton, 2, 2);
             grid.add(groupsButton, 2, 3);
             grid.add(accessButton, 2, 4);
             grid.add(abstractButton, 2, 6);
-            grid.add(bodyButton, 2, 7);
-            grid.add(keywordsButton, 2, 8);
-            grid.add(referencesButton, 2, 9);
+            grid.add(levelButton, 3, 8);
+            grid.add(bodyButton, 2, 9);
+            grid.add(keywordsButton, 2, 10);
+            grid.add(referencesButton, 2, 11);
             
             // Set action handlers to update database fields
             titleButton.setOnAction(e -> updateArticleField("title", titleField.getText()));
@@ -233,6 +253,7 @@ public class ArticleCreationPage extends VBox {
             bodyButton.setOnAction(e -> updateArticleField("body", bodyField.getText()));
             keywordsButton.setOnAction(e -> updateArticleField("keywords", keywordsField.getText()));
             referencesButton.setOnAction(e -> updateArticleField("ref_list", referencesField.getText()));
+            levelButton.setOnAction(e -> updateLevelAccess(id));
         }
 
         // Align buttons to the right
@@ -270,6 +291,31 @@ public class ArticleCreationPage extends VBox {
             messageLabel.setText("Error updating " + field + ": " + e.getMessage());
             messageLabel.setTextFill(Color.RED);
         }
+    }
+    
+    private void updateLevelAccess(long id) {
+    	// Determine selected levels
+        boolean isBeginner = beginner.isSelected();
+        boolean isIntermediate = intermediate.isSelected();
+        boolean isAdvanced = advanced.isSelected();
+        boolean isExpert = expert.isSelected();
+        boolean isAll = all.isSelected();
+
+        // Ensure at least one role is selected
+        if(!isAll) {
+            if (!isBeginner && !isIntermediate && !isAdvanced && !isExpert) {
+                messageLabel.setText("Select at least one level");
+                messageLabel.setTextFill(Color.RED);
+                return;
+            }
+        }
+        else {
+        	isBeginner = true;
+        	isIntermediate = true;
+        	isAdvanced = true;
+        	isExpert = true;
+        }
+        mainApp.databaseHelper.updateLevels(id, isBeginner, isIntermediate, isAdvanced, isExpert);
     }
     
     /**
@@ -324,8 +370,30 @@ public class ArticleCreationPage extends VBox {
             return;
         }
         
+        // Determine selected levels
+        boolean isBeginner = beginner.isSelected();
+        boolean isIntermediate = intermediate.isSelected();
+        boolean isAdvanced = advanced.isSelected();
+        boolean isExpert = expert.isSelected();
+        boolean isAll = all.isSelected();
+
+        // Ensure at least one role is selected
+        if(!isAll) {
+            if (!isBeginner && !isIntermediate && !isAdvanced && !isExpert) {
+                messageLabel.setText("Select at least one level");
+                messageLabel.setTextFill(Color.RED);
+                return;
+            }
+        }
+        else {
+        	isBeginner = true;
+        	isIntermediate = true;
+        	isAdvanced = true;
+        	isExpert = true;
+        }
+        
         try {
-			inserted = mainApp.databaseHelper.insertArticle(title, header, groups, isAdmin, isInstructor, isStudent, abstracts, body, keywords, references);
+			inserted = mainApp.databaseHelper.insertArticle(title, header, groups, isAdmin, isInstructor, isStudent, isBeginner, isIntermediate, isAdvanced, isExpert, abstracts, body, keywords, references);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -344,7 +412,11 @@ public class ArticleCreationPage extends VBox {
             referencesField.clear();
             admin.setSelected(false);
             instructor.setSelected(false);
-            student.setSelected(false);
+            beginner.setSelected(false);
+            intermediate.setSelected(false);
+            advanced.setSelected(false);
+            expert.setSelected(false);
+            all.setSelected(false);
         }
     }
 }
