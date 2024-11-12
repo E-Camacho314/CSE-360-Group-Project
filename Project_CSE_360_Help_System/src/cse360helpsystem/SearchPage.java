@@ -22,7 +22,6 @@ public class SearchPage extends VBox {
     // UI Components
     private Label titleLabel;
     private Label diffLabel;
-    private Label passLabel;
     private Label groupLabel;
     private Label phraseLabel;
     private TextField groupField;
