@@ -126,12 +126,20 @@ public class CSE360HelpSystem extends Application
         System.out.println("Switched to Login Page"); // For debugging
     }
     
-    // Displays the login page
+    // Displays the article creation page
     public void showArticleCreatePage(String prev, long id) {
         ArticleCreationPage articlecreatePage = new ArticleCreationPage(this, prev, id); // Pass it to ArticlesPage
         root.getChildren().clear();
         root.getChildren().add(articlecreatePage);
-        System.out.println("Switched to Login Page"); // For debugging
+        System.out.println("Switched to Article Creation Page"); // For debugging
+    }
+    
+    // Displays the special access group page
+    public void showSpecialAccessPage(String prev, String name, Boolean access) {
+        SpecialAccess specialaccessPage = new SpecialAccess(this, prev, name, access); // Pass it to ArticlesPage
+        root.getChildren().clear();
+        root.getChildren().add(specialaccessPage);
+        System.out.println("Switched to Special Access Page"); // For debugging
     }
     
     // Displays the admin page for admin users
@@ -184,7 +192,7 @@ public class CSE360HelpSystem extends Application
         ArticleListPage articlelistPage = new ArticleListPage(this, prev, id, idList); // Create a new ListPage instance
         root.getChildren().clear();
         root.getChildren().add(articlelistPage);
-        System.out.println("Switched to List Page"); // For debugging
+        System.out.println("Switched to Articles List Page"); // For debugging
     }
     
     // Provides access to the database helper for other parts of the application

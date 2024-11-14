@@ -106,9 +106,31 @@ public class DatabaseHelper {
                 + "abstract TEXT, "
                 + "keywords TEXT, "
                 + "body TEXT NOT NULL, "
-                + "ref_list TEXT"
+                + "ref_list TEXT, "
+                + "specialaccessgroups JSON"
                 + ");";
         statement.execute(articleTable);
+        
+        // table for special access groups
+        String accessTable = "CREATE TABLE IF NOT EXISTS specialaccess ("
+                + "id INTEGER PRIMARY KEY AUTOINCREMENT, "  // Ensures id is a unique long integer
+                + "groupname TEXT, "
+                + "instructors_with_view_access JSON, "       // JSON array for instructors with view access
+                + "instructors_with_admin_access JSON, "   // JSON array for instructors with admin access
+                + "article_ids JSON, "                        // JSON array for article IDs
+                + "students_with_view_access JSON "           // JSON array for students with view access
+                + ");";
+        statement.execute(accessTable);
+        
+        // table for requests from students
+        String requestTable = "CREATE TABLE IF NOT EXISTS requests("
+        		+ "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        		+ "studentid INTEGER, "
+        		+ "username TEXT, "
+        		+ "firstname TEXT, "
+        		+ "request TEXT NOT NULL"
+        		+ ");";
+        statement.execute(requestTable);
     }
 
     /**
@@ -140,6 +162,10 @@ public class DatabaseHelper {
             statement.executeUpdate(dropotherTable);
             String droparticlesTable = "DROP TABLE IF EXISTS articles;";
             statement.executeUpdate(droparticlesTable);
+            String dropaccessTable = "DROP TABLE IF EXISTS specialaccess;";
+            statement.executeUpdate(dropaccessTable);
+            String droprequestTable = "DROP TABLE IF EXISTS requests;";
+            statement.executeUpdate(droprequestTable);
 
         } catch (SQLException e) {
             System.err.println("SQL error while emptying the database: " + e.getMessage());
@@ -160,13 +186,7 @@ public class DatabaseHelper {
         return true;
     }
     
-    /**
-     * Logs in a user by setting the isloggedin column to 1.
-     * @param username the username of the user to log in
-     * @param password the password of the user to log in
-     * @return true if login is successful, false otherwise
-     * @throws SQLException if a database access error occurs
-     */
+    // Logs in a user by setting the isloggedin column to 1.
     public boolean loginUser(String username, String password) throws SQLException {
         String query = "SELECT * FROM cse360users WHERE username = ? AND password = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
@@ -197,12 +217,7 @@ public class DatabaseHelper {
         }
     }
 
-    /**
-     * Logs out a user by setting the isloggedin column to 0.
-     * @param username the username of the user to log out
-     * @return true if logout is successful, false otherwise
-     * @throws SQLException if a database access error occurs
-     */
+    // Logs out a user by setting the isloggedin column to 0.
     public void logoutUser() {
         String findLoggedInUser = "SELECT id FROM cse360users WHERE isloggedin = 1;";
         String updateLogout = "UPDATE cse360users SET isloggedin = 0 WHERE id = ?;";
@@ -228,10 +243,7 @@ public class DatabaseHelper {
         }
     }
 
-    /**
-     * Logs out all users by setting the isloggedin column to 0 for all users.
-     * @throws SQLException if a database access error occurs
-     */
+    // Logs out all users by setting the isloggedin column to 0 for all users.
     public void logoutAllUsers() throws SQLException {
         String query = "UPDATE cse360users SET isloggedin = 0";
         try (Statement statement = connection.createStatement()) {

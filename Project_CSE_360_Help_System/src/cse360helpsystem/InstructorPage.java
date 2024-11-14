@@ -30,7 +30,9 @@ public class InstructorPage extends HBox {
 	private Button logoutbutton = new Button ("Log Out");
 	private Button articlesbutton = new Button ("Articles View");
 	private TextField specialText = new TextField ();
+	private TextField createText = new TextField ();
 	private Button specialbutton = new Button ("Special Access View");
+	private Button createbutton = new Button ("Create Special Access Group");
 	private Button viewallstudentsbutton = new Button ("View All Students");
 	private Button viewstudentsbutton = new Button ("View Students");
 	private TextField viewstudentsText = new TextField ();
@@ -74,6 +76,10 @@ public class InstructorPage extends HBox {
         // Configure the View All Students button
         viewallstudentsbutton.setTextFill(Color.BLACK);
         viewallstudentsbutton.setFont(Font.font(null, 14));
+        
+        // Configure the Create Special Access Group button
+        createbutton.setTextFill(Color.BLACK);
+        createbutton.setFont(Font.font(null, 14));
 
         // Configure the logout button
         logoutbutton.setTextFill(Color.BLACK);
@@ -82,6 +88,7 @@ public class InstructorPage extends HBox {
         // Set prompt texts for text fields
         viewstudentsText.setPromptText("Enter Group to View");
         specialText.setPromptText("Enter Group to View");
+        createText.setPromptText("Enter Group Name");
         
         // Create a GridPane to hold the welcome message and logout button
         GridPane instructPane = new GridPane();
@@ -100,7 +107,9 @@ public class InstructorPage extends HBox {
         instructPane.add(viewallstudentsbutton, 0, 5);
         instructPane.add(specialText, 0, 6);
         instructPane.add(specialbutton, 1, 6);
-        instructPane.add(logoutbutton, 0, 7);
+        instructPane.add(createText, 0, 7);
+        instructPane.add(createbutton, 1, 7);
+        instructPane.add(logoutbutton, 0, 8);
 
         // Place the VBox in the center of the BorderPane
         mainPane.setCenter(instructPane);
@@ -117,8 +126,27 @@ public class InstructorPage extends HBox {
         	mainApp.databaseHelper.logoutUser();
             mainApp.showLoginPage(); // Switch back to the login page
         });
+        
+        specialbutton.setOnAction(e -> {
+        	getSpecialAccess();
+        });
+        
         searchbutton.setOnAction(e -> {
         	mainApp.showSearchPage(current);
         });
+	}
+	
+	private void getSpecialAccess() {
+		String group;
+		if(specialText.getText().isEmpty()) {
+			warning.setText("Enter a Group Name");
+			warning.setTextFill(Color.RED);
+            return;
+		}
+		else {
+			group = specialText.getText();
+		}
+		mainApp.showSpecialAccessPage(current, group, true);
+		specialText.clear();
 	}
 }
