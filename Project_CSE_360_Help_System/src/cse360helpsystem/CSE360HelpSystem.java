@@ -211,9 +211,10 @@ public class CSE360HelpSystem extends Application
     	}
     	try { 
     		databaseHelper = new DatabaseHelper();
-			//databaseHelper.connectToDatabase();
+			databaseHelper.connectToDatabase();
+			databaseHelper.emptySpecial();
 			//databaseHelper.emptyDatabase();		// Empty the database for testing purposes
-			//databaseHelper.closeConnection();
+			databaseHelper.closeConnection();
 			databaseHelper.connectToDatabase();  // Connect to the database
 			databaseHelper.logoutAllUsers();
 		    launch(args);

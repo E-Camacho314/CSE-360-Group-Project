@@ -46,11 +46,13 @@ public class ArticlesPage extends VBox {
 	private Button backupgroupbutton = new Button ("Backup Group");
 	private Button restorebutton = new Button ("Restore Articles");
 	private Button deletebutton = new Button ("Delete Articles");
+	private Button deletegroupbutton = new Button ("Delete Group");
 	private Button listbutton = new Button ("List Articles");
 	private Button updatebutton = new Button ("Update Article");
 	private Button returnbutton = new Button ("Return to Main");
 	private Button listGroupButton = new Button ("List Grouped Articles");
 	private TextField deleteField = new TextField();
+	private TextField deletegroupField = new TextField();
 	private TextField viewField = new TextField();
 	private TextField updateField = new TextField();
 	private TextField backupField = new TextField();
@@ -101,7 +103,9 @@ public class ArticlesPage extends VBox {
         restorebutton.setTextFill(Color.BLACK);
         restorebutton.setFont(Font.font(null, 14)); 
         deletebutton.setTextFill(Color.RED);
-        deletebutton.setFont(Font.font(null, 14));        
+        deletebutton.setFont(Font.font(null, 14));  
+        deletegroupbutton.setTextFill(Color.RED);
+        deletegroupbutton.setFont(Font.font(null, 14)); 
         listbutton.setTextFill(Color.BLACK);
         listbutton.setFont(Font.font(null, 14));
         returnbutton.setTextFill(Color.BLACK);
@@ -115,6 +119,7 @@ public class ArticlesPage extends VBox {
         
         // Set prompt texts for text fields
         deleteField.setPromptText("Article ID to delete");
+        deletegroupField.setPromptText("Group to delete");
         updateField.setPromptText("Article ID to update"); 
         viewField.setPromptText("Article ID to view");
         backupField.setPromptText("File to backup to"); 
@@ -150,9 +155,11 @@ public class ArticlesPage extends VBox {
         articlesPane.add(backupgroupbutton, 2, 9);
         articlesPane.add(restoreField, 0, 10);
         articlesPane.add(restorebutton, 1, 10);
-        articlesPane.add(returnbutton, 0, 12);
         articlesPane.add(listGroupField, 0, 11);
         articlesPane.add(listGroupButton, 1, 11);
+        articlesPane.add(deletegroupField, 0, 12);
+        articlesPane.add(deletegroupbutton, 1, 12);
+        articlesPane.add(returnbutton, 0, 13);
 
         // Set the VBox to the center of the BorderPane
         mainPane.setCenter(articlesPane);
@@ -223,6 +230,7 @@ public class ArticlesPage extends VBox {
 
     // Method to list a specific article by id
     private void viewArticle() {
+    	String username = mainApp.databaseHelper.findLoggedInUser();
         if (viewField.getText().isEmpty()) {
             warning.setText("Warning: ID needed to view");
             warning.setTextFill(Color.RED);
@@ -230,7 +238,7 @@ public class ArticlesPage extends VBox {
         }
         try {
             long id = Long.parseLong(viewField.getText());
-            if(mainApp.databaseHelper.canUserViewArticle(prev, id)) {
+            if(mainApp.databaseHelper.canUserViewArticle(prev, username, id)) {
                 mainApp.showArticlesListPage(prev, id, idList);
             }
             else {

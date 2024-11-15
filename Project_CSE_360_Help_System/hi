@@ -1,9 +1,14 @@
 Title: 1
-Headers: 2
-Groups: 1,2
-Access: admin:1,instructor:0,student:1
+Headers: 1
+Groups: ["new","mo","ent","net"]
+Access: admin:1,instructor:1,student:1
+Beginner: 1
+Intermediate: 0
+Advanced: 0
+Expert: 1
 Abstract: 1
 Keywords: 1
 Body: 1
 References: 1
+Special Access Groups: N/A
 

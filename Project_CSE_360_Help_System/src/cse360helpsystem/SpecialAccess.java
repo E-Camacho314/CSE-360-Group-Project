@@ -1,5 +1,9 @@
 package cse360helpsystem;
 
+import java.sql.SQLException;
+
+import org.json.JSONException;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -39,8 +43,10 @@ public class SpecialAccess extends VBox {
     private TextField removeField;
     private TextField addstudField;
     private TextField addinstField;
+    private TextField roleField;
     private TextField deluserField;
     private TextField viewartField;
+    private TextField backupField;
     private Button addarticleButton;
     private Button removeButton;
     private Button addstudButton;
@@ -49,6 +55,8 @@ public class SpecialAccess extends VBox {
     private Button viewstudButton;
     private Button viewButton;
     private Button viewartButton;
+    private Button backupButton;
+    private Button restoreButton;
     private Button deleteButton;
     private Button backButton;
     private Label messageLabel;
@@ -107,6 +115,8 @@ public class SpecialAccess extends VBox {
         addinstLabel.setFont(Font.font(14));
         addinstField = new TextField();
         addinstField.setPromptText("Enter Instructor Username");
+        roleField = new TextField();
+        roleField.setPromptText("Enter Permissions");
         
         // Delete a User to a Special Access Group 
         deluserLabel = new Label("Delete a User:");
@@ -131,6 +141,10 @@ public class SpecialAccess extends VBox {
         viewartLabel.setFont(Font.font(14));
         viewartField = new TextField();
         viewartField.setPromptText("Enter Article ID");
+        
+     // Backup Special Access Group 
+        backupField = new TextField();
+        backupField.setPromptText("Enter File to Backup To");
 
         // Buttons
         addarticleButton = new Button("Add Article");
@@ -149,6 +163,10 @@ public class SpecialAccess extends VBox {
         viewButton.setFont(Font.font(14));
         viewartButton = new Button("View Article");
         viewartButton.setFont(Font.font(14));
+        backupButton = new Button("Backup Group");
+        backupButton.setFont(Font.font(14));
+        restoreButton = new Button("Restore Group");
+        restoreButton.setFont(Font.font(14));
         deleteButton = new Button("Delete Group");
         deleteButton.setFont(Font.font(14));
         backButton = new Button("Back to Main");
@@ -165,34 +183,85 @@ public class SpecialAccess extends VBox {
         grid.setVgap(10);
         grid.setHgap(10);
         grid.setPadding(new Insets(20, 20, 20, 20));
+        
+        if(rights == true) {
+            // Adding components to the grid
+            grid.add(titleLabel, 0, 0, 2, 1);
+            grid.add(addarticleLabel, 0, 1);
+            grid.add(addarticleField, 0, 2);
+            grid.add(addarticleButton, 1, 2);
+            grid.add(removeLabel, 0, 3);
+            grid.add(removeField, 0, 4);
+            grid.add(removeButton, 1, 4);
+            grid.add(addstudLabel, 0, 5);
+            grid.add(addstudField, 0, 6);
+            grid.add(addstudButton, 1, 6);
+            grid.add(addinstLabel, 0, 7);
+            grid.add(addinstField, 0, 8);
+            grid.add(roleField, 1, 8);
+            grid.add(addinstButton, 2, 8);
+            grid.add(deluserLabel, 0, 9);
+            grid.add(deluserField, 0, 10);
+            grid.add(deluserButton, 1, 10);
+            grid.add(viewstudLabel, 0, 11);
+            grid.add(viewstudButton, 1, 11);
+            grid.add(viewLabel, 0, 12);
+            grid.add(viewButton, 1, 12);
+            grid.add(viewartLabel, 0, 13);
+            grid.add(viewartField, 0, 14);
+            grid.add(viewartButton, 1, 14);
+            grid.add(backupField, 0, 15);
+            grid.add(backupButton, 1, 15);
+            grid.add(restoreButton, 2, 15);
+            grid.add(deleteButton, 0, 16);
+            grid.add(backButton, 0, 18);
+            grid.add(messageLabel, 0, 17, 2, 1);
+            
+            addinstButton.setOnAction(e -> {
+				try {
+					AddInstructor();
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			});
+            
+            addstudButton.setOnAction(e -> {
+				try {
+					AddStudent();
+				} catch (JSONException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			});
+            
+            addarticleButton.setOnAction(e -> {
+				try {
+					AddArticle();
+				} catch (SQLException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			});
+        }
+        else {
+        	// Adding components to the grid
+            grid.add(titleLabel, 0, 0, 2, 1);
+            grid.add(viewstudLabel, 0, 1);
+			grid.add(viewstudButton, 1, 1);
+			grid.add(viewLabel, 0, 2);
+			grid.add(viewButton, 1, 2);
+			grid.add(viewartLabel, 0, 3);
+			grid.add(viewartField, 0, 4);
+			grid.add(viewartButton, 1, 4);
+			grid.add(backButton, 0, 6);
+            grid.add(messageLabel, 0, 5, 2, 1);
+        }
 
-        // Adding components to the grid
-        grid.add(titleLabel, 0, 0, 2, 1);
-        grid.add(addarticleLabel, 0, 1);
-        grid.add(addarticleField, 0, 2);
-        grid.add(addarticleButton, 1, 2);
-        grid.add(removeLabel, 0, 3);
-        grid.add(removeField, 0, 4);
-        grid.add(removeButton, 1, 4);
-        grid.add(addstudLabel, 0, 5);
-        grid.add(addstudField, 0, 6);
-        grid.add(addstudButton, 1, 6);
-        grid.add(addinstLabel, 0, 7);
-        grid.add(addinstField, 0, 8);
-        grid.add(addinstButton, 1, 8);
-        grid.add(deluserLabel, 0, 9);
-        grid.add(deluserField, 0, 10);
-        grid.add(deluserButton, 1, 10);
-        grid.add(viewstudLabel, 0, 11);
-        grid.add(viewstudButton, 1, 11);
-        grid.add(viewLabel, 0, 12);
-        grid.add(viewButton, 1, 12);
-        grid.add(viewartLabel, 0, 13);
-        grid.add(viewartField, 0, 14);
-        grid.add(viewartButton, 1, 14);
-        grid.add(deleteButton, 0, 15);
-        grid.add(backButton, 0, 17);
-        grid.add(messageLabel, 0, 9, 2, 1);
+
 
         // Align buttons to the right
         GridPane.setMargin(backButton, new Insets(10, 0, 0, 0));
@@ -207,6 +276,7 @@ public class SpecialAccess extends VBox {
     
     // Method to handle switching to previous page
     private void returnToPage(String prev) {
+    	messageLabel.setText("");
     	if(prev.equals("admin")) {
     		mainApp.showAdminPage();
     	}
@@ -216,5 +286,83 @@ public class SpecialAccess extends VBox {
     	if(prev.equals("student")) {
     		mainApp.showStudentPage();
     	}
+    }
+    
+    private void AddInstructor() throws SQLException {
+		if(addinstField.getText().isEmpty() || roleField.getText().isEmpty()) {
+			messageLabel.setText("Missing Information");
+			messageLabel.setTextFill(Color.RED);
+            return;
+		}
+    	String inst = addinstField.getText();
+    	String role = roleField.getText();
+    	if((!role.equals("admin")) && (!role.equals("view"))) {
+			messageLabel.setText("Enter 'view' or 'admin' for privileges");
+			messageLabel.setTextFill(Color.RED);
+            return;
+    	}
+    	if(!mainApp.databaseHelper.doesUserExist(inst)) {
+			messageLabel.setText("Invalid User");
+			messageLabel.setTextFill(Color.RED);
+            return;
+    	}
+    	User user = mainApp.databaseHelper.getUserByUsername(inst);
+    	if(!user.isInstructor() || !user.isAdmin()) {
+			messageLabel.setText("User is not an Instructor or Admin");
+			messageLabel.setTextFill(Color.RED);
+            return;
+    	}
+    	mainApp.databaseHelper.addInstructor(group, inst, role);
+    	mainApp.databaseHelper.printSpecialAccessTable();
+    	addinstField.clear();
+    	roleField.clear();
+    	messageLabel.setText("Instructor Added");
+		messageLabel.setTextFill(Color.GREEN);
+
+    }
+    
+    private void AddStudent() throws JSONException, SQLException {
+		if(addstudField.getText().isEmpty()) {
+			messageLabel.setText("Missing Information");
+			messageLabel.setTextFill(Color.RED);
+            return;
+		}
+    	String student = addstudField.getText();
+    	if(!mainApp.databaseHelper.doesUserExist(student)) {
+			messageLabel.setText("Invalid User");
+			messageLabel.setTextFill(Color.RED);
+            return;
+    	}
+    	User user = mainApp.databaseHelper.getUserByUsername(student);
+    	if(!user.isStudent()) {
+			messageLabel.setText("User is not a Student");
+			messageLabel.setTextFill(Color.RED);
+            return;
+    	}
+    	mainApp.databaseHelper.addStudentToViewAccess(group, student);
+    	mainApp.databaseHelper.printSpecialAccessTable();
+    	addstudField.clear();
+    	messageLabel.setText("Student Added");
+		messageLabel.setTextFill(Color.GREEN);
+    }
+    
+    private void AddArticle() throws SQLException {
+		if(addarticleField.getText().isEmpty()) {
+			messageLabel.setText("Missing Information");
+			messageLabel.setTextFill(Color.RED);
+            return;
+		}
+    	String ID = addarticleField.getText();
+    	int id = Integer.parseInt(ID);
+    	if(!mainApp.databaseHelper.isArticleIDValid(id)) {
+			messageLabel.setText("Invalid Article");
+			messageLabel.setTextFill(Color.RED);
+            return;
+    	}
+    	mainApp.databaseHelper.addArticleToGroup(id, group);
+    	mainApp.databaseHelper.printSpecialAccessTable();
+    	addarticleField.clear();
+    	messageLabel.setText("Article Added");
+		messageLabel.setTextFill(Color.GREEN);
     }
 }

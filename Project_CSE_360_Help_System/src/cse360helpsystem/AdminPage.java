@@ -157,6 +157,7 @@ public class AdminPage extends HBox {
         invitebutton.setOnAction(e -> inviteUser());
         resetbutton.setOnAction(e -> resetUserPassword());
         articlesbutton.setOnAction(e -> mainApp.showArticlesPage(current));
+        specialbutton.setOnAction(e -> getSpecialAccess());
 	}
 	
 	// Method to delete a user from the database
@@ -390,5 +391,53 @@ public class AdminPage extends HBox {
 	// Method to generate a random string to be used as a one time password
 	private String generateOneTimePassword() {
 	    return Long.toHexString(Double.doubleToLongBits(Math.random()));
+	}
+	
+	// Access Special Access Page for a specified group
+	private void getSpecialAccess() {
+		try {
+			String group;
+			String username;
+			// Store the username of the current user
+			username = mainApp.databaseHelper.findLoggedInUser();
+			if(specialField.getText().isEmpty()) {
+				warning.setText("Enter a Group Name");
+				warning.setTextFill(Color.RED);
+	            return;
+			}
+			else {
+				group = specialField.getText();
+				if(mainApp.databaseHelper.doesGroupExist(group)) {
+					mainApp.databaseHelper.printSpecialAccessTable();
+					if(mainApp.databaseHelper.isUserInGroup(group, username)) {
+						if(mainApp.databaseHelper.isUserAdmin(group, username)) {
+							mainApp.showSpecialAccessPage(current, group, true);
+							specialField.clear();
+							warning.setText("");
+						}
+						else {
+							mainApp.showSpecialAccessPage(current, group, false);
+							specialField.clear();
+							warning.setText("");
+						}
+					}
+					else {
+						warning.setText("You Do Not Have Access");
+						warning.setTextFill(Color.RED);
+			            return;
+					}
+				}
+				else {
+					warning.setText("Enter a Valid Group");
+					warning.setTextFill(Color.RED);
+		            return;
+				}
+			}
+		}
+		catch(SQLException e) {
+			warning.setText("ERROR: Exception Hit");
+			warning.setTextFill(Color.RED);
+            return;
+		}
 	}
 }

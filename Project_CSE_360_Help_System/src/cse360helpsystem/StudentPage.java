@@ -91,14 +91,13 @@ public class StudentPage extends HBox {
         // Add components to the GridPane
         studPane.add(welcome, 0, 0, 2, 1);
         studPane.add(warning, 0, 1);
-        studPane.add(articlesbutton, 0, 2);
-        studPane.add(searchbutton, 0, 3);
-        studPane.add(genericbutton, 0, 4);
-        studPane.add(specificText, 0, 5);
-        studPane.add(specificneedText, 0, 6);
-        studPane.add(specificbutton, 1, 6);
-        studPane.add(logoutbutton, 0, 7);
-        studPane.add(quitbutton, 1, 7);
+        studPane.add(searchbutton, 0, 2);
+        studPane.add(genericbutton, 0, 3);
+        studPane.add(specificText, 0, 4);
+        studPane.add(specificneedText, 0, 5);
+        studPane.add(specificbutton, 1, 5);
+        studPane.add(logoutbutton, 0, 6);
+        studPane.add(quitbutton, 1, 6);
 
         // Place the VBox in the center of the BorderPane
         mainPane.setCenter(studPane);

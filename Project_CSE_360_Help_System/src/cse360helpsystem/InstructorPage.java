@@ -1,5 +1,7 @@
 package cse360helpsystem;
 
+import java.sql.SQLException;
+
 import javafx.geometry.Insets;
 
 import javafx.geometry.Pos;
@@ -40,6 +42,12 @@ public class InstructorPage extends HBox {
 	private String current = "instructor";
 	private CSE360HelpSystem mainApp;
 	
+	// String to find the currently logged in user
+	private String username;
+	
+	// String to hold the group that the user chooses
+	private String group;
+	
 	/**
      * Constructor for InstructorPage.
      * Initializes the UI components and sets up the layout.
@@ -47,6 +55,7 @@ public class InstructorPage extends HBox {
      * @param mainApp the main application instance to facilitate page navigation
      */
 	public InstructorPage(CSE360HelpSystem mainApp){
+		
 		// Store reference to the main application
 		this.mainApp = mainApp;
 		
@@ -131,22 +140,91 @@ public class InstructorPage extends HBox {
         	getSpecialAccess();
         });
         
+        createbutton.setOnAction(e -> {
+        	createSpecialAccess();
+        });
+        
         searchbutton.setOnAction(e -> {
         	mainApp.showSearchPage(current);
         });
 	}
 	
 	private void getSpecialAccess() {
-		String group;
-		if(specialText.getText().isEmpty()) {
-			warning.setText("Enter a Group Name");
+		try {
+			String group;
+			// Store the username of the current user
+			username = mainApp.databaseHelper.findLoggedInUser();
+			if(specialText.getText().isEmpty()) {
+				warning.setText("Enter a Group Name");
+				warning.setTextFill(Color.RED);
+	            return;
+			}
+			else {
+				group = specialText.getText();
+				if(mainApp.databaseHelper.doesGroupExist(group)) {
+					mainApp.databaseHelper.printSpecialAccessTable();
+					if(mainApp.databaseHelper.isUserInGroup(group, username)) {
+						if(mainApp.databaseHelper.isUserAdmin(group, username)) {
+							mainApp.showSpecialAccessPage(current, group, true);
+							specialText.clear();
+							warning.setText("");
+						}
+						else {
+							mainApp.showSpecialAccessPage(current, group, false);
+							specialText.clear();
+							warning.setText("");
+						}
+					}
+					else {
+						warning.setText("You Do Not Have Access");
+						warning.setTextFill(Color.RED);
+			            return;
+					}
+				}
+				else {
+					warning.setText("Enter a Valid Group");
+					warning.setTextFill(Color.RED);
+		            return;
+				}
+			}
+		}
+		catch(SQLException e) {
+			warning.setText("ERROR: Exception Hit");
 			warning.setTextFill(Color.RED);
             return;
 		}
-		else {
-			group = specialText.getText();
+	}
+	
+	private void createSpecialAccess() {
+		String group;
+		// Store the username of the current user
+		username = mainApp.databaseHelper.findLoggedInUser();
+		try {
+			if(createText.getText().isEmpty()) {
+				warning.setText("Enter a Group Name");
+				warning.setTextFill(Color.RED);
+	            return;
+			}
+			else {
+				group = createText.getText();
+				if(!mainApp.databaseHelper.doesGroupExist(group)) {
+					mainApp.databaseHelper.createGroup(group, username);
+				}
+				else {
+					warning.setText("Group Already Exists");
+					warning.setTextFill(Color.RED);
+		            return;
+				}
+
+			}
+			mainApp.showSpecialAccessPage(current, group, true);
+			warning.setText("");
+			createText.clear();
 		}
-		mainApp.showSpecialAccessPage(current, group, true);
-		specialText.clear();
+		catch(SQLException e) {
+			warning.setText("ERROR: Exception Hit");
+			warning.setTextFill(Color.RED);
+            return;
+		}
 	}
 }
