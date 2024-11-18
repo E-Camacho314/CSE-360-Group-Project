@@ -36,7 +36,9 @@ public class InstructorPage extends HBox {
 	private Button specialbutton = new Button ("Special Access View");
 	private Button createbutton = new Button ("Create Special Access Group");
 	private Button viewallstudentsbutton = new Button ("View All Students");
-	private Button viewstudentsbutton = new Button ("View Students");
+	private Button viewstudentsbutton = new Button ("View Student");
+	private Button deletestudentbutton = new Button ("Delete Student");
+	private TextField deletestudentText = new TextField ();
 	private TextField viewstudentsText = new TextField ();
 	private Button searchbutton = new Button ("Search View");
 	private String current = "instructor";
@@ -74,9 +76,13 @@ public class InstructorPage extends HBox {
         specialbutton.setTextFill(Color.BLACK);
         specialbutton.setFont(Font.font(null, 14));
         
-        // Configure the View Students button
+        // Configure the View Student button
         viewstudentsbutton.setTextFill(Color.BLACK);
         viewstudentsbutton.setFont(Font.font(null, 14));
+        
+        // Configure the Delete Student button
+        deletestudentbutton.setTextFill(Color.BLACK);
+        deletestudentbutton.setFont(Font.font(null, 14));
         
         // Configure the search button
         searchbutton.setTextFill(Color.BLACK);
@@ -95,7 +101,8 @@ public class InstructorPage extends HBox {
         logoutbutton.setFont(Font.font(null, 14));
         
         // Set prompt texts for text fields
-        viewstudentsText.setPromptText("Enter Group to View");
+        deletestudentText.setPromptText("Enter Student to Delete");
+        viewstudentsText.setPromptText("Enter Student to View");
         specialText.setPromptText("Enter Group to View");
         createText.setPromptText("Enter Group Name");
         
@@ -114,11 +121,13 @@ public class InstructorPage extends HBox {
         instructPane.add(viewstudentsText, 0, 4);
         instructPane.add(viewstudentsbutton, 1, 4);
         instructPane.add(viewallstudentsbutton, 0, 5);
-        instructPane.add(specialText, 0, 6);
-        instructPane.add(specialbutton, 1, 6);
-        instructPane.add(createText, 0, 7);
-        instructPane.add(createbutton, 1, 7);
-        instructPane.add(logoutbutton, 0, 8);
+        instructPane.add(deletestudentText, 0, 6);
+        instructPane.add(deletestudentbutton, 1, 6);
+        instructPane.add(specialText, 0, 7);
+        instructPane.add(specialbutton, 1, 7);
+        instructPane.add(createText, 0, 8);
+        instructPane.add(createbutton, 1, 8);
+        instructPane.add(logoutbutton, 0, 9);
 
         // Place the VBox in the center of the BorderPane
         mainPane.setCenter(instructPane);
@@ -165,14 +174,14 @@ public class InstructorPage extends HBox {
 					mainApp.databaseHelper.printSpecialAccessTable();
 					if(mainApp.databaseHelper.isUserInGroup(group, username)) {
 						if(mainApp.databaseHelper.isUserAdmin(group, username)) {
-							mainApp.showSpecialAccessPage(current, group, true);
 							specialText.clear();
 							warning.setText("");
+							mainApp.showSpecialAccessPage(current, group, true);
 						}
 						else {
-							mainApp.showSpecialAccessPage(current, group, false);
 							specialText.clear();
 							warning.setText("");
+							mainApp.showSpecialAccessPage(current, group, false);
 						}
 					}
 					else {
@@ -226,5 +235,9 @@ public class InstructorPage extends HBox {
 			warning.setTextFill(Color.RED);
             return;
 		}
+	}
+	
+	private void deleteStudent() {
+		
 	}
 }

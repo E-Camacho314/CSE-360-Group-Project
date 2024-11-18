@@ -1,7 +1,7 @@
 package cse360helpsystem;
 
 import javafx.scene.control.TextField;
-
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -113,6 +113,11 @@ public class StudentPage extends HBox {
         searchbutton.setOnAction(e -> {
         	mainApp.showSearchPage(current);
         });
+        
+        quitbutton.setOnAction(e -> {
+        	mainApp.databaseHelper.closeConnection();
+        	Platform.exit();
+        	});
 
 	}
 }

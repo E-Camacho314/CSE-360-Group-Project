@@ -412,6 +412,7 @@ public class ArticleCreationPage extends VBox {
             referencesField.clear();
             admin.setSelected(false);
             instructor.setSelected(false);
+            student.setSelected(false);
             beginner.setSelected(false);
             intermediate.setSelected(false);
             advanced.setSelected(false);
