@@ -1,5 +1,7 @@
 package cse360helpsystem;
 
+import java.sql.SQLException;
+
 import javafx.geometry.Insets;
 
 import javafx.geometry.Pos;
@@ -7,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -25,10 +28,25 @@ import javafx.scene.text.Font;
 public class InstructorPage extends HBox {
 	// UI Components
 	private Label welcome = new Label("Instructor View");
+	private Label warning = new Label("");
 	private Button logoutbutton = new Button ("Log Out");
-	private Button articlesbutton = new Button ("Articles");
+	private Button articlesbutton = new Button ("Articles View");
+	private TextField specialText = new TextField ();
+	private TextField createText = new TextField ();
+	private Button specialbutton = new Button ("Special Access View");
+	private Button createbutton = new Button ("Create Special Access Group");
+	private Button viewallstudentsbutton = new Button ("View All Students");
+	private Button viewstudentsbutton = new Button ("View Students");
+	private TextField viewstudentsText = new TextField ();
+	private Button searchbutton = new Button ("Search View");
 	private String current = "instructor";
 	private CSE360HelpSystem mainApp;
+	
+	// String to find the currently logged in user
+	private String username;
+	
+	// String to hold the group that the user chooses
+	private String group;
 	
 	/**
      * Constructor for InstructorPage.
@@ -37,6 +55,7 @@ public class InstructorPage extends HBox {
      * @param mainApp the main application instance to facilitate page navigation
      */
 	public InstructorPage(CSE360HelpSystem mainApp){
+		
 		// Store reference to the main application
 		this.mainApp = mainApp;
 		
@@ -50,18 +69,58 @@ public class InstructorPage extends HBox {
         // Configure the articles button
         articlesbutton.setTextFill(Color.BLACK);
         articlesbutton.setFont(Font.font(null, 14));
+        
+        // Configure the Special Access Groups button
+        specialbutton.setTextFill(Color.BLACK);
+        specialbutton.setFont(Font.font(null, 14));
+        
+        // Configure the View Students button
+        viewstudentsbutton.setTextFill(Color.BLACK);
+        viewstudentsbutton.setFont(Font.font(null, 14));
+        
+        // Configure the search button
+        searchbutton.setTextFill(Color.BLACK);
+        searchbutton.setFont(Font.font(null, 14));
+        
+        // Configure the View All Students button
+        viewallstudentsbutton.setTextFill(Color.BLACK);
+        viewallstudentsbutton.setFont(Font.font(null, 14));
+        
+        // Configure the Create Special Access Group button
+        createbutton.setTextFill(Color.BLACK);
+        createbutton.setFont(Font.font(null, 14));
 
         // Configure the logout button
         logoutbutton.setTextFill(Color.BLACK);
         logoutbutton.setFont(Font.font(null, 14));
         
-        // Create a VBox to hold the welcome label and logout button vertically
-        VBox instructPane = new VBox();
-        instructPane.setSpacing(20);
-        instructPane.setPadding(new Insets(10, 10, 10, 10));
-        instructPane.getChildren().addAll(welcome, articlesbutton, logoutbutton);
+        // Set prompt texts for text fields
+        viewstudentsText.setPromptText("Enter Group to View");
+        specialText.setPromptText("Enter Group to View");
+        createText.setPromptText("Enter Group Name");
+        
+        // Create a GridPane to hold the welcome message and logout button
+        GridPane instructPane = new GridPane();
+        instructPane.setAlignment(Pos.CENTER);
+        instructPane.setVgap(10);
+        instructPane.setHgap(10);
+        instructPane.setPadding(new Insets(20, 20, 20, 20));
 
-        // Set the VBox to the center of the BorderPane
+        // Add components to the GridPane
+        instructPane.add(welcome, 0, 0, 2, 1);
+        instructPane.add(warning, 0, 1);
+        instructPane.add(articlesbutton, 0, 2);
+        instructPane.add(searchbutton, 0, 3);
+        instructPane.add(viewstudentsText, 0, 4);
+        instructPane.add(viewstudentsbutton, 1, 4);
+        instructPane.add(viewallstudentsbutton, 0, 5);
+        instructPane.add(specialText, 0, 6);
+        instructPane.add(specialbutton, 1, 6);
+        instructPane.add(createText, 0, 7);
+        instructPane.add(createbutton, 1, 7);
+        instructPane.add(logoutbutton, 0, 8);
+
+        // Place the VBox in the center of the BorderPane
         mainPane.setCenter(instructPane);
         
         // Add the BorderPane to the HBox (the root container of this page)
@@ -73,8 +132,99 @@ public class InstructorPage extends HBox {
         });
         
         logoutbutton.setOnAction(e -> {
+        	mainApp.databaseHelper.logoutUser();
             mainApp.showLoginPage(); // Switch back to the login page
         });
+        
+        specialbutton.setOnAction(e -> {
+        	getSpecialAccess();
+        });
+        
+        createbutton.setOnAction(e -> {
+        	createSpecialAccess();
+        });
+        
+        searchbutton.setOnAction(e -> {
+        	mainApp.showSearchPage(current);
+        });
+	}
+	
+	private void getSpecialAccess() {
+		try {
+			String group;
+			// Store the username of the current user
+			username = mainApp.databaseHelper.findLoggedInUser();
+			if(specialText.getText().isEmpty()) {
+				warning.setText("Enter a Group Name");
+				warning.setTextFill(Color.RED);
+	            return;
+			}
+			else {
+				group = specialText.getText();
+				if(mainApp.databaseHelper.doesGroupExist(group)) {
+					mainApp.databaseHelper.printSpecialAccessTable();
+					if(mainApp.databaseHelper.isUserInGroup(group, username)) {
+						if(mainApp.databaseHelper.isUserAdmin(group, username)) {
+							mainApp.showSpecialAccessPage(current, group, true);
+							specialText.clear();
+							warning.setText("");
+						}
+						else {
+							mainApp.showSpecialAccessPage(current, group, false);
+							specialText.clear();
+							warning.setText("");
+						}
+					}
+					else {
+						warning.setText("You Do Not Have Access");
+						warning.setTextFill(Color.RED);
+			            return;
+					}
+				}
+				else {
+					warning.setText("Enter a Valid Group");
+					warning.setTextFill(Color.RED);
+		            return;
+				}
+			}
+		}
+		catch(SQLException e) {
+			warning.setText("ERROR: Exception Hit");
+			warning.setTextFill(Color.RED);
+            return;
+		}
+	}
+	
+	private void createSpecialAccess() {
+		String group;
+		// Store the username of the current user
+		username = mainApp.databaseHelper.findLoggedInUser();
+		try {
+			if(createText.getText().isEmpty()) {
+				warning.setText("Enter a Group Name");
+				warning.setTextFill(Color.RED);
+	            return;
+			}
+			else {
+				group = createText.getText();
+				if(!mainApp.databaseHelper.doesGroupExist(group)) {
+					mainApp.databaseHelper.createGroup(group, username);
+				}
+				else {
+					warning.setText("Group Already Exists");
+					warning.setTextFill(Color.RED);
+		            return;
+				}
 
+			}
+			mainApp.showSpecialAccessPage(current, group, true);
+			warning.setText("");
+			createText.clear();
+		}
+		catch(SQLException e) {
+			warning.setText("ERROR: Exception Hit");
+			warning.setTextFill(Color.RED);
+            return;
+		}
 	}
 }

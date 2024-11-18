@@ -1,10 +1,15 @@
 package cse360helpsystem;
 
+import javafx.scene.control.TextField;
+
+import java.sql.SQLException;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -21,7 +26,18 @@ import javafx.scene.text.Font;
 public class StudentPage extends HBox {
 	// UI Components
 	private Label welcome = new Label("Student View");
+	private Label warning = new Label("");
 	private Button logoutbutton = new Button ("Log Out");
+	private Button articlesbutton = new Button ("Articles View");
+	private Button genericbutton = new Button ("Send Generic Message");
+	//COMBINE INPUTS
+	private TextField specificText = new TextField ();
+	private TextField specificneedText = new TextField ();
+	
+	private Button specificbutton = new Button ("Send Specific Message");
+	private Button searchbutton = new Button ("Search View");
+	private Button quitbutton = new Button ("Quit");
+	private String current = "student";
 	private CSE360HelpSystem mainApp;
 	
 	 /**
@@ -45,11 +61,47 @@ public class StudentPage extends HBox {
         logoutbutton.setTextFill(Color.BLACK);
         logoutbutton.setFont(Font.font(null, 14));
         
-        // Create a VBox to hold the welcome message and logout button
-        VBox studPane = new VBox();
-        studPane.setSpacing(20);
-        studPane.setPadding(new Insets(10, 10, 10, 10));
-        studPane.getChildren().addAll(welcome, logoutbutton);
+        // Configure the articles button
+        articlesbutton.setTextFill(Color.BLACK);
+        articlesbutton.setFont(Font.font(null, 14));
+        
+        // Configure the generic request button
+        genericbutton.setTextFill(Color.BLACK);
+        genericbutton.setFont(Font.font(null, 14));
+        
+        // Configure the specific request button
+        specificbutton.setTextFill(Color.BLACK);
+        specificbutton.setFont(Font.font(null, 14));
+        
+        // Configure the search button
+        searchbutton.setTextFill(Color.BLACK);
+        searchbutton.setFont(Font.font(null, 14));
+        
+        // Configure the quit button
+        quitbutton.setTextFill(Color.BLACK);
+        quitbutton.setFont(Font.font(null, 14));
+        
+        // Set prompt texts for text fields
+        specificText.setPromptText("Enter What is not Found");
+        specificneedText.setPromptText("Enter What is Needed");
+        
+        // Create a GridPane to hold the welcome message and logout button
+        GridPane studPane = new GridPane();
+        studPane.setAlignment(Pos.CENTER);
+        studPane.setVgap(10);
+        studPane.setHgap(10);
+        studPane.setPadding(new Insets(20, 20, 20, 20));
+
+        // Add components to the GridPane
+        studPane.add(welcome, 0, 0, 2, 1);
+        studPane.add(warning, 0, 1);
+        studPane.add(searchbutton, 0, 2);
+        studPane.add(genericbutton, 0, 3);
+        studPane.add(specificText, 0, 4);
+        studPane.add(specificneedText, 0, 5);
+        studPane.add(specificbutton, 1, 5);
+        studPane.add(logoutbutton, 0, 6);
+        studPane.add(quitbutton, 1, 6);
 
         // Place the VBox in the center of the BorderPane
         mainPane.setCenter(studPane);
@@ -59,8 +111,49 @@ public class StudentPage extends HBox {
         this.setAlignment(Pos.CENTER);
         
         logoutbutton.setOnAction(e -> {
+        	mainApp.databaseHelper.logoutUser();
             mainApp.showLoginPage(); // Switch back to the login page
         });
+        searchbutton.setOnAction(e -> {
+        	mainApp.showSearchPage(current);
+        });
+        
+        
+        
+        
+        specificbutton.setOnAction(e -> {
+            try {
+                // Get the text input values
+                String notFound = specificText.getText().trim();
+                String needed = specificneedText.getText().trim();
+
+                // Validate inputs
+                if (notFound.isEmpty() || needed.isEmpty()) {
+                    warning.setText("Both fields are required.");
+                    warning.setTextFill(Color.RED);
+                    return;
+                }
+
+                // Get the currently logged-in user's username
+                String username = mainApp.databaseHelper.findLoggedInUser();
+
+                // Call the database method to add the specific message
+                mainApp.databaseHelper.addSpecificMessage(username, notFound, needed);
+
+                // Display success message
+                warning.setText("Message sent successfully!");
+                warning.setTextFill(Color.GREEN);
+
+                // Clear the input fields
+                specificText.clear();
+                specificneedText.clear();
+            } catch (SQLException ex) {
+                warning.setText("Error: Unable to send message.");
+                warning.setTextFill(Color.RED);
+                ex.printStackTrace();
+            }
+        });
+
 
 	}
 }

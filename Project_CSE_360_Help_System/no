@@ -1,0 +1,36 @@
+Title: 2
+Headers: 2
+Groups: 1,2,3
+Access: admin:0,instructor:1,student:0
+Abstract: 1
+Keywords: 1
+Body: 1
+References: 1
+
+Title: 2
+Headers: 2
+Groups: 1,2,3
+Access: admin:0,instructor:1,student:0
+Abstract: 1
+Keywords: 1
+Body: 1
+References: 1
+
+Title: 2
+Headers: 2
+Groups: 1,2,3
+Access: admin:0,instructor:1,student:0
+Abstract: 1
+Keywords: 1
+Body: 1
+References: 1
+
+Title: 1
+Headers: 2
+Groups: 1,2
+Access: admin:1,instructor:0,student:1
+Abstract: 1
+Keywords: 1
+Body: 1
+References: 1
+
