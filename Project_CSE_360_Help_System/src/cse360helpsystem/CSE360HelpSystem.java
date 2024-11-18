@@ -32,7 +32,7 @@ import javafx.geometry.Pos;
 public class CSE360HelpSystem extends Application
 {
 	// Constants for window dimensions
-    public static final int WIDTH = 600, HEIGHT = 600;
+    public static final int WIDTH = 600, HEIGHT = 700;
     
     // Singleton instance of the DatabaseHelper class to manage database connections
     public static DatabaseHelper databaseHelper;
@@ -114,7 +114,7 @@ public class CSE360HelpSystem extends Application
 	
 	// Displays the Search page for searching articles
 	public void showSearchPage(String prev) {
-        SearchPage searchPage = new SearchPage(this, prev); // Pass it to ArticlesPage
+        SearchPage searchPage = new SearchPage(this, prev); // Pass it to SearcPage
         root.getChildren().clear();
         root.getChildren().add(searchPage);
     }
@@ -128,7 +128,7 @@ public class CSE360HelpSystem extends Application
     
     // Displays the article creation page
     public void showArticleCreatePage(String prev, long id) {
-        ArticleCreationPage articlecreatePage = new ArticleCreationPage(this, prev, id); // Pass it to ArticlesPage
+        ArticleCreationPage articlecreatePage = new ArticleCreationPage(this, prev, id); // Pass it to ArticleCreatePage
         root.getChildren().clear();
         root.getChildren().add(articlecreatePage);
         System.out.println("Switched to Article Creation Page"); // For debugging
@@ -188,8 +188,8 @@ public class CSE360HelpSystem extends Application
     }
     
     // Displays a page containing a list of information for the articles
-    public void showArticlesListPage(String prev, long id, List<Long> idList) {
-        ArticleListPage articlelistPage = new ArticleListPage(this, prev, id, idList); // Create a new ListPage instance
+    public void showArticlesListPage(String prev, String group, long id, List<Long> idList, boolean search) {
+        ArticleListPage articlelistPage = new ArticleListPage(this, prev, group, id, idList, search); // Create a new ListPage instance
         root.getChildren().clear();
         root.getChildren().add(articlelistPage);
         System.out.println("Switched to Articles List Page"); // For debugging
@@ -211,10 +211,10 @@ public class CSE360HelpSystem extends Application
     	}
     	try { 
     		databaseHelper = new DatabaseHelper();
-			databaseHelper.connectToDatabase();
-			databaseHelper.emptySpecial();
+			//databaseHelper.connectToDatabase();
+			//databaseHelper.emptySpecial();
 			//databaseHelper.emptyDatabase();		// Empty the database for testing purposes
-			databaseHelper.closeConnection();
+			//databaseHelper.closeConnection();
 			databaseHelper.connectToDatabase();  // Connect to the database
 			databaseHelper.logoutAllUsers();
 		    launch(args);

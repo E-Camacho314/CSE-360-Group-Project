@@ -1,5 +1,10 @@
 package cse360helpsystem;
 
+import java.sql.SQLException;
+import java.util.List;
+
+import org.json.JSONException;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -24,15 +29,19 @@ public class SearchPage extends VBox {
     private Label diffLabel;
     private Label groupLabel;
     private Label phraseLabel;
+    private Label idLabel;
     private TextField groupField;
     private TextField phraseField;
+    private TextField idField;
     private CheckBox beginner = new CheckBox ("Beginner");
 	private CheckBox intermediate = new CheckBox ("Intermediate");
 	private CheckBox advanced = new CheckBox ("Advanced");
 	private CheckBox expert = new CheckBox ("Expert");
+	private CheckBox all = new CheckBox ("All");
     private Button diffButton;
     private Button groupButton;
     private Button phraseButton;
+    private Button idButton;
     private Button backButton;
     private Label messageLabel;
 
@@ -77,6 +86,13 @@ public class SearchPage extends VBox {
         phraseLabel.setFont(Font.font(14));
         phraseField = new TextField();
         phraseField.setPromptText("Enter the Word or Phrase");
+        
+        // By ID
+        idLabel = new Label("Search by ID:");
+        idLabel.setTextFill(Color.BLACK);
+        idLabel.setFont(Font.font(14));
+        idField = new TextField();
+        idField.setPromptText("Enter the Article ID");
 
         // Buttons
         diffButton = new Button("Search");
@@ -85,6 +101,8 @@ public class SearchPage extends VBox {
         groupButton.setFont(Font.font(14));
         phraseButton = new Button("Search");
         phraseButton.setFont(Font.font(14));
+        idButton = new Button("Search");
+        idButton.setFont(Font.font(14));
         backButton = new Button("Back to Main");
         backButton.setFont(Font.font(14));
 
@@ -103,6 +121,7 @@ public class SearchPage extends VBox {
         // Adding components to the grid
         grid.add(titleLabel, 0, 0, 2, 1);
         grid.add(diffLabel, 0, 1);
+        grid.add(all, 1, 1);        
         grid.add(beginner, 0, 2);
         grid.add(intermediate, 1, 2);
         grid.add(advanced, 0, 3);
@@ -114,8 +133,11 @@ public class SearchPage extends VBox {
         grid.add(phraseLabel, 0, 6);
         grid.add(phraseField, 0, 7);
         grid.add(phraseButton, 1, 7);
-        grid.add(backButton, 0, 8);
-        grid.add(messageLabel, 0, 9, 2, 1);
+        grid.add(idLabel, 0, 8);
+        grid.add(idField, 0, 9);
+        grid.add(idButton, 1, 9);
+        grid.add(backButton, 0, 10);
+        grid.add(messageLabel, 0, 11, 2, 1);
 
         // Align buttons to the right
         GridPane.setMargin(backButton, new Insets(10, 0, 0, 0));
@@ -123,7 +145,40 @@ public class SearchPage extends VBox {
         // Add GridPane to VBox
         this.setAlignment(Pos.CENTER);
         this.getChildren().add(grid);
-
+        
+        // SearchByDifficulty Button
+        diffButton.setOnAction(e -> {
+			try {
+				searchByDifficulty();
+			} catch (JSONException | SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		});
+        
+        // SearchbyGroup Button
+        groupButton.setOnAction(e -> {
+			try {
+				searchByGroup();
+			} catch (SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		});
+        
+        // SearchbyPhrase Button
+        phraseButton.setOnAction(e -> {
+			try {
+				searchByPhrase();
+			} catch (JSONException | SQLException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		});
+        
+        // SearchByID Button
+        idButton.setOnAction(e -> searchByID());
+        
         // Button Actions
         backButton.setOnAction(e -> returnToPage(prev));
     }
@@ -139,5 +194,92 @@ public class SearchPage extends VBox {
     	if(prev.equals("student")) {
     		mainApp.showStudentPage();
     	}
+    }
+    
+    private void searchByDifficulty() throws JSONException, SQLException {
+        // Determine selected levels
+        boolean isBeginner = beginner.isSelected();
+        boolean isIntermediate = intermediate.isSelected();
+        boolean isAdvanced = advanced.isSelected();
+        boolean isExpert = expert.isSelected();
+        boolean isAll = all.isSelected();
+        String username = mainApp.databaseHelper.findLoggedInUser();
+
+        // Ensure at least one role is selected
+        if(!isAll) {
+            if (!isBeginner && !isIntermediate && !isAdvanced && !isExpert) {
+                messageLabel.setText("Select at least one level");
+                messageLabel.setTextFill(Color.RED);
+                return;
+            }
+        }
+        else {
+        	isBeginner = true;
+        	isIntermediate = true;
+        	isAdvanced = true;
+        	isExpert = true;
+        }
+        List<Long> idList = mainApp.databaseHelper.getArticlesByDifficulty(username, isBeginner, isIntermediate, isAdvanced, isExpert);
+        mainApp.showArticlesListPage(prev, "",  -2, idList, true);
+    }
+    
+    private void searchByGroup() throws SQLException {
+    	if(groupField.getText().isEmpty()) {
+    		messageLabel.setText("Please enter a valid group");
+            messageLabel.setTextFill(Color.RED);
+            return;
+    	}
+    	String group = groupField.getText();
+    	
+        String username = mainApp.databaseHelper.findLoggedInUser();
+    	List<Long> idList = mainApp.databaseHelper.searchArticlesByGroups(username, group);
+    	if(idList.isEmpty()) {
+    		messageLabel.setText("Please enter a valid group");
+            messageLabel.setTextFill(Color.RED);
+            return;
+    	}
+    	mainApp.showArticlesListPage(prev, group,  -3, idList, true);
+    }
+    
+    private void searchByPhrase() throws JSONException, SQLException {
+    	if(phraseField.getText().isEmpty()) {
+    		messageLabel.setText("Please enter a valid phrase");
+            messageLabel.setTextFill(Color.RED);
+            return;
+    	}
+    	String phrase = phraseField.getText();
+        String username = mainApp.databaseHelper.findLoggedInUser();
+    	List<Long> idList = mainApp.databaseHelper.searchArticlesByKeywordWithAccess(username, phrase);
+    	if(idList.isEmpty()) {
+    		messageLabel.setText("Please enter a valid phrase");
+            messageLabel.setTextFill(Color.RED);
+            return;
+    	}
+    	mainApp.showArticlesListPage(prev, phrase,  -4, idList, true);
+    }
+    
+    private void searchByID() {
+    	String username = mainApp.databaseHelper.findLoggedInUser();
+    	if (idField.getText().isEmpty()) {
+    		messageLabel.setText("Warning: ID needed to view");
+    		messageLabel.setTextFill(Color.RED);
+            return;
+        }
+        try {
+            long id = Long.parseLong(idField.getText());
+            if(mainApp.databaseHelper.canUserViewArticle(prev, username, id) && mainApp.databaseHelper.isUserInAccessGroups(username, id)) {
+                mainApp.showArticlesListPage(prev, "", id, null, true);
+            }
+            else {
+            	messageLabel.setText("Warning: " + prev + " cannot view Article: " + id);
+            	messageLabel.setTextFill(Color.RED);
+                return;
+            }
+        } catch (NumberFormatException e) {
+        	messageLabel.setText("Invalid ID format.");
+        	messageLabel.setTextFill(Color.RED);
+        } catch (SQLException e) {
+			e.printStackTrace();
+		}
     }
 }

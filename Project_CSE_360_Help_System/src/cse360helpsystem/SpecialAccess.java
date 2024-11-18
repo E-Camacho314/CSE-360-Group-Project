@@ -110,11 +110,11 @@ public class SpecialAccess extends VBox {
         addstudField.setPromptText("Enter Student Username");
         
         // Add an Instructor to a Special Access Group 
-        addinstLabel = new Label("Add an Instructor:");
+        addinstLabel = new Label("Add an Instructor or Admin:");
         addinstLabel.setTextFill(Color.BLACK);
         addinstLabel.setFont(Font.font(14));
         addinstField = new TextField();
-        addinstField.setPromptText("Enter Instructor Username");
+        addinstField.setPromptText("Enter Username");
         roleField = new TextField();
         roleField.setPromptText("Enter Permissions");
         
@@ -153,7 +153,7 @@ public class SpecialAccess extends VBox {
         removeButton.setFont(Font.font(14));
         addstudButton = new Button("Add Student");
         addstudButton.setFont(Font.font(14));
-        addinstButton = new Button("Add Instructor");
+        addinstButton = new Button("Add User");
         addinstButton.setFont(Font.font(14));
         deluserButton = new Button("Delete User");
         deluserButton.setFont(Font.font(14));
@@ -269,6 +269,9 @@ public class SpecialAccess extends VBox {
         // Add GridPane to VBox
         this.setAlignment(Pos.CENTER);
         this.getChildren().add(grid);
+        
+        // Button Actions
+        viewartButton.setOnAction(e -> viewArticle());
 
         // Button Actions
         backButton.setOnAction(e -> returnToPage(prev));
@@ -286,6 +289,32 @@ public class SpecialAccess extends VBox {
     	if(prev.equals("student")) {
     		mainApp.showStudentPage();
     	}
+    }
+    
+    private void viewArticle() {
+    	if(viewartField.getText().isEmpty()) {
+			messageLabel.setText("Missing Article ID");
+			messageLabel.setTextFill(Color.RED);
+            return;
+    	}
+        try {
+        	String ID = viewartField.getText();
+        	int id = Integer.parseInt(ID);
+        	if(mainApp.databaseHelper.isArticleInSpecialAccessGroup(id, group)) {
+    			mainApp.showArticlesListPage(prev, group, id, null, false);
+        	}
+        	else {
+    			messageLabel.setText("Article does not exist in Group");
+    			messageLabel.setTextFill(Color.RED);
+                return;
+        	}
+        } catch (NumberFormatException e) {
+        	messageLabel.setText("Invalid ID format.");
+        	messageLabel.setTextFill(Color.RED);
+        } catch (SQLException e) {
+			e.printStackTrace();
+		}
+    	
     }
     
     private void AddInstructor() throws SQLException {
@@ -307,7 +336,7 @@ public class SpecialAccess extends VBox {
             return;
     	}
     	User user = mainApp.databaseHelper.getUserByUsername(inst);
-    	if(!user.isInstructor() || !user.isAdmin()) {
+    	if(!user.isInstructor() && !user.isAdmin()) {
 			messageLabel.setText("User is not an Instructor or Admin");
 			messageLabel.setTextFill(Color.RED);
             return;
@@ -316,7 +345,7 @@ public class SpecialAccess extends VBox {
     	mainApp.databaseHelper.printSpecialAccessTable();
     	addinstField.clear();
     	roleField.clear();
-    	messageLabel.setText("Instructor Added");
+    	messageLabel.setText("User Added");
 		messageLabel.setTextFill(Color.GREEN);
 
     }
@@ -356,6 +385,11 @@ public class SpecialAccess extends VBox {
     	int id = Integer.parseInt(ID);
     	if(!mainApp.databaseHelper.isArticleIDValid(id)) {
 			messageLabel.setText("Invalid Article");
+			messageLabel.setTextFill(Color.RED);
+            return;
+    	}
+    	if(mainApp.databaseHelper.isArticleInSpecialAccessGroup(id, group)) {
+			messageLabel.setText("Article is already in Group");
 			messageLabel.setTextFill(Color.RED);
             return;
     	}

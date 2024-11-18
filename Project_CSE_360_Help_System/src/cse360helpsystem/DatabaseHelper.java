@@ -181,6 +181,8 @@ public class DatabaseHelper {
             connectToDatabase(); // Establish connection
             String dropaccessTable = "DROP TABLE IF EXISTS specialaccess;";
             statement.executeUpdate(dropaccessTable);
+            String droparticlesTable = "DROP TABLE IF EXISTS articles;";
+            statement.executeUpdate(droparticlesTable);
 
         } catch (SQLException e) {
             System.err.println("SQL error while emptying the database: " + e.getMessage());
@@ -1842,6 +1844,25 @@ public class DatabaseHelper {
         }
         return false; // User is not found in either access list
     }
+    
+    public boolean isStudentInGroup(String groupName, String username) throws SQLException, JSONException {
+        String query = "SELECT students_with_view_access FROM specialaccess WHERE groupname = ?";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, groupName);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    // Retrieve JSON array as a String
+                    String viewAccessJson = resultSet.getString("students_with_view_access");
+
+                    // Check the JSON array for the username
+                    return isUserInJsonArray(viewAccessJson, username);
+                }
+            }
+        }
+        return false; // User is not found in the view access list
+    }
+
 
     private boolean isUserInJsonArray(String jsonArrayString, String username) {
         if (jsonArrayString == null || jsonArrayString.isEmpty()) {
@@ -1955,6 +1976,36 @@ public class DatabaseHelper {
         }
     }
     
+    public boolean isArticleInSpecialAccessGroup(int articleId, String groupName) throws SQLException {
+        String query = "SELECT article_ids FROM specialaccess WHERE groupname = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, groupName);  // Set the groupname parameter
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String articleIdsJson = rs.getString("article_ids");  // Get the article_ids JSON field
+
+                    if (articleIdsJson != null && !articleIdsJson.isEmpty()) {
+                        JSONArray articleIdsArray = new JSONArray(articleIdsJson);  // Parse the JSON array
+                        // Check if the article ID exists in the JSON array
+                        for (int i = 0; i < articleIdsArray.length(); i++) {
+                            if (articleIdsArray.getInt(i) == articleId) {
+                                return true;  // If the article ID is found, return true
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException | JSONException e) {
+            e.printStackTrace();  // Log the exception
+            throw e;  // Rethrow the exception for proper error handling
+        }
+
+        return false;  // Return false if the article ID is not found in the group
+    }
+
+    
     public void addArticleToGroup(int articleId, String groupName) throws SQLException, JSONException {
         // Step 1: Add the article ID to the specialaccess table
         String query = "SELECT article_ids FROM specialaccess WHERE groupname = ?";
@@ -2007,6 +2058,45 @@ public class DatabaseHelper {
         }
     }
     
+    public boolean isUserInAccessGroups(String username, long articleId) throws SQLException, JSONException {
+        String query = "SELECT specialaccessgroups FROM articles WHERE id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            // Set parameters for the query
+            stmt.setLong(1, articleId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String specialAccessGroupsJson = rs.getString("specialaccessgroups");
+
+                    // If no special access groups, return false
+                    if (specialAccessGroupsJson == null || specialAccessGroupsJson.isEmpty()) {
+                        return false;
+                    }
+
+                    // Parse the special access groups into a JSON array
+                    JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
+
+                    // Check each special access group
+                    for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
+                        String specialGroup = specialAccessGroupsArray.getString(i).trim();
+
+                        // Use the helper method to check if the user has access to this group
+                        if (hasUserAccessToGroups(specialGroup, username)) {
+                            return true; // User has access to at least one group
+                        }
+                    }
+                }
+            }
+        } catch (SQLException | JSONException e) {
+            System.err.println("Error checking user access to special access groups: " + e.getMessage());
+            throw e;
+        }
+
+        return false; // User does not have access to any of the groups
+    }
+
+    
     public void printSpecialAccessTable() {
         String query = "SELECT * FROM specialaccess";
 
@@ -2033,7 +2123,184 @@ public class DatabaseHelper {
             e.printStackTrace();
         }
     }
-  
+    
+    //Search Functions for Phase III
+    
+    public List<Long> getArticlesByDifficulty(String username, boolean beginner, boolean intermediate, boolean advanced, boolean expert) throws SQLException, JSONException {
+        List<Long> accessibleArticleIds = new ArrayList<>();
+
+        // SQL query to retrieve articles (no need to include difficulty or groups)
+        String query = "SELECT a.id, a.beginner, a.intermediate, a.advanced, a.expert, a.specialaccessgroups FROM articles a";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                long articleId = rs.getLong("id");
+                String specialAccessGroupsJson = rs.getString("specialaccessgroups");
+
+                // Check for at least one required difficulty (any difficulty that matches)
+                boolean hasRequiredDifficulty = (beginner && rs.getInt("beginner") == 1) ||
+                                                (intermediate && rs.getInt("intermediate") == 1) ||
+                                                (advanced && rs.getInt("advanced") == 1) ||
+                                                (expert && rs.getInt("expert") == 1);
+
+                boolean hasAccess = false;
+
+                // Check access through 'specialaccessgroups' field using hasUserAccessToGroups
+                if (specialAccessGroupsJson != null && !specialAccessGroupsJson.isEmpty()) {
+                    JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
+
+                    // Loop through each special access group to check if user has access
+                    for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
+                        String specialGroup = specialAccessGroupsArray.getString(i).trim();
+                        // Check if user has access to this group using hasUserAccessToGroups
+                        if (hasUserAccessToGroups(specialGroup, username)) {
+                            hasAccess = true;
+                            break; // Stop checking once access is confirmed
+                        }
+                    }
+                }
+
+                // Add article if it matches at least one difficulty and has access
+                if (hasRequiredDifficulty && hasAccess) {
+                    accessibleArticleIds.add(articleId);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving accessible articles: " + e.getMessage());
+            throw e;
+        }
+
+        return accessibleArticleIds;
+    }
+
+    public List<Long> searchArticlesByGroups(String username, String groupNames) throws SQLException, JSONException {
+        List<Long> accessibleArticleIds = new ArrayList<>();
+
+        // Safely handle groupNames, split by comma, and use a HashSet for efficient lookups
+        Set<String> groupSet = new HashSet<>();
+        if (groupNames != null && !groupNames.isEmpty()) {
+            for (String group : groupNames.split(",")) {
+                groupSet.add(group.trim());
+            }
+        }
+
+        String query = "SELECT a.id, a.groups, a.specialaccessgroups FROM articles a WHERE a.groups IS NOT NULL OR a.specialaccessgroups IS NOT NULL";
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            while (rs.next()) {
+                long articleId = rs.getLong("id");
+                String groupsJson = rs.getString("groups");
+                String specialAccessGroupsJson = rs.getString("specialaccessgroups");
+
+                boolean groupMatchFound = false;
+                boolean specialGroupMatchFound = false;
+                boolean hasSpecialAccess = false;
+
+                // Step 1: Check if at least one of the groupNames matches the article's regular groups
+                if (groupsJson != null && !groupsJson.isEmpty()) {
+                    JSONArray groupsArray = new JSONArray(groupsJson);
+                    for (int i = 0; i < groupsArray.length(); i++) {
+                        String articleGroup = groupsArray.getString(i).trim();
+                        if (groupSet.contains(articleGroup)) {
+                            groupMatchFound = true;
+                            break; // Stop checking if regular group matches
+                        }
+                    }
+                }
+
+                // Step 2: Check if at least one of the groupNames matches the article's regular groups
+                if (specialAccessGroupsJson != null && !specialAccessGroupsJson.isEmpty()) {
+                    JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
+                    for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
+                        String specialGroup = specialAccessGroupsArray.getString(i).trim();
+                        if (groupSet.contains(specialGroup)) {
+                            specialGroupMatchFound = true;
+                            break; // Stop checking if special access group matches
+                        }
+                    }
+                }
+
+                // Step 3: Check if user has access to any special access groups, if present
+                if (specialAccessGroupsJson != null && !specialAccessGroupsJson.isEmpty()) {
+                    JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
+                    for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
+                        String specialGroup = specialAccessGroupsArray.getString(i).trim();
+
+                        // If user has access to any special access group, mark as having access
+                        if (hasUserAccessToGroups(specialGroup, username)) {
+                            hasSpecialAccess = true;
+                            break; // Stop checking once access is confirmed
+                        }
+                    }
+                }
+
+                // Step 4: Add article if there is a regular group or special access group match and the user has access to special access groups if present
+                if ((groupMatchFound || specialGroupMatchFound) && (specialAccessGroupsJson == null || hasSpecialAccess)) {
+                    accessibleArticleIds.add(articleId);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving articles by group(s): " + e.getMessage());
+            throw e;
+        }
+
+        return accessibleArticleIds;
+    }
+
+    public List<Long> searchArticlesByKeywordWithAccess(String username, String searchQuery) throws SQLException, JSONException {
+        List<Long> accessibleArticleIds = new ArrayList<>();
+        String query = "SELECT id, title, abstract, specialaccessgroups FROM articles WHERE LOWER(title) LIKE ? OR LOWER(abstract) LIKE ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            String keywordPattern = "%" + searchQuery.toLowerCase().trim() + "%";
+
+            // Set parameters for the query
+            stmt.setString(1, keywordPattern); // For title
+            stmt.setString(2, keywordPattern); // For abstract
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    long articleId = rs.getLong("id");
+                    String specialAccessGroupsJson = rs.getString("specialaccessgroups");
+
+                    // Check access via specialaccessgroups only
+                    boolean hasAccess = false;
+                    if (specialAccessGroupsJson != null && !specialAccessGroupsJson.isEmpty()) {
+                        JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
+                        for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
+                            String specialGroup = specialAccessGroupsArray.getString(i).trim();
+
+                            // If user has access to any special access group, mark as having access
+                            if (hasUserAccessToGroups(specialGroup, username)) {
+                                hasAccess = true;
+                                break; // Stop checking once access is confirmed
+                            }
+                        }
+                    }
+
+                    // Add article if the user has access
+                    if (hasAccess) {
+                        accessibleArticleIds.add(articleId);
+                    }
+                }
+            }
+        } catch (SQLException | JSONException e) {
+            System.err.println("Error during article search: " + e.getMessage());
+            throw e;
+        }
+
+        return accessibleArticleIds;
+    }
+
+    // Helper method to check if user has access to the special access groups
+    private boolean hasUserAccessToGroups(String group, String username) throws SQLException, JSONException {
+    	return (isUserInGroup(group, username) || isStudentInGroup(group, username));
+    }
+    
     /**
      * Closes the database connection and associated statement.
      * Should be called when the application is shutting down to release resources.

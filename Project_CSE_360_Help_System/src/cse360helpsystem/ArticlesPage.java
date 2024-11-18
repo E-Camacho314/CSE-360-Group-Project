@@ -173,7 +173,7 @@ public class ArticlesPage extends VBox {
         createbutton.setOnAction(e -> mainApp.showArticleCreatePage(prev, 0));
         updatebutton.setOnAction(e -> handleUpdate());
         deletebutton.setOnAction(e -> handleDelete());
-        listbutton.setOnAction(e -> mainApp.showArticlesListPage(prev, 0, idList));
+        listbutton.setOnAction(e -> mainApp.showArticlesListPage(prev, "", 0, idList, false));
         viewbutton.setOnAction(e -> viewArticle());
         backupbutton.setOnAction(e -> backupArticles());
         restorebutton.setOnAction(e -> restoreArticles());
@@ -238,8 +238,8 @@ public class ArticlesPage extends VBox {
         }
         try {
             long id = Long.parseLong(viewField.getText());
-            if(mainApp.databaseHelper.canUserViewArticle(prev, username, id)) {
-                mainApp.showArticlesListPage(prev, id, idList);
+            if(mainApp.databaseHelper.canUserViewArticle(prev, username, id) && mainApp.databaseHelper.isUserInAccessGroups(username, id)) {
+                mainApp.showArticlesListPage(prev, "", id, idList, false);
             }
             else {
                 warning.setText("Warning: " + prev + " cannot view Article: " + id);
@@ -265,7 +265,7 @@ public class ArticlesPage extends VBox {
     	        // Get the group name from listGroupField
     	        String groupName = listGroupField.getText();
     	        idList = mainApp.databaseHelper.getArticlesByGroups(groupName);
-    	        mainApp.showArticlesListPage(prev, -1, idList);
+    	        mainApp.showArticlesListPage(prev, groupName, -1, idList, false);
     	    } catch (Exception e) {
     	    	String groupName = listGroupField.getText();
     	        warning.setText("Failed to retrieve articles for " + groupName);

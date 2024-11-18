@@ -26,8 +26,10 @@ public class ArticleListPage extends VBox {
 	// UI components
     private CSE360HelpSystem mainApp;
     private String prev;
+    private String group;
     private long id;
     private List<Long> idList;
+    boolean search;
     private Label pageTitle = new Label("All Articles");
     private Label warning = new Label("");
     private Button returnButton = new Button("Return to Main");
@@ -42,11 +44,13 @@ public class ArticleListPage extends VBox {
      * @param id ID of the article to display
      * @param idList list of articles to be displayed by id
      */
-    public ArticleListPage(CSE360HelpSystem mainApp, String prev, long id, List<Long> idList) {
+    public ArticleListPage(CSE360HelpSystem mainApp, String prev, String group, long id, List<Long> idList, boolean search) {
         this.mainApp = mainApp;
         this.idList = idList;
+        this.group = group;
         this.prev = prev;
         this.id = id;
+        this.search = search;
         initializeUI();
     }
 
@@ -62,7 +66,12 @@ public class ArticleListPage extends VBox {
         // Set return button properties and action
         returnButton.setTextFill(Color.BLACK);
         returnButton.setFont(Font.font(null, 14));
-        returnButton.setOnAction(e -> mainApp.showArticlesPage(prev));
+        if(search == true) {
+            returnButton.setOnAction(e -> mainApp.showSearchPage(prev));
+        }
+        else {
+            returnButton.setOnAction(e -> mainApp.showArticlesPage(prev));
+        }
         
         // Configure articlesGrid for listing article titles
         articlesGrid.setAlignment(Pos.CENTER);
@@ -78,7 +87,32 @@ public class ArticleListPage extends VBox {
             pageTitle.setText("Showing Groups");
         	List<String> articles = fetchAllArticleGroup(idList);
             displayArticles(articles);
-        }else {
+        } else if(id == -2){
+            pageTitle.setText("Showing Articles by Difficulty");
+            warning.setFont(Font.font(null, 20));
+            warning.setTextFill(Color.BLACK);
+            warning.setText("Articles Found: " + idList.size());
+        	List<String> articles = fetchAllArticleGroup(idList);
+            displayArticles(articles);
+        } else if (id == -3){
+            pageTitle.setText("Showing Group: " + group);
+            warning.setFont(Font.font(null, 20));
+            warning.setTextFill(Color.BLACK);
+            warning.setText("Articles Found: " + idList.size());
+        	List<String> articles = fetchAllArticleGroup(idList);
+            displayArticles(articles);
+        } else if (id == -4){
+            pageTitle.setText("Showing Articles With: " + group);
+            warning.setFont(Font.font(null, 20));
+            warning.setTextFill(Color.BLACK);
+            warning.setText("Articles Found: " + idList.size());
+        	List<String> articles = fetchAllArticleGroup(idList);
+            displayArticles(articles);
+        } else if (id > 0 && !group.isEmpty()){
+        	pageTitle.setText("Showing Article: " + id);
+            viewArticleById(id);
+            returnButton.setOnAction(e -> mainApp.showSpecialAccessPage(prev, group, true));
+        } else {
         	pageTitle.setText("Showing Article: " + id);
             viewArticleById(id);
         }

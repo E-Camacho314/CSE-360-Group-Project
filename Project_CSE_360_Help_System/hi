@@ -1,14 +1,42 @@
 Title: 1
 Headers: 1
-Groups: ["new","mo","ent","net"]
+Groups: ["use","silent","hill"]
 Access: admin:1,instructor:1,student:1
 Beginner: 1
 Intermediate: 0
 Advanced: 0
 Expert: 1
-Abstract: 1
+Abstract: no
 Keywords: 1
 Body: 1
 References: 1
+Special Access Groups: ["new"]
+
+Title: 2
+Headers: no
+Groups: ["no","silent","hill"]
+Access: admin:1,instructor:1,student:1
+Beginner: 1
+Intermediate: 1
+Advanced: 1
+Expert: 1
+Abstract: no
+Keywords: 2
+Body: 2
+References: 2
+Special Access Groups: ["new"]
+
+Title: 3
+Headers: 3
+Groups: ["hill"]
+Access: admin:1,instructor:1,student:1
+Beginner: 1
+Intermediate: 1
+Advanced: 0
+Expert: 0
+Abstract: 3
+Keywords: 3
+Body: 3
+References: 3
 Special Access Groups: N/A
 
