@@ -10,6 +10,7 @@ import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -193,6 +194,33 @@ public class CSE360HelpSystem extends Application
         root.getChildren().clear();
         root.getChildren().add(articlelistPage);
         System.out.println("Switched to Articles List Page"); // For debugging
+    }
+    
+    // Displays a page containing a list of users in a special access group
+    public void showUsersListPage(List<User> users, String group, String title) {
+        Stage listStage = new Stage();
+        listStage.setTitle(title + " in " + group);
+        
+        VBox layout = new VBox(10);
+        layout.setPadding(new Insets(10));
+        layout.setAlignment(Pos.CENTER);
+        
+        Label titleLabel = new Label(title + " in Group: " + group);
+        titleLabel.setFont(Font.font(16));
+        titleLabel.setTextFill(Color.BLACK);
+        
+        ListView<String> userListView = new ListView<>();
+        for (User user : users) {
+            userListView.getItems().add("Username: " + user.getUsername());
+        }
+        
+        Button closeButton = new Button("Close");
+        closeButton.setOnAction(e -> listStage.close());
+        
+        layout.getChildren().addAll(titleLabel, userListView, closeButton);
+        Scene scene = new Scene(layout, 400, 300);
+        listStage.setScene(scene);
+        listStage.show();
     }
     
     // Provides access to the database helper for other parts of the application

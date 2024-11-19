@@ -156,6 +156,10 @@ public class InstructorPage extends HBox {
         searchbutton.setOnAction(e -> {
         	mainApp.showSearchPage(current);
         });
+        
+        deletestudentbutton.setOnAction(e -> {
+        	deleteStudent();
+        });
 	}
 	
 	private void getSpecialAccess() {
@@ -237,7 +241,41 @@ public class InstructorPage extends HBox {
 		}
 	}
 	
+	// Method to handle deleting a student account from the database
 	private void deleteStudent() {
-		
-	}
+		try {
+	        // Retrieve the entered student ID or username
+	        String studentIdentifier = deletestudentText.getText().trim();
+
+	        // Check if the input is empty
+	        if (studentIdentifier.isEmpty()) {
+	            warning.setText("Enter a Student ID or Username to Delete");
+	            warning.setTextFill(Color.RED);
+	            return;
+	        }
+ 
+	        // Check if the student exists in the database
+	        if (!mainApp.databaseHelper.doesStudentExist(studentIdentifier)) {
+	            warning.setText("Student Not Found");
+	            warning.setTextFill(Color.RED);
+	            return;
+	        }
+
+	        // Attempt to delete the student
+	        boolean success = mainApp.databaseHelper.deleteStudent(studentIdentifier);
+
+	        if (success) {
+	            warning.setText("Student Successfully Deleted");
+	            warning.setTextFill(Color.GREEN);
+	            deletestudentText.clear();
+	        } else {
+	            warning.setText("Failed to Delete Student");
+	            warning.setTextFill(Color.RED);
+	        }
+	    } catch (SQLException e) {
+	        warning.setText("Database Error: Unable to Delete Student");
+	        warning.setTextFill(Color.RED);
+	        e.printStackTrace();
+	    }
+	}	
 }

@@ -2295,10 +2295,115 @@ public class DatabaseHelper {
 
         return accessibleArticleIds;
     }
+    
+    // Method to check if student exist in the database for deleting
+    public boolean doesStudentExist(String studentIdentifier) throws SQLException {
+        String query = "SELECT 1 FROM cse360users WHERE username = ? OR email = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, studentIdentifier);
+            stmt.setString(2, studentIdentifier);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
+        }
+    }
+    
+    // Method to remove a student from the database
+    public boolean deleteStudent(String studentIdentifier) throws SQLException {
+        String query = "DELETE FROM cse360users WHERE username = ? OR email = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, studentIdentifier);
+            stmt.setString(2, studentIdentifier);
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
 
     // Helper method to check if user has access to the special access groups
     private boolean hasUserAccessToGroups(String group, String username) throws SQLException, JSONException {
     	return (isUserInGroup(group, username) || isStudentInGroup(group, username));
+    }
+    
+    // Method to access list of all users in provided group
+    public List<User> getAllUsersInGroup(String groupName) throws SQLException, JSONException {
+        String query = "SELECT instructors_with_view_access, instructors_with_admin_access, students_with_view_access FROM specialaccess WHERE groupname = ?";
+        List<User> users = new ArrayList<>();
+
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, groupName);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    // Parse and add instructors with view access
+                    String viewAccessJson = resultSet.getString("instructors_with_view_access");
+                    if (viewAccessJson != null && !viewAccessJson.isEmpty()) {
+                        JSONArray viewAccessArray = new JSONArray(viewAccessJson);
+                        for (int i = 0; i < viewAccessArray.length(); i++) {
+                            String username = viewAccessArray.getString(i);
+                            User user = getUserByUsername(username); // Get user data (you may need to define this method)
+                            if (user != null) {
+                                users.add(user);  // Add User object to the list
+                            }
+                        }
+                    }
+
+                    // Parse and add instructors with admin access
+                    String adminAccessJson = resultSet.getString("instructors_with_admin_access");
+                    if (adminAccessJson != null && !adminAccessJson.isEmpty()) {
+                        JSONArray adminAccessArray = new JSONArray(adminAccessJson);
+                        for (int i = 0; i < adminAccessArray.length(); i++) {
+                            String username = adminAccessArray.getString(i);
+                            User user = getUserByUsername(username); // Get user data
+                            if (user != null) {
+                                users.add(user);  // Add User object to the list
+                            }
+                        }
+                    }
+
+                    // Parse and add students with view access
+                    String studentAccessJson = resultSet.getString("students_with_view_access");
+                    if (studentAccessJson != null && !studentAccessJson.isEmpty()) {
+                        JSONArray studentAccessArray = new JSONArray(studentAccessJson);
+                        for (int i = 0; i < studentAccessArray.length(); i++) {
+                            String username = studentAccessArray.getString(i);
+                            User user = getUserByUsername(username); // Get user data
+                            if (user != null) {
+                                users.add(user);  // Add User object to the list
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return users;
+    }
+    
+    // Method to access list of students in provided group
+ // Method to access list of students in provided group
+    public List<User> getStudentsInGroup(String groupName) throws SQLException, JSONException {
+        String query = "SELECT students_with_view_access FROM specialaccess WHERE groupname = ?";
+        List<User> students = new ArrayList<>();
+
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, groupName);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    // Parse and add students with view access
+                    String studentAccessJson = resultSet.getString("students_with_view_access");
+                    if (studentAccessJson != null && !studentAccessJson.isEmpty()) {
+                        JSONArray studentAccessArray = new JSONArray(studentAccessJson);
+                        for (int i = 0; i < studentAccessArray.length(); i++) {
+                            String username = studentAccessArray.getString(i);
+                            User user = getUserByUsername(username); // Get user data
+                            if (user != null) {
+                                students.add(user);  // Add User object to the list
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return students;
     }
     
     /**
