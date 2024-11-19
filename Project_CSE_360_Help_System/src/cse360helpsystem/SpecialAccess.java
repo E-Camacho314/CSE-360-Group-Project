@@ -1,6 +1,7 @@
 package cse360helpsystem;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import org.json.JSONException;
 
@@ -246,6 +247,9 @@ public class SpecialAccess extends VBox {
 					e1.printStackTrace();
 				}
 			});
+            
+            viewButton.setOnAction(e -> viewUsers());
+            viewstudButton.setOnAction(e -> viewStudents());
         }
         else {
         	// Adding components to the grid
@@ -399,4 +403,51 @@ public class SpecialAccess extends VBox {
     	messageLabel.setText("Article Added");
 		messageLabel.setTextFill(Color.GREEN);
     }
+    
+    // Method to display users based on the special access group
+    private void viewUsers() {
+        try {
+            // Get all users in the special access group
+            List<User> users = mainApp.databaseHelper.getAllUsersInGroup(group);
+            
+            // Display users in a new list page
+            if (users.isEmpty()) {
+                messageLabel.setText("No users found in the group.");
+                messageLabel.setTextFill(Color.RED);
+            } else {
+                mainApp.showUsersListPage(users, group, "All Users");
+            }
+        } catch (SQLException e) {
+            messageLabel.setText("Error retrieving users.");
+            messageLabel.setTextFill(Color.RED);
+            e.printStackTrace();
+        }
+    }
+    
+    // Method to display students based on the special access group
+    private void viewStudents() {
+        // Get all students in the special access group
+		List<User> students = null;
+		try {
+			try {
+				students = mainApp.databaseHelper.getStudentsInGroup(group);
+			} catch (SQLException e) {
+				messageLabel.setText("Error retrieving students. SQL Exception");
+	            messageLabel.setTextFill(Color.RED);
+				e.printStackTrace();
+			}
+		} catch (JSONException e) {
+			messageLabel.setText("Error retrieving students. JSON Exception");
+            messageLabel.setTextFill(Color.RED);
+			e.printStackTrace();
+		}
+		
+		// Display students in a new list page
+		if (students.isEmpty()) {
+		    messageLabel.setText("No students found in the group.");
+		    messageLabel.setTextFill(Color.RED);
+		} else {
+		    mainApp.showUsersListPage(students, group, "Students");
+		}
+    }  
 }
