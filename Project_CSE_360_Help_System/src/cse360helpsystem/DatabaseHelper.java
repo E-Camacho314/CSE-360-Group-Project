@@ -1811,7 +1811,7 @@ public class DatabaseHelper {
         }
     }
     
-    public boolean doesGroupExist(String groupName) throws SQLException {
+    public boolean doesSpecialGroupExist(String groupName) throws SQLException {
         String query = "SELECT COUNT(*) FROM specialaccess WHERE groupname = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, groupName);
@@ -2586,7 +2586,7 @@ public class DatabaseHelper {
     public boolean deleteArticleFromSpecialAccessGroup(String groupName, int articleId) throws SQLException, JSONException {
         System.out.println("Attempting to delete article " + articleId + " from group " + groupName);
 
-        if (!doesGroupExist(groupName)) {
+        if (!doesSpecialGroupExist(groupName)) {
             System.out.println("Group " + groupName + " does not exist.");
             return false;
         }
@@ -2681,6 +2681,97 @@ public class DatabaseHelper {
         System.out.println("Group name " + groupName + " not found.");
         return false;
     }
+    
+    // method to delete a special access group
+    public void deleteSpecialAccessGroup(String groupName) throws SQLException {
+    	if (!doesSpecialGroupExist(groupName)) {
+            throw new SQLException("Invalid group name.");
+        }
+    	String query = "DELETE FROM specialaccess WHERE groupname = ?";
+    	try (PreparedStatement stmt = connection.prepareStatement(query)) {
+    		stmt.setString(1, groupName);
+    		stmt.executeUpdate();
+    		System.out.println(groupName + "deleted successfully.");
+    	} catch (SQLException e) {
+    		System.err.println("Error deleting special access group:" + e.getMessage());
+    	}	
+    }
+    
+    // Method to delete group
+    public void deleteGroup(String groupName) throws SQLException {
+        String query = "SELECT id, groups FROM articles";
+        String updateQuery = "UPDATE articles SET groups = ? WHERE id = ?";
+        
+        try (Statement selectStmt = connection.createStatement();
+             ResultSet rs = selectStmt.executeQuery(query)) {
+
+            System.out.println("Executing query to fetch articles...");
+
+            while (rs.next()) {
+                long articleId = rs.getLong("id");
+                String groupsJson = rs.getString("groups");
+
+                System.out.println("Processing article ID: " + articleId);
+                if (groupsJson != null && !groupsJson.isEmpty()) {
+                    System.out.println("Original groups JSON: " + groupsJson);
+
+                    JSONArray groupsArray = new JSONArray(groupsJson);
+                    JSONArray updatedGroupsArray = new JSONArray();
+
+                    // Keep all groups except the one to remove
+                    for (int i = 0; i < groupsArray.length(); i++) {
+                        String group = groupsArray.getString(i);
+                        if (!group.equalsIgnoreCase(groupName)) {
+                            updatedGroupsArray.put(group);
+                        } else {
+                            System.out.println("Removing group: " + group);
+                        }
+                    }
+
+                    System.out.println("Updated groups JSON for article ID " + articleId + ": " + updatedGroupsArray);
+
+                    // Update the database with the new array
+                    try (PreparedStatement updateStmt = connection.prepareStatement(updateQuery)) {
+                        updateStmt.setString(1, updatedGroupsArray.toString());
+                        updateStmt.setLong(2, articleId);
+                        int rowsUpdated = updateStmt.executeUpdate();
+                        System.out.println("Article ID " + articleId + " updated. Rows affected: " + rowsUpdated);
+                    }
+                } else {
+                    System.out.println("No groups found for article ID: " + articleId);
+                }
+            }
+        } catch (JSONException e) {
+            System.err.println("Error processing groups: " + e.getMessage());
+        }
+    }
+    
+    
+    //method to check if a group exists in the Articles table
+    public boolean doesGroupExist(String groupName) throws SQLException {
+        // Query to check if the group name exists in the 'groups' JSON array
+        String query = "SELECT COUNT(*) FROM articles, json_each(groups) WHERE json_each.value = ?";
+
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, groupName); // Directly bind the group name for comparison
+
+            System.out.println("Executing query to check if group exists: " + groupName);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    int count = resultSet.getInt(1);
+                    System.out.println("Group existence count: " + count);
+                    return count > 0; // Return true if the count is greater than 0
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error checking group existence: " + e.getMessage());
+            throw e; // Re-throw the exception for further handling
+        }
+        return false; // Return false if no matches are found
+    }
+
+
     
     public void addSpecificMessage(String username, String specificText, String specificNeed) throws SQLException {
         String insertRequest = "INSERT INTO requests (username, request) VALUES (?, ?)";

@@ -407,7 +407,7 @@ public class AdminPage extends HBox {
 			}
 			else {
 				group = specialField.getText();
-				if(mainApp.databaseHelper.doesGroupExist(group)) {
+				if(mainApp.databaseHelper.doesSpecialGroupExist(group)) {
 					mainApp.databaseHelper.printSpecialAccessTable();
 					if(mainApp.databaseHelper.isUserInGroup(group, username)) {
 						if(mainApp.databaseHelper.isUserAdmin(group, username)) {

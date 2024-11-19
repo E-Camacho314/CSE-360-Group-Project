@@ -265,6 +265,9 @@ public class SpecialAccess extends VBox {
                 }
             });
             
+            deleteButton.setOnAction(e -> {
+            	deleteSpecialGroup();
+            	});
         }
         else {
         	// Adding components to the grid
@@ -534,6 +537,21 @@ public class SpecialAccess extends VBox {
             messageLabel.setTextFill(Color.RED);
             e.printStackTrace();
         }
+    }
+    
+    private void deleteSpecialGroup() {
+    	try {
+			mainApp.databaseHelper.deleteSpecialAccessGroup(group);
+	    	if(prev.equals("admin")) {
+	    		mainApp.showAdminPage();
+	    	}
+	    	if(prev.equals("instructor")) {
+	    		mainApp.showInstructorPage();
+	    	}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 
 }

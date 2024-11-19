@@ -178,6 +178,7 @@ public class ArticlesPage extends VBox {
         backupbutton.setOnAction(e -> backupArticles());
         restorebutton.setOnAction(e -> restoreArticles());
         listGroupButton.setOnAction(e -> viewArticleGroup());
+        deletegroupbutton.setOnAction(e -> deleteGroup());
         backupgroupbutton.setOnAction(e -> backupGroup());
     }
     
@@ -365,5 +366,28 @@ public class ArticlesPage extends VBox {
         		System.out.println("User cancelled.");
         	}
         }
+    }
+    
+    private void deleteGroup() {
+    	if (deletegroupField.getText().isEmpty()) {
+    		warning.setText("Warning: No group specified!");
+    		warning.setTextFill(Color.RED);
+    		return;
+    	}
+    	try {
+        	String group = deletegroupField.getText();
+        	if (!mainApp.databaseHelper.doesGroupExist(group)) {
+        		warning.setText("Warning: Group does not Exist!");
+        		warning.setTextFill(Color.RED);
+        		return;
+        	}
+        	mainApp.databaseHelper.deleteGroup(group);
+        	deletegroupField.clear();
+    		warning.setText("Group Deleted!");
+    		warning.setTextFill(Color.GREEN);
+    	}
+    	catch(Exception e) {
+    		
+    	}
     }
 }

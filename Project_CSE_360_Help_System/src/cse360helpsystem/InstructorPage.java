@@ -185,7 +185,7 @@ public class InstructorPage extends HBox {
 			}
 			else {
 				group = specialText.getText();
-				if(mainApp.databaseHelper.doesGroupExist(group)) {
+				if(mainApp.databaseHelper.doesSpecialGroupExist(group)) {
 					mainApp.databaseHelper.printSpecialAccessTable();
 					if(mainApp.databaseHelper.isUserInGroup(group, username)) {
 						if(mainApp.databaseHelper.isUserAdmin(group, username)) {
@@ -231,7 +231,7 @@ public class InstructorPage extends HBox {
 			}
 			else {
 				group = createText.getText();
-				if(!mainApp.databaseHelper.doesGroupExist(group)) {
+				if(!mainApp.databaseHelper.doesSpecialGroupExist(group)) {
 					mainApp.databaseHelper.createGroup(group, username);
 				}
 				else {
