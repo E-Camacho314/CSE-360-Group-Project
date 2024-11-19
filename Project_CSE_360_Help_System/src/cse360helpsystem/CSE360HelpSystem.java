@@ -199,13 +199,23 @@ public class CSE360HelpSystem extends Application
     // Displays a page containing a list of users in a special access group
     public void showUsersListPage(List<User> users, String group, String title) {
         Stage listStage = new Stage();
-        listStage.setTitle(title + " in " + group);
+        if(group.equals("")) {
+        	listStage.setTitle(title + " in Help System");
+        }
+        else {
+            listStage.setTitle(title + " in " + group);
+        }
+
         
         VBox layout = new VBox(10);
         layout.setPadding(new Insets(10));
         layout.setAlignment(Pos.CENTER);
-        
-        Label titleLabel = new Label(title + " in Group: " + group);
+        Label titleLabel = new Label();
+        if(group.equals("")) {
+        	titleLabel.setText(title + " in Help System");
+        }else {
+            titleLabel.setText(title + " in Group: " + group);
+        }
         titleLabel.setFont(Font.font(16));
         titleLabel.setTextFill(Color.BLACK);
         

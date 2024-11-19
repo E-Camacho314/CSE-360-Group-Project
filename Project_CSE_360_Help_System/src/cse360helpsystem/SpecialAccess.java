@@ -248,8 +248,23 @@ public class SpecialAccess extends VBox {
 				}
 			});
             
-            viewButton.setOnAction(e -> viewUsers());
-            viewstudButton.setOnAction(e -> viewStudents());
+            removeButton.setOnAction(e -> {
+                try {
+                    RemoveArticle();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            });
+
+            
+            deluserButton.setOnAction(e -> {
+                try {
+                    deleteUserFromGroup();
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+            });
+            
         }
         else {
         	// Adding components to the grid
@@ -276,9 +291,10 @@ public class SpecialAccess extends VBox {
         
         // Button Actions
         viewartButton.setOnAction(e -> viewArticle());
-
-        // Button Actions
+        viewButton.setOnAction(e -> viewUsers());
+        viewstudButton.setOnAction(e -> viewStudents());
         backButton.setOnAction(e -> returnToPage(prev));
+        
     }
     
     // Method to handle switching to previous page
@@ -450,4 +466,74 @@ public class SpecialAccess extends VBox {
 		    mainApp.showUsersListPage(students, group, "Students");
 		}
     }  
+    
+    private void deleteUserFromGroup() throws SQLException {
+        if (deluserField.getText().isEmpty()) {
+            messageLabel.setText("Missing Username");
+            messageLabel.setTextFill(Color.RED);
+            return;
+        }
+
+        String username = deluserField.getText();
+
+        // Check if the user exists
+        if (!mainApp.databaseHelper.doesUserExist(username)) {
+            messageLabel.setText("Invalid User");
+            messageLabel.setTextFill(Color.RED);
+            return;
+        }
+
+        // Call the existing function to check if the user is the last admin
+        if (mainApp.databaseHelper.isLastAdminInGroup(group, username)) {
+            messageLabel.setText("Cannot delete the last Admin from the group");
+            messageLabel.setTextFill(Color.RED);
+            return;
+        }
+
+        // Proceed to delete the user
+        mainApp.databaseHelper.deleteUserFromGroup(group, username);
+        mainApp.databaseHelper.printSpecialAccessTable();
+        deluserField.clear();
+        messageLabel.setText("User deleted successfully");
+        messageLabel.setTextFill(Color.GREEN);
+    }
+    
+    
+    
+    private void RemoveArticle() throws SQLException {
+        if (removeField.getText().isEmpty()) {
+            messageLabel.setText("Missing Article ID");
+            messageLabel.setTextFill(Color.RED);
+            return;
+        }
+
+        try {
+            String ID = removeField.getText();
+            int articleId = Integer.parseInt(ID);
+
+            // Attempt to delete the article using the database helper
+            boolean success = mainApp.databaseHelper.deleteArticleFromSpecialAccessGroup(group, articleId);
+
+            if (success) {
+                removeField.clear();
+                messageLabel.setText("Article removed successfully");
+                messageLabel.setTextFill(Color.GREEN);
+            } else {
+                messageLabel.setText("Article not found in group");
+                messageLabel.setTextFill(Color.RED);
+            }
+        } catch (NumberFormatException e) {
+            messageLabel.setText("Invalid Article ID format");
+            messageLabel.setTextFill(Color.RED);
+        } catch (JSONException e) {
+            messageLabel.setText("Error processing JSON data");
+            messageLabel.setTextFill(Color.RED);
+            e.printStackTrace();
+        } catch (SQLException e) {
+            messageLabel.setText("Database error occurred");
+            messageLabel.setTextFill(Color.RED);
+            e.printStackTrace();
+        }
+    }
+
 }

@@ -2406,6 +2406,302 @@ public class DatabaseHelper {
         return students;
     }
     
+    // Method to access list of students
+    public List<User> getAllStudents() throws SQLException {
+        String query = "SELECT * FROM cse360users WHERE student = 1";
+        List<User> students = new ArrayList<>();
+
+        try (PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                // Extract data from the result set
+                String username = resultSet.getString("username");
+                String email = resultSet.getString("email");
+                String firstname = resultSet.getString("firstname");
+                String middlename = resultSet.getString("middlename");
+                String lastname = resultSet.getString("lastname");
+                String preferred = resultSet.getString("preferred");
+                boolean isAdmin = resultSet.getInt("admin") == 1;
+                boolean isInstructor = resultSet.getInt("instructor") == 1;
+                boolean isStudent = resultSet.getInt("student") == 1;
+                boolean isFlagged = resultSet.getInt("flag") == 1;
+
+                // Create a new User object
+                User student = new User(
+                    username,
+                    email,
+                    firstname,
+                    middlename,
+                    lastname,
+                    preferred,
+                    isAdmin,
+                    isInstructor,
+                    isStudent,
+                    isFlagged
+                );
+
+                // Add the user to the list
+                students.add(student);
+            }
+        }
+        return students;
+    }
+    
+    // Method to access list of students
+    public List<User> getStudent(String username) throws SQLException {
+        String query = "SELECT * FROM cse360users WHERE student = 1 AND username = ?";
+        List<User> students = new ArrayList<>();
+
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            // Bind the username parameter
+            statement.setString(1, username);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    // Extract data from the result set
+                    String uname = resultSet.getString("username");
+                    String email = resultSet.getString("email");
+                    String firstname = resultSet.getString("firstname");
+                    String middlename = resultSet.getString("middlename");
+                    String lastname = resultSet.getString("lastname");
+                    String preferred = resultSet.getString("preferred");
+                    boolean isAdmin = resultSet.getInt("admin") == 1;
+                    boolean isInstructor = resultSet.getInt("instructor") == 1;
+                    boolean isStudent = resultSet.getInt("student") == 1;
+                    boolean isFlagged = resultSet.getInt("flag") == 1;
+
+                    // Create a new User object
+                    User student = new User(
+                        uname,
+                        email,
+                        firstname,
+                        middlename,
+                        lastname,
+                        preferred,
+                        isAdmin,
+                        isInstructor,
+                        isStudent,
+                        isFlagged
+                    );
+
+                    // Add the user to the list
+                    students.add(student);
+                }
+            }
+        }
+        return students;
+    }
+    
+    // Checks if a user is the last admin in a group
+    boolean isLastAdminInGroup(String groupName, String username) throws SQLException, JSONException {
+        System.out.println("Checking if user " + username + " is the last admin in group " + groupName);
+        String query = "SELECT instructors_with_admin_access FROM specialaccess WHERE groupname = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, groupName);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                String adminAccessJson = rs.getString("instructors_with_admin_access");
+                JSONArray adminAccessArray = new JSONArray(adminAccessJson != null ? adminAccessJson : "[]");
+                System.out.println("Admin access list for group " + groupName + ": " + adminAccessArray);
+
+                // Check if the array contains only one user, and it is the specified user
+                return adminAccessArray.length() == 1 && adminAccessArray.getString(0).equals(username);
+            }
+        }
+        System.out.println("No admins or multiple admins exist in the group.");
+        return false;
+    }
+
+    // Deletes a user (admin or student) from a group
+    public boolean deleteUserFromGroup(String groupName, String username) throws SQLException, JSONException {
+        System.out.println("Attempting to delete user " + username + " from group " + groupName);
+
+        // Prevent deletion if the user is the last admin
+        if (isLastAdminInGroup(groupName, username)) {
+            System.out.println("Cannot delete user " + username + " as they are the last admin in the group.");
+            return false;
+        }
+
+        String query = "SELECT instructors_with_admin_access, instructors_with_view_access, students_with_view_access FROM specialaccess WHERE groupname = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, groupName);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                // Handle admin access array
+                String adminAccessJson = rs.getString("instructors_with_admin_access");
+                JSONArray adminAccessArray = new JSONArray(adminAccessJson != null ? adminAccessJson : "[]");
+                System.out.println("Original admin access list: " + adminAccessArray);
+                removeUserFromArray(adminAccessArray, username);
+                System.out.println("Updated admin access list: " + adminAccessArray);
+
+                // Handle instructor view access array
+                String viewAccessJson = rs.getString("instructors_with_view_access");
+                JSONArray viewAccessArray = new JSONArray(viewAccessJson != null ? viewAccessJson : "[]");
+                System.out.println("Original view access list: " + viewAccessArray);
+                removeUserFromArray(viewAccessArray, username);
+                System.out.println("Updated view access list: " + viewAccessArray);
+
+                // Handle student view access array
+                String studentAccessJson = rs.getString("students_with_view_access");
+                JSONArray studentAccessArray = new JSONArray(studentAccessJson != null ? studentAccessJson : "[]");
+                System.out.println("Original student access list: " + studentAccessArray);
+                removeUserFromArray(studentAccessArray, username);
+                System.out.println("Updated student access list: " + studentAccessArray);
+
+                // Update the database
+                String updateQuery = "UPDATE specialaccess SET "
+                        + "instructors_with_admin_access = ?, "
+                        + "instructors_with_view_access = ?, "
+                        + "students_with_view_access = ? "
+                        + "WHERE groupname = ?";
+                try (PreparedStatement updateStmt = connection.prepareStatement(updateQuery)) {
+                    updateStmt.setString(1, adminAccessArray.toString());
+                    updateStmt.setString(2, viewAccessArray.toString());
+                    updateStmt.setString(3, studentAccessArray.toString());
+                    updateStmt.setString(4, groupName);
+                    updateStmt.executeUpdate();
+                }
+            }
+        }
+        System.out.println("User " + username + " deleted successfully from group " + groupName);
+        return true;
+    }
+
+    // Helper method to remove a user from a JSON array
+    private void removeUserFromArray(JSONArray jsonArray, String username) {
+        System.out.println("Removing user " + username + " from array: " + jsonArray);
+        for (int i = 0; i < jsonArray.length(); i++) {
+            if (jsonArray.getString(i).equals(username)) {
+                jsonArray.remove(i);
+                System.out.println("User " + username + " removed.");
+                break;
+            }
+        }
+    }
+
+    // Deletes an article from a special access group
+    public boolean deleteArticleFromSpecialAccessGroup(String groupName, int articleId) throws SQLException, JSONException {
+        System.out.println("Attempting to delete article " + articleId + " from group " + groupName);
+
+        if (!doesGroupExist(groupName)) {
+            System.out.println("Group " + groupName + " does not exist.");
+            return false;
+        }
+
+        String query = "SELECT article_ids FROM specialaccess WHERE groupname = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, groupName);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                String articleIdsJson = rs.getString("article_ids");
+                JSONArray articleIdsArray = (articleIdsJson != null && !articleIdsJson.isEmpty()) 
+                                              ? new JSONArray(articleIdsJson) 
+                                              : new JSONArray();
+                System.out.println("Original article IDs for group " + groupName + ": " + articleIdsArray);
+
+                boolean removed = removeArticleFromArray(articleIdsArray, articleId);
+                if (!removed) {
+                    System.out.println("Article ID " + articleId + " not found in group " + groupName);
+                    return false;
+                }
+
+                System.out.println("Updated article IDs for group " + groupName + ": " + articleIdsArray);
+
+                String updateQuery = "UPDATE specialaccess SET article_ids = ? WHERE groupname = ?";
+                try (PreparedStatement updateStmt = connection.prepareStatement(updateQuery)) {
+                    updateStmt.setString(1, articleIdsArray.toString());
+                    updateStmt.setString(2, groupName);
+                    updateStmt.executeUpdate();
+                }
+
+                String articleQuery = "SELECT specialaccessgroups FROM articles WHERE id = ?";
+                try (PreparedStatement articleStmt = connection.prepareStatement(articleQuery)) {
+                    articleStmt.setInt(1, articleId);
+                    ResultSet articleRs = articleStmt.executeQuery();
+
+                    if (articleRs.next()) {
+                        String groupNamesJson = articleRs.getString("specialaccessgroups");
+                        JSONArray groupNamesArray = (groupNamesJson != null && !groupNamesJson.isEmpty()) 
+                                                      ? new JSONArray(groupNamesJson) 
+                                                      : new JSONArray();
+                        System.out.println("Original group names for article " + articleId + ": " + groupNamesArray);
+
+                        boolean groupRemoved = removeGroupFromArray(groupNamesArray, groupName);
+                        if (groupRemoved) {
+                            System.out.println("Updated group names for article " + articleId + ": " + groupNamesArray);
+                            String updateArticleQuery = "UPDATE articles SET specialaccessgroups = ? WHERE id = ?";
+                            try (PreparedStatement updateArticleStmt = connection.prepareStatement(updateArticleQuery)) {
+                                updateArticleStmt.setString(1, groupNamesArray.toString());
+                                updateArticleStmt.setInt(2, articleId);
+                                updateArticleStmt.executeUpdate();
+                            }
+                        }
+                    }
+                }
+
+                System.out.println("Article " + articleId + " successfully removed from group " + groupName);
+                return true;
+            }
+        } catch (SQLException | JSONException e) {
+            System.err.println("Error while deleting article from group: " + e.getMessage());
+            throw e;
+        }
+
+        return false;
+    }
+
+    // Helper method to remove an article ID from a JSON array
+    private boolean removeArticleFromArray(JSONArray jsonArray, int articleId) {
+        System.out.println("Removing article ID " + articleId + " from array: " + jsonArray);
+        for (int i = 0; i < jsonArray.length(); i++) {
+            if (jsonArray.getInt(i) == articleId) {
+                jsonArray.remove(i);
+                System.out.println("Article ID " + articleId + " removed.");
+                return true;
+            }
+        }
+        System.out.println("Article ID " + articleId + " not found.");
+        return false;
+    }
+
+    // Helper method to remove a group name from a JSON array
+    private boolean removeGroupFromArray(JSONArray jsonArray, String groupName) {
+        System.out.println("Removing group name " + groupName + " from array: " + jsonArray);
+        for (int i = 0; i < jsonArray.length(); i++) {
+            if (jsonArray.getString(i).equals(groupName)) {
+                jsonArray.remove(i);
+                System.out.println("Group name " + groupName + " removed.");
+                return true;
+            }
+        }
+        System.out.println("Group name " + groupName + " not found.");
+        return false;
+    }
+    
+    public void addSpecificMessage(String username, String specificText, String specificNeed) throws SQLException {
+        String insertRequest = "INSERT INTO requests (username, request) VALUES (?, ?)";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(insertRequest)) {
+            // Combine the inputs into a single message
+            String combinedMessage = "Not Found: " + specificText + "; Needed: " + specificNeed;
+
+            // Set parameters for the query
+            pstmt.setString(1, username); // The username of the student
+            pstmt.setString(2, combinedMessage); // The combined message
+
+            // Execute the query
+            pstmt.executeUpdate();
+            System.out.println("Specific message added to the database for user: " + username);
+        } catch (SQLException e) {
+            System.err.println("Error while adding specific message: " + e.getMessage());
+            throw e; // Rethrow for higher-level handling
+        }
+    }
+    
     /**
      * Closes the database connection and associated statement.
      * Should be called when the application is shutting down to release resources.

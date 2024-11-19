@@ -1,6 +1,9 @@
 package cse360helpsystem;
 
 import java.sql.SQLException;
+import java.util.List;
+
+import org.json.JSONException;
 
 import javafx.geometry.Insets;
 
@@ -160,6 +163,14 @@ public class InstructorPage extends HBox {
         deletestudentbutton.setOnAction(e -> {
         	deleteStudent();
         });
+        
+        viewallstudentsbutton.setOnAction(e -> {
+        	viewAllStudents();
+        });
+        
+        viewstudentsbutton.setOnAction(e -> {
+        	viewStudent();
+        });
 	}
 	
 	private void getSpecialAccess() {
@@ -278,4 +289,66 @@ public class InstructorPage extends HBox {
 	        e.printStackTrace();
 	    }
 	}	
+	
+	// Method to display all students
+    private void viewStudent() {
+        // Get all students in the special access group
+    	String student;
+    	if(viewstudentsText.getText().isEmpty()) {
+			warning.setText("Error: Please Enter a Username");
+            warning.setTextFill(Color.RED);
+            return;
+    	}
+    	student = viewstudentsText.getText();
+		List<User> students = null;
+		try {
+			try {
+				students = mainApp.databaseHelper.getStudent(student);
+			} catch (SQLException e) {
+				warning.setText("Error retrieving students. SQL Exception");
+	            warning.setTextFill(Color.RED);
+				e.printStackTrace();
+			}
+		} catch (JSONException e) {
+			warning.setText("Error retrieving students. JSON Exception");
+            warning.setTextFill(Color.RED);
+			e.printStackTrace();
+		}
+		
+		// Display students in a new list page
+		if (students.isEmpty()) {
+		    warning.setText("No student found.");
+		    warning.setTextFill(Color.RED);
+		} else {
+		    mainApp.showUsersListPage(students, "", student);
+		    viewstudentsText.clear();
+		}
+    }  
+	
+    // Method to display all students
+    private void viewAllStudents() {
+        // Get all students in the special access group
+		List<User> students = null;
+		try {
+			try {
+				students = mainApp.databaseHelper.getAllStudents();
+			} catch (SQLException e) {
+				warning.setText("Error retrieving students. SQL Exception");
+	            warning.setTextFill(Color.RED);
+				e.printStackTrace();
+			}
+		} catch (JSONException e) {
+			warning.setText("Error retrieving students. JSON Exception");
+            warning.setTextFill(Color.RED);
+			e.printStackTrace();
+		}
+		
+		// Display students in a new list page
+		if (students.isEmpty()) {
+		    warning.setText("No students found.");
+		    warning.setTextFill(Color.RED);
+		} else {
+		    mainApp.showUsersListPage(students, "", "Students");
+		}
+    }  
 }

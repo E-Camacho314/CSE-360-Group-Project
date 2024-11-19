@@ -1,6 +1,9 @@
 package cse360helpsystem;
 
 import javafx.scene.control.TextField;
+
+import java.sql.SQLException;
+
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -118,6 +121,40 @@ public class StudentPage extends HBox {
         	mainApp.databaseHelper.closeConnection();
         	Platform.exit();
         	});
+        
+        specificbutton.setOnAction(e -> {
+            try {
+                // Get the text input values
+                String notFound = specificText.getText().trim();
+                String needed = specificneedText.getText().trim();
+
+                // Validate inputs
+                if (notFound.isEmpty() || needed.isEmpty()) {
+                    warning.setText("Both fields are required.");
+                    warning.setTextFill(Color.RED);
+                    return;
+                }
+
+                // Get the currently logged-in user's username
+                String username = mainApp.databaseHelper.findLoggedInUser();
+
+                // Call the database method to add the specific message
+                mainApp.databaseHelper.addSpecificMessage(username, notFound, needed);
+
+                // Display success message
+                warning.setText("Message sent successfully!");
+                warning.setTextFill(Color.GREEN);
+
+                // Clear the input fields
+                specificText.clear();
+                specificneedText.clear();
+            } catch (SQLException ex) {
+                warning.setText("Error: Unable to send message.");
+                warning.setTextFill(Color.RED);
+                ex.printStackTrace();
+            }
+        });
+
 
 	}
 }
