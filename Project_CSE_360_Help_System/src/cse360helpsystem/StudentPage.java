@@ -19,11 +19,12 @@ import javafx.scene.text.Font;
 /**
 * <p>StudentPage Class</p>
 * 
-* <p>Description:This class represents the student view in the CSE360HelpSystem. 
+* <p>Description: This class represents the student view in the CSE360HelpSystem. 
 * It displays a welcome message and provides a logout button that navigates the user back to the login page. </p>
 * 
 * <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
 */
+
 public class StudentPage extends HBox {
 	// UI Components
 	private Label welcome = new Label("Student View");
@@ -122,6 +123,7 @@ public class StudentPage extends HBox {
         	Platform.exit();
         	});
         
+        // Action to add a specific message request
         specificbutton.setOnAction(e -> {
             try {
                 // Get the text input values
@@ -155,6 +157,7 @@ public class StudentPage extends HBox {
             }
         });
 
+        // Action to add a generic help message request
         genericbutton.setOnAction(e -> {
             try {
 
@@ -172,6 +175,5 @@ public class StudentPage extends HBox {
                 ex.printStackTrace();
             }
         });
-
 	}
 }

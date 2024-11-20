@@ -368,6 +368,7 @@ public class ArticlesPage extends VBox {
         }
     }
     
+    // Method to delete a group from the database based on the provided string in the text field
     private void deleteGroup() {
     	if (deletegroupField.getText().isEmpty()) {
     		warning.setText("Warning: No group specified!");
@@ -387,7 +388,7 @@ public class ArticlesPage extends VBox {
     		warning.setTextFill(Color.GREEN);
     	}
     	catch(Exception e) {
-    		
+    		e.printStackTrace();
     	}
     }
 }

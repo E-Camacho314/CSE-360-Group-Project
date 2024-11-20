@@ -240,10 +240,7 @@ public class LoginPage extends HBox {
 	        	   warning.setText("Error");
 				   warning.setTextFill(Color.RED);
 				   warning.setFont(Font.font(null, 14)); 
-	            }
-	        
+	            }	        
 	        } //end of handle() method                 
-	} //end of ButtonHandler class
-	
+	} //end of ButtonHandler class	
 }
-

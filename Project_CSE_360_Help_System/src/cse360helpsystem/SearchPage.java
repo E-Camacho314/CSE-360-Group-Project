@@ -16,6 +16,15 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
+/**
+* <p>SearchPage Class</p>
+* 
+* <p>Description:This class displays a page to allow users to search for articles by difficulty,
+* group, keyword, or id. </p>
+* 
+* <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
+*/
+
 public class SearchPage extends VBox {
 
 	// Reference to the main application to facilitate navigation between pages
@@ -151,7 +160,6 @@ public class SearchPage extends VBox {
 			try {
 				searchByDifficulty();
 			} catch (JSONException | SQLException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 		});
@@ -161,7 +169,6 @@ public class SearchPage extends VBox {
 			try {
 				searchByGroup();
 			} catch (SQLException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 		});
@@ -171,7 +178,6 @@ public class SearchPage extends VBox {
 			try {
 				searchByPhrase();
 			} catch (JSONException | SQLException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 		});
@@ -196,6 +202,7 @@ public class SearchPage extends VBox {
     	}
     }
     
+    // Method to retrieve an article based on difficulty
     private void searchByDifficulty() throws JSONException, SQLException {
         // Determine selected levels
         boolean isBeginner = beginner.isSelected();
@@ -223,6 +230,7 @@ public class SearchPage extends VBox {
         mainApp.showArticlesListPage(prev, "",  -2, idList, true);
     }
     
+    // Method to retrieve an article based on group
     private void searchByGroup() throws SQLException {
     	if(groupField.getText().isEmpty()) {
     		messageLabel.setText("Please enter a valid group");
@@ -241,6 +249,7 @@ public class SearchPage extends VBox {
     	mainApp.showArticlesListPage(prev, group,  -3, idList, true);
     }
     
+    // Method to retrieve an article based on keyword
     private void searchByPhrase() throws JSONException, SQLException {
     	if(phraseField.getText().isEmpty()) {
     		messageLabel.setText("Please enter a valid phrase");
@@ -258,6 +267,7 @@ public class SearchPage extends VBox {
     	mainApp.showArticlesListPage(prev, phrase,  -4, idList, true);
     }
     
+    // Method to retrieve an article based on id
     private void searchByID() {
     	String username = mainApp.databaseHelper.findLoggedInUser();
     	if (idField.getText().isEmpty()) {

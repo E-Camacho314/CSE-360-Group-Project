@@ -56,6 +56,8 @@ public class DatabaseHelper {
      * @throws SQLException
      */
     private void createTables() throws SQLException {
+    	
+    	// table for all user accounts
         String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + "firstname TEXT, "
@@ -1412,13 +1414,12 @@ public class DatabaseHelper {
     	            String articleInfo = "ID: " + id + ", Title: " + title + ", Abstract: " + abstractText;
     	            articles.add(articleInfo); // Add formatted string to the list
     	        }
-    	    }
-    	    
+    	    }  	    
     	    return articles; // Return the list of articles
     	}
 
  	
-     // Method to retrieve detailed information about a specific article
+    // Method to retrieve detailed information about a specific article
 	public String getArticleDetailsById(long id) throws Exception {
 	    String query = "SELECT * FROM articles WHERE id = ?";
 	    StringBuilder articleDetails = new StringBuilder();
@@ -1525,12 +1526,11 @@ public class DatabaseHelper {
 	        System.err.println("Failed to retrieve articles by group(s): " + e.getMessage());
 	        throw e;
 	    }
-
 	    // Convert Set to List and return
 	    return new ArrayList<>(uniqueArticleIds);
 	}
 
-     
+     // Method to print all articles in a given group
      public List<String> getAllArticlesGroups(List<Long> idList) throws SQLException {
     	    List<String> articles = new ArrayList<>(); // List to store article information
 
@@ -1679,7 +1679,6 @@ public class DatabaseHelper {
 				        encryptionHelper.encrypt(newValue.getBytes(), EncryptionUtils.getInitializationVector(newValue.toCharArray()))
 				);
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
         }
@@ -1782,7 +1781,6 @@ public class DatabaseHelper {
         } catch (JSONException e) {
             System.err.println("Failed to parse special access groups JSON: " + e.getMessage());
         }
-
         return hasAccess;
     }
 
@@ -1833,6 +1831,7 @@ public class DatabaseHelper {
         }
     }
     
+    // Method to check if a group is in the database
     public boolean doesSpecialGroupExist(String groupName) throws SQLException {
         String query = "SELECT COUNT(*) FROM specialaccess WHERE groupname = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
@@ -1848,6 +1847,7 @@ public class DatabaseHelper {
         return false; // Group does not exist
     }
     
+    // Method to check if a user is in the group
     public boolean isUserInGroup(String groupName, String username) throws SQLException, JSONException {
         String query = "SELECT instructors_with_view_access, instructors_with_admin_access FROM specialaccess WHERE groupname = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
@@ -1867,6 +1867,7 @@ public class DatabaseHelper {
         return false; // User is not found in either access list
     }
     
+    // Method to check if student user is in the group
     public boolean isStudentInGroup(String groupName, String username) throws SQLException, JSONException {
         String query = "SELECT students_with_view_access FROM specialaccess WHERE groupname = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
@@ -1885,7 +1886,7 @@ public class DatabaseHelper {
         return false; // User is not found in the view access list
     }
 
-
+    // Method to check if user is in the JSON array
     private boolean isUserInJsonArray(String jsonArrayString, String username) {
         if (jsonArrayString == null || jsonArrayString.isEmpty()) {
             return false;
@@ -1904,10 +1905,10 @@ public class DatabaseHelper {
             // Handle any JSON parsing errors
             e.printStackTrace();
         }
-
         return false;
     }
     
+    // Method to check if user has admin access in the group
     public boolean isUserAdmin(String groupName, String username) throws SQLException, JSONException {
         String query = "SELECT instructors_with_admin_access FROM specialaccess WHERE groupname = ?";
         try (PreparedStatement statement = connection.prepareStatement(query)) {
@@ -1938,6 +1939,7 @@ public class DatabaseHelper {
         return false; // User is not found in the admin access list
     }
     
+    // Method to add an instructor user to the group with either view or admin access
     public void addInstructor(String groupName, String instructorUsername, String accessType) throws SQLException, JSONException {
         if (!accessType.equals("view") && !accessType.equals("admin")) {
             throw new IllegalArgumentException("Invalid access type. Use 'view' or 'admin'.");
@@ -1972,7 +1974,7 @@ public class DatabaseHelper {
         }
     }
 
-    
+    // Method to add a student user to the group
     public void addStudentToViewAccess(String groupName, String studentUsername) throws SQLException, JSONException {
         String query = "SELECT students_with_view_access FROM specialaccess WHERE groupname = ?";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
@@ -1998,6 +2000,7 @@ public class DatabaseHelper {
         }
     }
     
+    // Method to check if an article is in the group
     public boolean isArticleInSpecialAccessGroup(int articleId, String groupName) throws SQLException {
         String query = "SELECT article_ids FROM specialaccess WHERE groupname = ?";
 
@@ -2023,11 +2026,10 @@ public class DatabaseHelper {
             e.printStackTrace();  // Log the exception
             throw e;  // Rethrow the exception for proper error handling
         }
-
         return false;  // Return false if the article ID is not found in the group
     }
 
-    
+    // Method to add an article to the group
     public void addArticleToGroup(int articleId, String groupName) throws SQLException, JSONException {
         // Step 1: Add the article ID to the specialaccess table
         String query = "SELECT article_ids FROM specialaccess WHERE groupname = ?";
@@ -2080,6 +2082,7 @@ public class DatabaseHelper {
         }
     }
     
+    // Method to check if a user has access to a special group associated with the given article
     public boolean isUserInAccessGroups(String username, long articleId) throws SQLException, JSONException {
         String query = "SELECT specialaccessgroups FROM articles WHERE id = ?";
 
@@ -2114,11 +2117,10 @@ public class DatabaseHelper {
             System.err.println("Error checking user access to special access groups: " + e.getMessage());
             throw e;
         }
-
         return false; // User does not have access to any of the groups
     }
 
-    
+    // Method to print a table of special access groups
     public void printSpecialAccessTable() {
         String query = "SELECT * FROM specialaccess";
 
@@ -2140,12 +2142,12 @@ public class DatabaseHelper {
                 System.out.printf("%d | %s | %s | %s | %s | %s\n",
                         id, groupName, instructorsWithViewAccess, instructorsWithAdminAccess, articleIds, studentsWithViewAccess);
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
     
+    // Method to empty the special access groups table 
     public void emptySpecialArticles() throws Exception {
         try {
             String droparticleTable = "DROP TABLE IF EXISTS specialaccess;";
@@ -2158,6 +2160,9 @@ public class DatabaseHelper {
         }
     }
     
+    //Search Functions for Phase III
+    
+    // Method to retrieve a list of articles from the group
     public List<Long> getSpecialAccessByGroups(String groupName) throws SQLException {
    	 List<Long> articleIds = new ArrayList<>(); // List to store article IDs
 
@@ -2199,24 +2204,22 @@ public class DatabaseHelper {
    	                }
    	            }
    	        }
-
+   	        
    	        System.out.println("Finished processing results. Total article IDs found: " + articleIds.size());
    	    } catch (SQLException e) {
    	        System.err.println("Failed to retrieve article IDs for group '" + groupName + "': " + e.getMessage());
    	        throw e;
    	    }
-
+   	    
    	    if (articleIds.isEmpty()) {
    	        System.out.println("No article IDs found for group '" + groupName + "'.");
    	    } else {
    	        System.out.println("Article IDs retrieved successfully for group '" + groupName + "'.");
    	    }
-
    	    return articleIds; // Return the list of article IDs
    }
     
-    //Search Functions for Phase III
-    
+    // Method to retrieve a list of article ids accessible to a user based on difficulty level and group access 
     public List<Long> getArticlesByDifficulty(String username, boolean beginner, boolean intermediate, boolean advanced, boolean expert) throws SQLException, JSONException {
         List<Long> accessibleArticleIds = new ArrayList<>();
 
@@ -2262,10 +2265,10 @@ public class DatabaseHelper {
             System.err.println("Error retrieving accessible articles: " + e.getMessage());
             throw e;
         }
-
         return accessibleArticleIds;
     }
 
+    // Method to retrieve articles accessible to a user based on group access
     public List<Long> searchArticlesByGroups(String username, String groupNames) throws SQLException, JSONException {
         List<Long> accessibleArticleIds = new ArrayList<>();
 
@@ -2338,10 +2341,10 @@ public class DatabaseHelper {
             System.err.println("Error retrieving articles by group(s): " + e.getMessage());
             throw e;
         }
-
         return accessibleArticleIds;
     }
 
+    // Method to retrieve articles based on keyword search in title or abstract given the user has group access
     public List<Long> searchArticlesByKeywordWithAccess(String username, String searchQuery) throws SQLException, JSONException {
         List<Long> accessibleArticleIds = new ArrayList<>();
         String query = "SELECT id, title, abstract, specialaccessgroups FROM articles WHERE LOWER(title) LIKE ? OR LOWER(abstract) LIKE ?";
@@ -2383,7 +2386,6 @@ public class DatabaseHelper {
             System.err.println("Error during article search: " + e.getMessage());
             throw e;
         }
-
         return accessibleArticleIds;
     }
     
@@ -2469,7 +2471,6 @@ public class DatabaseHelper {
     }
     
     // Method to access list of students in provided group
- // Method to access list of students in provided group
     public List<User> getStudentsInGroup(String groupName) throws SQLException, JSONException {
         String query = "SELECT students_with_view_access FROM specialaccess WHERE groupname = ?";
         List<User> students = new ArrayList<>();
@@ -2741,7 +2742,6 @@ public class DatabaseHelper {
             System.err.println("Error while deleting article from group: " + e.getMessage());
             throw e;
         }
-
         return false;
     }
 
@@ -2773,7 +2773,7 @@ public class DatabaseHelper {
         return false;
     }
     
-    // method to delete a special access group
+    // M<ethod to delete a special access group
     public void deleteSpecialAccessGroup(String groupName) throws SQLException {
     	if (!doesSpecialGroupExist(groupName)) {
             throw new SQLException("Invalid group name.");
@@ -2837,8 +2837,7 @@ public class DatabaseHelper {
         }
     }
     
-    
-    //method to check if a group exists in the Articles table
+    // Method to check if a group exists in the Articles table
     public boolean doesGroupExist(String groupName) throws SQLException {
         // Query to check if the group name exists in the 'groups' JSON array
         String query = "SELECT COUNT(*) FROM articles, json_each(groups) WHERE json_each.value = ?";
@@ -2862,8 +2861,7 @@ public class DatabaseHelper {
         return false; // Return false if no matches are found
     }
 
-
-    
+    // Method to add a specific message from the user to the requests table
     public void addSpecificMessage(String username, String specificText, String specificNeed) throws SQLException {
         String insertRequest = "INSERT INTO requests (username, request) VALUES (?, ?)";
 
@@ -2884,6 +2882,7 @@ public class DatabaseHelper {
         }
     }
     
+    // Method to add a generic help message from the user to the requests table
     public void addGenericMessage(String username) throws SQLException {
         String insertRequest = "INSERT INTO requests (username, request) VALUES (?, ?)";
 

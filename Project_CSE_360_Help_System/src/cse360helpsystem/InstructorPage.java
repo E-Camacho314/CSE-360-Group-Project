@@ -173,6 +173,7 @@ public class InstructorPage extends HBox {
         });
 	}
 	
+	// Method to check if user has access to group and if so redirects to group page
 	private void getSpecialAccess() {
 		try {
 			String group;
@@ -219,6 +220,7 @@ public class InstructorPage extends HBox {
 		}
 	}
 	
+	// Method to create a new special access group
 	private void createSpecialAccess() {
 		String group;
 		// Store the username of the current user
@@ -239,7 +241,6 @@ public class InstructorPage extends HBox {
 					warning.setTextFill(Color.RED);
 		            return;
 				}
-
 			}
 			mainApp.showSpecialAccessPage(current, group, true);
 			warning.setText("");

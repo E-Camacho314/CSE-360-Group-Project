@@ -268,7 +268,7 @@ public class ArticleCreationPage extends VBox {
         });
     }
     
-    // Method to handle updating a specifc data entry of an article
+    // Method to handle updating a specific data entry of an article
     private void updateArticleField(String field, String newValue) {
         if (newValue.isEmpty()) {
             messageLabel.setText("Please enter a value for " + field);
@@ -293,6 +293,7 @@ public class ArticleCreationPage extends VBox {
         }
     }
     
+    // Method to adjust the access level to the given id
     private void updateLevelAccess(long id) {
     	// Determine selected levels
         boolean isBeginner = beginner.isSelected();
@@ -395,7 +396,6 @@ public class ArticleCreationPage extends VBox {
         try {
 			inserted = mainApp.databaseHelper.insertArticle(title, header, groups, isAdmin, isInstructor, isStudent, isBeginner, isIntermediate, isAdvanced, isExpert, abstracts, keywords, body, references);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
         

@@ -55,7 +55,6 @@ public class ListPage extends HBox {
         titleLabel.setFont(Font.font(16));
 
         // Set up the table columns
-
         TableColumn<User, String> usernameCol = new TableColumn<>("Username");
         usernameCol.setCellValueFactory(new PropertyValueFactory<>("username"));
 

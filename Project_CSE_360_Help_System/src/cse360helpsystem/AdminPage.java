@@ -29,6 +29,7 @@ import javafx.scene.Scene;
  * 
  * <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
  */
+
 public class AdminPage extends HBox {
 	// Reference to the main application class to access shared resources
 	private CSE360HelpSystem mainApp;

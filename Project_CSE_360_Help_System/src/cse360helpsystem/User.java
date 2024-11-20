@@ -8,12 +8,13 @@ import javafx.beans.property.StringProperty;
 /**
 * <p>User Class</p>
 * 
-* <p>Description:This class represents a user in the CSE360HelpSystem application.
+* <p>Description: This class represents a user in the CSE360HelpSystem application.
  * It contains properties related to the user's personal information and roles within the system.
  * JavaFX properties are used for easy binding with UI components. </p>
 * 
 * <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
 */
+
 public class User {
 	// User properties
     private final StringProperty username = new SimpleStringProperty();
@@ -57,7 +58,7 @@ public class User {
         setFlag(isFlagged);
     }
 
-    // Getters for retrieving property values
+	// Getters for retrieving property values
     public String getUsername() {
         return username.get();
     }

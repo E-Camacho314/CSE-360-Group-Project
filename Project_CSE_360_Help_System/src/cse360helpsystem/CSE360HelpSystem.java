@@ -206,7 +206,6 @@ public class CSE360HelpSystem extends Application
             listStage.setTitle(title + " in " + group);
         }
 
-        
         VBox layout = new VBox(10);
         layout.setPadding(new Insets(10));
         layout.setAlignment(Pos.CENTER);

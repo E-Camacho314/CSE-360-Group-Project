@@ -19,6 +19,17 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
+/**
+* <p>SpecialAccess Class</p>
+* 
+* <p>Description: This class represents the special access functions a user can perform in a group.
+*  Admins and users with special access can perform tasks including adding or removing articles, 
+*  adding or deleting users, view users or articles, delete, backup, and restore a group. Regular 
+*  users can only view other users and articles belonging to the group. </p> 
+* 
+* <p>Authors: Erik Camacho, Thienban Nguyen, Sarvesh Shanmugam, Ivan Mancillas, Tanis Peterson</p>
+*/
+
 public class SpecialAccess extends VBox {
 
 	// Reference to the main application to facilitate navigation between pages
@@ -146,7 +157,7 @@ public class SpecialAccess extends VBox {
         viewartField = new TextField();
         viewartField.setPromptText("Enter Article ID");
         
-     // Backup Special Access Group 
+        // Backup Special Access Group 
         backupField = new TextField();
         backupField.setPromptText("Enter File to Backup To");
 
@@ -188,6 +199,7 @@ public class SpecialAccess extends VBox {
         grid.setHgap(10);
         grid.setPadding(new Insets(20, 20, 20, 20));
         
+        // if user has special access rights
         if(rights == true) {
             // Adding components to the grid
             grid.add(titleLabel, 0, 0, 2, 1);
@@ -225,7 +237,6 @@ public class SpecialAccess extends VBox {
 				try {
 					AddInstructor();
 				} catch (SQLException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			});
@@ -234,10 +245,8 @@ public class SpecialAccess extends VBox {
 				try {
 					AddStudent();
 				} catch (JSONException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				} catch (SQLException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			});
@@ -246,7 +255,6 @@ public class SpecialAccess extends VBox {
 				try {
 					AddArticle();
 				} catch (SQLException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			});
@@ -280,6 +288,7 @@ public class SpecialAccess extends VBox {
             	restoreSpecialAccessGroup();
             });
         }
+        // user does not have special access rights
         else {
         	// Adding components to the grid
             grid.add(titleLabel, 0, 0, 2, 1);
@@ -293,8 +302,6 @@ public class SpecialAccess extends VBox {
 			grid.add(backButton, 0, 6);
             grid.add(messageLabel, 0, 5, 2, 1);
         }
-
-
 
         // Align buttons to the right
         GridPane.setMargin(backButton, new Insets(10, 0, 0, 0));
@@ -325,6 +332,7 @@ public class SpecialAccess extends VBox {
     	}
     }
     
+    // Method to retrieve list of articles in the group
     private void viewArticle() {
     	if(viewartField.getText().isEmpty()) {
 			messageLabel.setText("Missing Article ID");
@@ -347,10 +355,10 @@ public class SpecialAccess extends VBox {
         	messageLabel.setTextFill(Color.RED);
         } catch (SQLException e) {
 			e.printStackTrace();
-		}
-    	
+		}  	
     }
     
+    // Method to add a user with the instructor role to the group
     private void AddInstructor() throws SQLException {
 		if(addinstField.getText().isEmpty() || roleField.getText().isEmpty()) {
 			messageLabel.setText("Missing Information");
@@ -381,9 +389,9 @@ public class SpecialAccess extends VBox {
     	roleField.clear();
     	messageLabel.setText("User Added");
 		messageLabel.setTextFill(Color.GREEN);
-
     }
     
+    // Method to add a user with the student role to the group
     private void AddStudent() throws JSONException, SQLException {
 		if(addstudField.getText().isEmpty()) {
 			messageLabel.setText("Missing Information");
@@ -409,6 +417,7 @@ public class SpecialAccess extends VBox {
 		messageLabel.setTextFill(Color.GREEN);
     }
     
+    // Method to add an article to the group
     private void AddArticle() throws SQLException {
 		if(addarticleField.getText().isEmpty()) {
 			messageLabel.setText("Missing Information");
@@ -481,6 +490,7 @@ public class SpecialAccess extends VBox {
 		}
     }  
     
+    // Method to remove a user from the group
     private void deleteUserFromGroup() throws SQLException {
         if (deluserField.getText().isEmpty()) {
             messageLabel.setText("Missing Username");
@@ -511,9 +521,8 @@ public class SpecialAccess extends VBox {
         messageLabel.setText("User deleted successfully");
         messageLabel.setTextFill(Color.GREEN);
     }
-    
-    
-    
+       
+    // Method to remove an article from the group
     private void RemoveArticle() throws SQLException {
         if (removeField.getText().isEmpty()) {
             messageLabel.setText("Missing Article ID");
@@ -550,6 +559,7 @@ public class SpecialAccess extends VBox {
         }
     }
     
+    // Method to delete the group
     private void deleteSpecialGroup() {
     	try {
 			mainApp.databaseHelper.deleteSpecialAccessGroup(group);
@@ -560,11 +570,11 @@ public class SpecialAccess extends VBox {
 	    		mainApp.showInstructorPage();
 	    	}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }
     
+    // Method to backup the group
     private void backupSpecialAccessGroup() {
     	boolean known = false;
     	if (backupField.getText().isEmpty()) {
@@ -591,7 +601,7 @@ public class SpecialAccess extends VBox {
 		}
     }
     
-    // Change
+    // Method to restore a deleted group
     private void restoreSpecialAccessGroup() {
     	if (backupField.getText().isEmpty()) {
     		messageLabel.setText("Warning: No file specified!");
