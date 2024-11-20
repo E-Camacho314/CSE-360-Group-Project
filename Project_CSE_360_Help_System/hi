@@ -3,68 +3,26 @@ Headers: 1
 Groups: ["1"]
 Access: admin:1,instructor:0,student:1
 Beginner: 1
-Intermediate: 0
-Advanced: 0
-Expert: 0
-Abstract: 1
-Keywords: sfhaspfhqpfhfapjhfa;fapofrhrqprfja
-Body: TEGUWQgdw1SdhpAYE67q/w==
-References: 1
-Special Access Groups: N/A
-
-Title: afadsf
-Headers: adfadsf
-Groups: ["asfdsa"]
-Access: admin:1,instructor:1,student:1
-Beginner: 1
-Intermediate: 1
-Advanced: 1
-Expert: 1
-Abstract: afdasfdsafdf
-Keywords: In my restless dreams, I see that town
-Body: 9UsWJVZfypf7hTjiTC1HRw==
-References: fsafds
-Special Access Groups: N/A
-
-Title: adfasdfsa
-Headers: asdfafds
-Groups: ["afdsafas"]
-Access: admin:1,instructor:1,student:1
-Beginner: 1
-Intermediate: 1
-Advanced: 0
-Expert: 1
-Abstract: adfasfdsaf
-Keywords: Silent Hill. You said you'd take me there again some day. But you never did.
-Body: 9RVFDBE4rX4ZSIxgFlNtUQ==
-References: afdsadf
-Special Access Groups: N/A
-
-Title: 1
-Headers: 1
-Groups: ["1"]
-Access: admin:1,instructor:1,student:1
-Beginner: 1
 Intermediate: 1
 Advanced: 1
 Expert: 1
 Abstract: 1
-Keywords: EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
-Body: FKAO4DW/ttIJKctpwyxV5g==
+Keywords: Silent Hill
+Body: P+FOYqI7gjEkwlNAv14HHY/E9iT2p/k8ZFyZrr/85pAoiwkAl+bi1Y2hT5nvN8h7
 References: 1
-Special Access Groups: N/A
+Special Access Groups: ["new"]
 
 Title: 2
 Headers: 2
 Groups: ["2"]
-Access: admin:1,instructor:1,student:1
+Access: admin:1,instructor:0,student:0
 Beginner: 1
 Intermediate: 1
 Advanced: 1
 Expert: 1
 Abstract: 2
-Keywords: nononononononono
+Keywords: 2
 Body: kejPn7YuA2K6IkuNHP+s4A==
 References: 2
-Special Access Groups: N/A
+Special Access Groups: ["new"]
 

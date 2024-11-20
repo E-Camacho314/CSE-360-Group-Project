@@ -2146,6 +2146,75 @@ public class DatabaseHelper {
         }
     }
     
+    public void emptySpecialArticles() throws Exception {
+        try {
+            String droparticleTable = "DROP TABLE IF EXISTS specialaccess;";
+            statement.executeUpdate(droparticleTable);
+
+        } catch (SQLException e) {
+            System.err.println("SQL error while emptying the database: " + e.getMessage());
+        } finally {
+            System.out.println("Database emptied successfully.");
+        }
+    }
+    
+    public List<Long> getSpecialAccessByGroups(String groupName) throws SQLException {
+   	 List<Long> articleIds = new ArrayList<>(); // List to store article IDs
+
+   	    // SQL query to fetch article_ids where groupname matches the given value
+   	    String query = "SELECT article_ids FROM specialaccess WHERE groupname = ?";
+
+   	    System.out.println("Preparing to execute query for group: " + groupName);
+
+   	    try (PreparedStatement stmt = connection.prepareStatement(query)) {
+   	        // Set the groupName parameter in the query
+   	        stmt.setString(1, groupName);
+   	        System.out.println("Query prepared: " + query);
+
+   	        try (ResultSet rs = stmt.executeQuery()) {
+   	            System.out.println("Query executed. Checking results...");
+
+   	            while (rs.next()) {
+   	                System.out.println("Row found for group: " + groupName);
+
+   	                String articleIdsJson = rs.getString("article_ids"); // Get the JSON array
+   	                System.out.println("Retrieved article_ids JSON: " + articleIdsJson);
+
+   	                if (articleIdsJson != null && !articleIdsJson.isEmpty()) {
+   	                    try {
+   	                        // Parse the JSON array and add each ID to the list
+   	                        JSONArray articleIdsArray = new JSONArray(articleIdsJson);
+   	                        System.out.println("Parsing article_ids JSON array...");
+   	                        
+   	                        for (int i = 0; i < articleIdsArray.length(); i++) {
+   	                            long articleId = articleIdsArray.getLong(i);
+   	                            articleIds.add(articleId);
+   	                            System.out.println("Article ID added: " + articleId);
+   	                        }
+   	                    } catch (JSONException e) {
+   	                        System.err.println("Error parsing article_ids JSON for group '" + groupName + "': " + e.getMessage());
+   	                    }
+   	                } else {
+   	                    System.out.println("No article_ids JSON found for group '" + groupName + "'.");
+   	                }
+   	            }
+   	        }
+
+   	        System.out.println("Finished processing results. Total article IDs found: " + articleIds.size());
+   	    } catch (SQLException e) {
+   	        System.err.println("Failed to retrieve article IDs for group '" + groupName + "': " + e.getMessage());
+   	        throw e;
+   	    }
+
+   	    if (articleIds.isEmpty()) {
+   	        System.out.println("No article IDs found for group '" + groupName + "'.");
+   	    } else {
+   	        System.out.println("Article IDs retrieved successfully for group '" + groupName + "'.");
+   	    }
+
+   	    return articleIds; // Return the list of article IDs
+   }
+    
     //Search Functions for Phase III
     
     public List<Long> getArticlesByDifficulty(String username, boolean beginner, boolean intermediate, boolean advanced, boolean expert) throws SQLException, JSONException {

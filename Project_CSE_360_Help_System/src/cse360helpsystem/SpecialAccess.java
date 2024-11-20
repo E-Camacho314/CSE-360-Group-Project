@@ -2,12 +2,15 @@ package cse360helpsystem;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 import org.json.JSONException;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -267,7 +270,15 @@ public class SpecialAccess extends VBox {
             
             deleteButton.setOnAction(e -> {
             	deleteSpecialGroup();
-            	});
+            });
+            
+            backupButton.setOnAction(e -> {
+            	backupSpecialAccessGroup();
+            });
+            
+            restoreButton.setOnAction(e ->{
+            	restoreSpecialAccessGroup();
+            });
         }
         else {
         	// Adding components to the grid
@@ -553,5 +564,78 @@ public class SpecialAccess extends VBox {
 			e.printStackTrace();
 		}
     }
+    
+    private void backupSpecialAccessGroup() {
+    	boolean known = false;
+    	if (backupField.getText().isEmpty()) {
+    		messageLabel.setText("Warning: No File specified!");
+    		messageLabel.setTextFill(Color.RED);
+    		return;
+    	}
+    	String file = backupField.getText();
+    	String group = this.group;
+    	try {
+    		List<Long> idList = mainApp.databaseHelper.getSpecialAccessByGroups(group);
+    		System.out.print(idList);
+    		known = mainApp.databaseHelper.backupGroup(file, idList);
+    		if(!known) {
+    			messageLabel.setText("No articles found in " + group);
+        		messageLabel.setTextFill(Color.RED);
+    		} else {
+    			messageLabel.setText("Backed up " + group + " to " + file + "!");
+        		messageLabel.setTextFill(Color.GREEN);
+        		backupField.clear();
+    		}
+    	} catch (Exception e) {
+			e.printStackTrace();
+		}
+    }
+    
+    // Change
+    private void restoreSpecialAccessGroup() {
+    	if (backupField.getText().isEmpty()) {
+    		messageLabel.setText("Warning: No file specified!");
+    		messageLabel.setTextFill(Color.RED);
+    		return;
+    	}
+    	String file = backupField.getText();
+    	
+    	Alert firstAlert = new Alert(Alert.AlertType.CONFIRMATION);
+    	ButtonType deleteButton = new ButtonType("Delete");
+    	ButtonType mergeButton = new ButtonType("Merge");
+        ButtonType cancelButton = new ButtonType("Cancel");
+        
+    	firstAlert.setTitle("Confirmation Dialog");
+        firstAlert.setHeaderText("Delete current table or merge?");
+        firstAlert.setContentText("Please choose an option.");
+        firstAlert.getButtonTypes().setAll(deleteButton, mergeButton, cancelButton);
+        
+        // Wait for the user's response
+        Optional<ButtonType> result = firstAlert.showAndWait();
 
+        if (result.isPresent()) {
+        	if (result.get() == deleteButton) {
+        		System.out.println("Delete Table");
+        		try {
+                	mainApp.databaseHelper.emptySpecialArticles();
+                	mainApp.databaseHelper.restore(file);
+            		messageLabel.setText("Group Restored!");
+            		messageLabel.setTextFill(Color.GREEN);
+                } catch( Exception e) {
+                	System.out.println("Not able to do empty/restore operation.");
+                }
+        	} else if(result.get() == mergeButton) {
+        		System.out.println("Merge Table");
+        		try {
+                	mainApp.databaseHelper.mergeArticles(file);
+            		messageLabel.setText("Group Merged!");
+            		messageLabel.setTextFill(Color.GREEN);
+                } catch(Exception e){
+                	System.out.println("Not able to do merge operation.");
+                }
+        	} else {
+        		System.out.println("User cancelled.");
+        	}
+        }
+    }
 }
