@@ -155,6 +155,23 @@ public class StudentPage extends HBox {
             }
         });
 
+        genericbutton.setOnAction(e -> {
+            try {
+
+                // Get the currently logged-in user's username
+                String username = mainApp.databaseHelper.findLoggedInUser();
+
+                mainApp.databaseHelper.addGenericMessage(username);
+
+                // Display success message
+                warning.setText("Message sent successfully!");
+                warning.setTextFill(Color.GREEN);
+            } catch (SQLException ex) {
+                warning.setText("Error: Unable to send message.");
+                warning.setTextFill(Color.RED);
+                ex.printStackTrace();
+            }
+        });
 
 	}
 }

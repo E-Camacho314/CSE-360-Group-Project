@@ -1419,7 +1419,7 @@ public class DatabaseHelper {
 
  	
      // Method to retrieve detailed information about a specific article
-	public String getArticleDetailsById(long id) throws SQLException {
+	public String getArticleDetailsById(long id) throws Exception {
 	    String query = "SELECT * FROM articles WHERE id = ?";
 	    StringBuilder articleDetails = new StringBuilder();
 	
@@ -1440,6 +1440,12 @@ public class DatabaseHelper {
 	                String abstractText = rs.getString("abstract");
 	                String keywords = rs.getString("keywords");
 	                String body = rs.getString("body");
+	    			String decryptedBody = new String(
+	                        encryptionHelper.decrypt(
+	                                Base64.getDecoder().decode(body),
+	                                EncryptionUtils.getInitializationVector(title.toCharArray())
+	                        )
+	                );
 	                String references = rs.getString("ref_list");
 	
 	                // Parse the groups JSON array
@@ -1467,7 +1473,7 @@ public class DatabaseHelper {
 	                        .append("Expert: ").append(expert).append("\n")
 	                        .append("Abstract: ").append(abstractText != null ? abstractText : "N/A").append("\n")
 	                        .append("Keywords: ").append(keywords != null ? keywords : "N/A").append("\n")
-	                        .append("Body: ").append(body != null ? body : "N/A").append("\n")
+	                        .append("Body: ").append(decryptedBody != null ? decryptedBody : "N/A").append("\n")
 	                        .append("References: ").append(references != null ? references : "N/A").append("\n");
 	            } else {
 	                articleDetails.append("No article found with ID: ").append(id);
@@ -1590,12 +1596,16 @@ public class DatabaseHelper {
 	        e.printStackTrace();
 	    }
 
-	    // Debugging logs for input values
+	    // Encrypt the body
+	    String encryptedbody = Base64.getEncoder().encodeToString(
+	            encryptionHelper.encrypt(body.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray()))
+	    );
 	    System.out.println("Original title: " + title);
 	    System.out.println("Original headers: " + headers);
 	    System.out.println("Original groups: " + groups);
 	    System.out.println("Original keywords: " + keywords);
 	    System.out.println("Original body: " + body);
+	    System.out.println("New body: " + encryptedbody);
 	    System.out.println("Original references: " + references);
 
 	    // Convert boolean values into an access string
@@ -1630,7 +1640,7 @@ public class DatabaseHelper {
 	        preparedStatement.setInt(8, expert ? 1 : 0);
 	        preparedStatement.setString(9, abstractText);
 	        preparedStatement.setString(10, keywords);
-	        preparedStatement.setString(11, body);
+	        preparedStatement.setString(11, encryptedbody);
 	        preparedStatement.setString(12, references);
 
 	        int rowsAffected = preparedStatement.executeUpdate();
@@ -1662,7 +1672,19 @@ public class DatabaseHelper {
     
     // Method to update a specific entry of an article
     public boolean updateArticleField(long articleId, String field, String newValue) {
-        String updateSQL = "UPDATE articles SET " + field + " = ? WHERE id = ?";
+        if(field.equals("body")) {
+            // Encrypt the body
+            try {
+				newValue = Base64.getEncoder().encodeToString(
+				        encryptionHelper.encrypt(newValue.getBytes(), EncryptionUtils.getInitializationVector(newValue.toCharArray()))
+				);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+    	
+    	String updateSQL = "UPDATE articles SET " + field + " = ? WHERE id = ?";
         
         try (PreparedStatement pstmt = connection.prepareStatement(updateSQL)) {
             pstmt.setString(1, newValue);
@@ -2071,7 +2093,7 @@ public class DatabaseHelper {
 
                     // If no special access groups, return false
                     if (specialAccessGroupsJson == null || specialAccessGroupsJson.isEmpty()) {
-                        return false;
+                        return true;
                     }
 
                     // Parse the special access groups into a JSON array
@@ -2789,6 +2811,26 @@ public class DatabaseHelper {
             System.out.println("Specific message added to the database for user: " + username);
         } catch (SQLException e) {
             System.err.println("Error while adding specific message: " + e.getMessage());
+            throw e; // Rethrow for higher-level handling
+        }
+    }
+    
+    public void addGenericMessage(String username) throws SQLException {
+        String insertRequest = "INSERT INTO requests (username, request) VALUES (?, ?)";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(insertRequest)) {
+            // Combine the inputs into a single message
+            String Message = "Please Help!";
+
+            // Set parameters for the query
+            pstmt.setString(1, username); // The username of the student
+            pstmt.setString(2, Message); // The combined message
+
+            // Execute the query
+            pstmt.executeUpdate();
+            System.out.println("Generic message added to the database for user: " + username);
+        } catch (SQLException e) {
+            System.err.println("Error while adding generic message: " + e.getMessage());
             throw e; // Rethrow for higher-level handling
         }
     }

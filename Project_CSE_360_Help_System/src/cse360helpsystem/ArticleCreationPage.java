@@ -393,7 +393,7 @@ public class ArticleCreationPage extends VBox {
         }
         
         try {
-			inserted = mainApp.databaseHelper.insertArticle(title, header, groups, isAdmin, isInstructor, isStudent, isBeginner, isIntermediate, isAdvanced, isExpert, abstracts, body, keywords, references);
+			inserted = mainApp.databaseHelper.insertArticle(title, header, groups, isAdmin, isInstructor, isStudent, isBeginner, isIntermediate, isAdvanced, isExpert, abstracts, keywords, body, references);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
