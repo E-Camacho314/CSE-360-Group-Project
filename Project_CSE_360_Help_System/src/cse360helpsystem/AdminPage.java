@@ -46,7 +46,8 @@ public class AdminPage extends HBox {
 	private Button listbutton = new Button ("List Users");
 	private Button changepermsbutton = new Button ("Update Roles");
 	private Button logoutbutton = new Button ("Log Out");
-	private Button articlesbutton = new Button ("Articles");
+	private Button articlesbutton = new Button ("Article View");
+	private Button specialbutton = new Button ("Special Access View");
 	private CheckBox admin1 = new CheckBox ("Admin");
 	private CheckBox instructor1 = new CheckBox ("Instructor");
 	private CheckBox student1 = new CheckBox ("Student");
@@ -57,6 +58,7 @@ public class AdminPage extends HBox {
 	private TextField permsField = new TextField();
 	private TextField resetField = new TextField();
 	private TextField inviteField = new TextField();
+	private TextField specialField = new TextField();
 	private String user;
 	private String current = "admin";
 	private boolean confirmation;
@@ -96,12 +98,15 @@ public class AdminPage extends HBox {
         logoutbutton.setFont(Font.font(null, 14));
         articlesbutton.setTextFill(Color.BLACK);
         articlesbutton.setFont(Font.font(null, 14));
+        specialbutton.setTextFill(Color.BLACK);
+        specialbutton.setFont(Font.font(null, 14));
         
         // Set prompt texts for text fields
         deleteField.setPromptText("Username to delete");
         inviteField.setPromptText("User to invite");
         resetField.setPromptText("Username to reset");
         permsField.setPromptText("User to change Roles");     
+        specialField.setPromptText("Select Group to View");   
         
         // Create a GridPane to arrange the UI components
         GridPane adminPane = new GridPane();
@@ -131,8 +136,10 @@ public class AdminPage extends HBox {
         adminPane.add(instructor, 0, 10);
         adminPane.add(student, 1, 10);
         adminPane.add(admin, 0, 11);
-        adminPane.add(logoutbutton, 0, 12);
-        adminPane.add(articlesbutton, 1, 12);
+        adminPane.add(specialField, 0, 12);
+        adminPane.add(specialbutton, 1, 12);
+        adminPane.add(logoutbutton, 0, 13);
+        adminPane.add(articlesbutton, 1, 13);
 
         // Set the VBox to the center of the BorderPane
         mainPane.setCenter(adminPane);
@@ -150,6 +157,7 @@ public class AdminPage extends HBox {
         invitebutton.setOnAction(e -> inviteUser());
         resetbutton.setOnAction(e -> resetUserPassword());
         articlesbutton.setOnAction(e -> mainApp.showArticlesPage(current));
+        specialbutton.setOnAction(e -> getSpecialAccess());
 	}
 	
 	// Method to delete a user from the database
@@ -162,9 +170,21 @@ public class AdminPage extends HBox {
 	            deleteConfirmation(user);
 	            
 	            if (confirmation == true) {
-	            	mainApp.databaseHelper.deleteUser(user);
-	            	warning.setText("User deleted.");
-	            	warning.setTextFill(Color.GREEN);
+	            	if(mainApp.databaseHelper.moreThanOneAdmin()) {
+	            		String current = mainApp.databaseHelper.findLoggedInUser();
+		            	mainApp.databaseHelper.deleteUser(user);
+		            	warning.setText("User deleted.");
+		            	warning.setTextFill(Color.GREEN);
+		            	if(user.equals(current)){
+		            		logout();
+		            	}
+	            	}
+	            	else {
+	            		warning.setText("Only One Admin Exists");
+		            	warning.setTextFill(Color.RED);
+		            	deleteField.clear();
+		            	return;
+	            	}
 	            }
 	        } 
 	        else {
@@ -198,6 +218,7 @@ public class AdminPage extends HBox {
     	codetype.setText("");
     	inviteField.clear();
     	resetField.clear();
+    	mainApp.databaseHelper.logoutUser();
     	mainApp.showLoginPage();
     }
 	
@@ -370,5 +391,53 @@ public class AdminPage extends HBox {
 	// Method to generate a random string to be used as a one time password
 	private String generateOneTimePassword() {
 	    return Long.toHexString(Double.doubleToLongBits(Math.random()));
+	}
+	
+	// Access Special Access Page for a specified group
+	private void getSpecialAccess() {
+		try {
+			String group;
+			String username;
+			// Store the username of the current user
+			username = mainApp.databaseHelper.findLoggedInUser();
+			if(specialField.getText().isEmpty()) {
+				warning.setText("Enter a Group Name");
+				warning.setTextFill(Color.RED);
+	            return;
+			}
+			else {
+				group = specialField.getText();
+				if(mainApp.databaseHelper.doesGroupExist(group)) {
+					mainApp.databaseHelper.printSpecialAccessTable();
+					if(mainApp.databaseHelper.isUserInGroup(group, username)) {
+						if(mainApp.databaseHelper.isUserAdmin(group, username)) {
+							mainApp.showSpecialAccessPage(current, group, true);
+							specialField.clear();
+							warning.setText("");
+						}
+						else {
+							mainApp.showSpecialAccessPage(current, group, false);
+							specialField.clear();
+							warning.setText("");
+						}
+					}
+					else {
+						warning.setText("You Do Not Have Access");
+						warning.setTextFill(Color.RED);
+			            return;
+					}
+				}
+				else {
+					warning.setText("Enter a Valid Group");
+					warning.setTextFill(Color.RED);
+		            return;
+				}
+			}
+		}
+		catch(SQLException e) {
+			warning.setText("ERROR: Exception Hit");
+			warning.setTextFill(Color.RED);
+            return;
+		}
 	}
 }

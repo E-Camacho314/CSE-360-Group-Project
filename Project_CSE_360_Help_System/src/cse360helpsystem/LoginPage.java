@@ -1,5 +1,6 @@
 package cse360helpsystem;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javafx.event.ActionEvent;
@@ -62,7 +63,6 @@ public class LoginPage extends HBox {
 	public LoginPage(CSE360HelpSystem mainApp){
 		// Store reference to the main application
 		this.mainApp = mainApp;
-		
 		// Create a BorderPane as the main layout container
 		BorderPane mainPane = new BorderPane();
 		
@@ -154,7 +154,8 @@ public class LoginPage extends HBox {
 			        	passwords = passfield.getText();
 			        	//Check if the database is empty. If so, set up new user as Admin
 			        	if (mainApp.databaseHelper.doesUserExist(username) && mainApp.databaseHelper.checkPassword(username, passwords)) {
-                            User user = mainApp.databaseHelper.getUserByUsername(username);
+                            mainApp.databaseHelper.loginUser(username, passwords);
+			        		User user = mainApp.databaseHelper.getUserByUsername(username);
                             
                             // Check if the user's account setup is incomplete or if the account is flagged
 			        		if(user.getFirstname().equals("") || user.getMiddlename().equals("") || user.getLastname().equals("")) {

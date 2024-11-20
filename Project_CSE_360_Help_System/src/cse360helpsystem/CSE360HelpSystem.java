@@ -1,6 +1,8 @@
 package cse360helpsystem;
 
 import java.sql.SQLException;
+import java.util.List;
+
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -30,7 +32,7 @@ import javafx.geometry.Pos;
 public class CSE360HelpSystem extends Application
 {
 	// Constants for window dimensions
-    public static final int WIDTH = 500, HEIGHT = 500;
+    public static final int WIDTH = 600, HEIGHT = 600;
     
     // Singleton instance of the DatabaseHelper class to manage database connections
     public static DatabaseHelper databaseHelper;
@@ -109,6 +111,13 @@ public class CSE360HelpSystem extends Application
         root.getChildren().clear();
         root.getChildren().add(articlesPage);
     }
+	
+	// Displays the Search page for searching articles
+	public void showSearchPage(String prev) {
+        SearchPage searchPage = new SearchPage(this, prev); // Pass it to ArticlesPage
+        root.getChildren().clear();
+        root.getChildren().add(searchPage);
+    }
 	    
     // Displays the login page
     public void showLoginPage() {
@@ -117,12 +126,20 @@ public class CSE360HelpSystem extends Application
         System.out.println("Switched to Login Page"); // For debugging
     }
     
-    // Displays the login page
+    // Displays the article creation page
     public void showArticleCreatePage(String prev, long id) {
         ArticleCreationPage articlecreatePage = new ArticleCreationPage(this, prev, id); // Pass it to ArticlesPage
         root.getChildren().clear();
         root.getChildren().add(articlecreatePage);
-        System.out.println("Switched to Login Page"); // For debugging
+        System.out.println("Switched to Article Creation Page"); // For debugging
+    }
+    
+    // Displays the special access group page
+    public void showSpecialAccessPage(String prev, String name, Boolean access) {
+        SpecialAccess specialaccessPage = new SpecialAccess(this, prev, name, access); // Pass it to ArticlesPage
+        root.getChildren().clear();
+        root.getChildren().add(specialaccessPage);
+        System.out.println("Switched to Special Access Page"); // For debugging
     }
     
     // Displays the admin page for admin users
@@ -171,11 +188,11 @@ public class CSE360HelpSystem extends Application
     }
     
     // Displays a page containing a list of information for the articles
-    public void showArticlesListPage(String prev, long id) {
-        ArticleListPage articlelistPage = new ArticleListPage(this, prev, id); // Create a new ListPage instance
+    public void showArticlesListPage(String prev, long id, List<Long> idList) {
+        ArticleListPage articlelistPage = new ArticleListPage(this, prev, id, idList); // Create a new ListPage instance
         root.getChildren().clear();
         root.getChildren().add(articlelistPage);
-        System.out.println("Switched to List Page"); // For debugging
+        System.out.println("Switched to Articles List Page"); // For debugging
     }
     
     // Provides access to the database helper for other parts of the application
@@ -195,9 +212,11 @@ public class CSE360HelpSystem extends Application
     	try { 
     		databaseHelper = new DatabaseHelper();
 			databaseHelper.connectToDatabase();
-			databaseHelper.emptyDatabase();		// Empty the database for testing purposes
+			databaseHelper.emptySpecial();
+			//databaseHelper.emptyDatabase();		// Empty the database for testing purposes
 			databaseHelper.closeConnection();
 			databaseHelper.connectToDatabase();  // Connect to the database
+			databaseHelper.logoutAllUsers();
 		    launch(args);
 		} catch (SQLException e) {
 			// Handle SQL exceptions and print error message
