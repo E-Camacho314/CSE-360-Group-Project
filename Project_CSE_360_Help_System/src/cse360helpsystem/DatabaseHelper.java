@@ -2150,7 +2150,7 @@ public class DatabaseHelper {
     // Method to empty the special access groups table 
     public void emptySpecialArticles() throws Exception {
         try {
-            String droparticleTable = "DROP TABLE IF EXISTS specialaccess;";
+            String droparticleTable = "DROP TABLE IF EXISTS articles;";
             statement.executeUpdate(droparticleTable);
 
         } catch (SQLException e) {
@@ -2159,7 +2159,6 @@ public class DatabaseHelper {
             System.out.println("Database emptied successfully.");
         }
     }
-    
     //Search Functions for Phase III
     
     // Method to retrieve a list of articles from the group
@@ -2254,6 +2253,9 @@ public class DatabaseHelper {
                             break; // Stop checking once access is confirmed
                         }
                     }
+                }
+                else {
+                	hasAccess = true;
                 }
 
                 // Add article if it matches at least one difficulty and has access
@@ -2374,6 +2376,9 @@ public class DatabaseHelper {
                                 break; // Stop checking once access is confirmed
                             }
                         }
+                    }
+                    else {
+                    	hasAccess = true;
                     }
 
                     // Add article if the user has access

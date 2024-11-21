@@ -423,12 +423,14 @@ public class AdminPage extends HBox {
 						}
 					}
 					else {
+						specialField.clear();
 						warning.setText("You Do Not Have Access");
 						warning.setTextFill(Color.RED);
 			            return;
 					}
 				}
 				else {
+					specialField.clear();
 					warning.setText("Enter a Valid Group");
 					warning.setTextFill(Color.RED);
 		            return;
@@ -436,6 +438,7 @@ public class AdminPage extends HBox {
 			}
 		}
 		catch(SQLException e) {
+			specialField.clear();
 			warning.setText("ERROR: Exception Hit");
 			warning.setTextFill(Color.RED);
             return;

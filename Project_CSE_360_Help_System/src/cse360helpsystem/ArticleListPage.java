@@ -7,6 +7,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -33,6 +34,8 @@ public class ArticleListPage extends VBox {
     private Label pageTitle = new Label("All Articles");
     private Label warning = new Label("");
     private Button returnButton = new Button("Return to Main");
+    private Button viewButton = new Button("View Article");
+    private TextField viewField = new TextField();
     private GridPane articlesGrid = new GridPane(); 
 
      /**
@@ -66,8 +69,13 @@ public class ArticleListPage extends VBox {
         // Set return button properties and action
         returnButton.setTextFill(Color.BLACK);
         returnButton.setFont(Font.font(null, 14));
+        
         if(search == true) {
+        	viewButton.setTextFill(Color.BLACK);
+            viewButton.setFont(Font.font(null, 14));
+            viewField.setPromptText("Enter ID to view");
             returnButton.setOnAction(e -> mainApp.showSearchPage(prev));
+            viewButton.setOnAction(e -> viewArticle(idList));
         }
         else {
             returnButton.setOnAction(e -> mainApp.showArticlesPage(prev));
@@ -125,7 +133,7 @@ public class ArticleListPage extends VBox {
         mainPane.setCenter(articlesGrid);
 
         // Add to VBox
-        this.getChildren().addAll(mainPane, returnButton);
+        this.getChildren().addAll(mainPane, viewField, viewButton, returnButton);
         this.setAlignment(Pos.CENTER);
     }
 
@@ -187,6 +195,32 @@ public class ArticleListPage extends VBox {
             warning.setTextFill(Color.RED);
             e.printStackTrace();
         }
-    }	
+    }
+    
+    // View a specific article from the list
+    private void viewArticle(List<Long> idList) {
+    	try {
+    		if(viewField.getText().isEmpty()) {
+        		warning.setText("Enter an ID");
+        		warning.setTextFill(Color.RED);
+        		return;
+        	}
+        	articlesGrid.getChildren().clear();
+        	long ID = Integer.parseInt(viewField.getText());
+        	if(idList.contains(ID)) {
+            	viewArticleById(ID);
+        	}
+        	else {
+        		warning.setText("Invalid ID");
+        		warning.setTextFill(Color.RED);
+        		return;
+        	}
+    	}
+    	catch(NumberFormatException e) {
+    		warning.setText("Enter an Integer");
+    		warning.setTextFill(Color.RED);
+    		return;
+    	}
+    }
 }
 

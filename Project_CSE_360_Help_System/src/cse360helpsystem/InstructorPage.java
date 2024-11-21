@@ -201,12 +201,14 @@ public class InstructorPage extends HBox {
 						}
 					}
 					else {
+						specialText.clear();
 						warning.setText("You Do Not Have Access");
 						warning.setTextFill(Color.RED);
 			            return;
 					}
 				}
 				else {
+					specialText.clear();
 					warning.setText("Enter a Valid Group");
 					warning.setTextFill(Color.RED);
 		            return;
@@ -214,6 +216,7 @@ public class InstructorPage extends HBox {
 			}
 		}
 		catch(SQLException e) {
+			specialText.clear();
 			warning.setText("ERROR: Exception Hit");
 			warning.setTextFill(Color.RED);
             return;
@@ -237,16 +240,18 @@ public class InstructorPage extends HBox {
 					mainApp.databaseHelper.createGroup(group, username);
 				}
 				else {
+					createText.clear();
 					warning.setText("Group Already Exists");
 					warning.setTextFill(Color.RED);
 		            return;
 				}
 			}
+			createText.clear();
 			mainApp.showSpecialAccessPage(current, group, true);
 			warning.setText("");
-			createText.clear();
 		}
 		catch(SQLException e) {
+			createText.clear();
 			warning.setText("ERROR: Exception Hit");
 			warning.setTextFill(Color.RED);
             return;
