@@ -1,6 +1,10 @@
 package cse360helpsystem;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -623,29 +627,78 @@ public class SpecialAccess extends VBox {
         // Wait for the user's response
         Optional<ButtonType> result = firstAlert.showAndWait();
 
-        if (result.isPresent()) {
-        	if (result.get() == deleteButton) {
-        		System.out.println("Delete Table");
-        		try {
-                	mainApp.databaseHelper.emptySpecialArticles();
-                	mainApp.databaseHelper.restore(file);
-            		messageLabel.setText("Group Restored!");
-            		messageLabel.setTextFill(Color.GREEN);
-                } catch( Exception e) {
-                	System.out.println("Not able to do empty/restore operation.");
-                }
-        	} else if(result.get() == mergeButton) {
-        		System.out.println("Merge Table");
-        		try {
-                	mainApp.databaseHelper.mergeArticles(file);
-            		messageLabel.setText("Group Merged!");
-            		messageLabel.setTextFill(Color.GREEN);
-                } catch(Exception e){
-                	System.out.println("Not able to do merge operation.");
-                }
-        	} else {
-        		System.out.println("User cancelled.");
-        	}
+        try {
+            if (mainApp.databaseHelper == null) {
+                throw new IllegalStateException("DatabaseHelper is not initialized.");
+            }
+
+            if (result.get() == deleteButton) {
+                System.out.println("Delete Table");
+                String groupName = getGroupNameFromFile(file);
+                List<Long> articleIdsToRemove = getArticleIdsToRemoveFromFile(file);
+
+                mainApp.databaseHelper.removeArticlesFromGroup(file, articleIdsToRemove);
+                mainApp.databaseHelper.restore(file);
+                
+                int articleId = mainApp.databaseHelper.getNewArticleId();
+                String articleTitle = mainApp.databaseHelper.getRestoredArticleTitle(articleId);
+                mainApp.databaseHelper.addArticlesToGroups(file, articleTitle);
+                messageLabel.setText("Group Restored!");
+                messageLabel.setTextFill(Color.GREEN);
+
+            } else if (result.get() == mergeButton) {
+                System.out.println("Merge Table");
+                mainApp.databaseHelper.mergeArticlesforGroups(file, group, file);
+                messageLabel.setText("Group Merged!");
+                messageLabel.setTextFill(Color.GREEN);
+
+            } else {
+                System.out.println("User cancelled.");
+                messageLabel.setText("Operation cancelled by the user.");
+                messageLabel.setTextFill(Color.ORANGE);
+            }
+        } catch (Exception e) {
+            System.err.println("Error during table operation: " + e.getMessage());
+            e.printStackTrace();
+
+            messageLabel.setText("Error: Operation failed. Check logs for details.");
+            messageLabel.setTextFill(Color.RED);
         }
+    }
+    
+    // Method to extract article IDs from the backup file
+    private List<Long> getArticleIdsToRemoveFromFile(String filePath) throws IOException {
+        List<Long> articleIdsToRemove = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("Article ID: ")) {
+                    String idStr = line.substring(12).trim();
+                    try {
+                        Long articleId = Long.parseLong(idStr);
+                        articleIdsToRemove.add(articleId);
+                    } catch (NumberFormatException e) {
+                    	e.printStackTrace();
+                    }
+                }
+            }
+        }
+        return articleIdsToRemove;
+    }
+    
+    // Method to extract group name from the backup file
+    private String getGroupNameFromFile(String filePath) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(filePath));
+        String line;
+        
+        while ((line = reader.readLine()) != null) {
+            // Assuming the group name is on a line like "Group Name: <groupName>"
+            if (line.startsWith("Group Name: ")) {
+                return line.substring("Group Name: ".length()).trim();
+            }
+        }
+        
+        reader.close();
+        return null; // Return null if no group name is found
     }
 }

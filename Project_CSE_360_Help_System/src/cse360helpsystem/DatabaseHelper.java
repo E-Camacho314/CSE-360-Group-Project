@@ -2,6 +2,7 @@ package cse360helpsystem;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,13 +13,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.bouncycastle.util.Arrays;
 
 import Encryption.EncryptionHelper;
 import Encryption.EncryptionUtils;
@@ -1182,6 +1185,16 @@ public class DatabaseHelper {
          // SQL to insert articles
          String insertSQL = "INSERT INTO articles (title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list, specialaccessgroups) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
+         // Validate file existence and readability
+         File file = new File(filePath);
+         if (!file.exists()) {
+             System.err.println("Error: File not found at " + filePath);
+             return false;
+         } else if (!file.canRead()) {
+             System.err.println("Error: File is not readable at " + filePath);
+             return false;
+         }
+         
          try (BufferedReader br = new BufferedReader(new FileReader(filePath));
               PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
 
@@ -1224,10 +1237,17 @@ public class DatabaseHelper {
                          if (!specialAccessGroups.isEmpty()) {
                              new JSONArray(specialAccessGroups); // Validate JSON format
                          } else {
-                             specialAccessGroups = null; // Nullify if no special access groups
+                             specialAccessGroups = "[]"; // Nullify if no special access groups
+                         }                        
+                         if (!groups.isEmpty()) {
+                             new JSONArray(groups);  // Validate JSON format
+                         } else {
+                             groups = "[]";  // Default to empty JSON array
                          }
                      } catch (JSONException e) {
                          specialAccessGroups = "Invalid JSON format"; // Handle invalid JSON gracefully
+                         groups = "[]";
+                         specialAccessGroups = "[]";
                      }
 
                      // Set prepared statement parameters
@@ -1268,9 +1288,103 @@ public class DatabaseHelper {
              return false;
          }
      }
+     
+     // Method to add an article to a group after restoring
+     void addArticlesToGroups(String groupNames, String articleTitle) {
+    	    // Convert the group names (or IDs) to a list
+    	    String[] groupsArray = groupNames.replaceAll("[\\[\\]\" ]", "").split(",");
+
+    	    for (String groupName : groupsArray) {
+    	        // Get the articles that were just inserted
+    	        String getArticleSQL = "SELECT id FROM articles WHERE title = ?";  // Assuming title is unique
+    	        try (PreparedStatement getArticleStmt = connection.prepareStatement(getArticleSQL)) {
+    	            getArticleStmt.setString(1, articleTitle);
+    	            ResultSet rs = getArticleStmt.executeQuery();
+    	            
+    	            if (rs.next()) {
+    	                int articleId = rs.getInt("id");
+
+    	                // Now, update the group's article_ids with the new article ID
+    	                String updateGroupSQL = "UPDATE specialaccess SET article_ids = json_insert(article_ids, '$', ?) WHERE groupname = ?";
+    	                try (PreparedStatement updateGroupStmt = connection.prepareStatement(updateGroupSQL)) {
+    	                    updateGroupStmt.setInt(1, articleId);
+    	                    updateGroupStmt.setString(2, groupName);
+    	                    updateGroupStmt.executeUpdate();
+    	                }
+    	            }
+    	        } catch (SQLException e) {
+    	            System.err.println("Error adding article to group: " + e.getMessage());
+    	        }
+    	    }
+    	}
+     
+     // Method to get the article title after restoring
+     String getRestoredArticleTitle(int articleId) {
+    	    String title = null;
+    	    String getTitleSQL = "SELECT title FROM articles WHERE id = ?";
+    	    
+    	    try (PreparedStatement getTitleStmt = connection.prepareStatement(getTitleSQL)) {
+    	        getTitleStmt.setInt(1, articleId); // Set the article ID to search for
+    	        
+    	        try (ResultSet rs = getTitleStmt.executeQuery()) {
+    	            if (rs.next()) {
+    	                title = rs.getString("title");  // Get the title from the result set
+    	            } else {
+    	                System.err.println("Article not found with ID: " + articleId);
+    	            }
+    	        }
+    	    } catch (SQLException e) {
+    	        System.err.println("Error retrieving article title: " + e.getMessage());
+    	    }
+    	    
+    	    return title;
+    	}
+     
+     // Method to get the article id after restoring
+     int getNewArticleId() {
+    	    int articleId = -1;  // Default value indicating failure
+    	    String insertSQL = "INSERT INTO articles (title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list, specialaccessgroups) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    	    
+    	    try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
+    	        
+    	        // Set parameters for the insert query
+    	        preparedStatement.setString(1, "Sample Title");
+    	        preparedStatement.setString(2, "Sample Headers");
+    	        preparedStatement.setString(3, "[]");  // Assuming empty JSON for simplicity
+    	        preparedStatement.setString(4, "Public");
+    	        preparedStatement.setInt(5, 1);
+    	        preparedStatement.setInt(6, 1);
+    	        preparedStatement.setInt(7, 1);
+    	        preparedStatement.setInt(8, 1);
+    	        preparedStatement.setString(9, "Abstract Text");
+    	        preparedStatement.setString(10, "Keyword1, Keyword2");
+    	        preparedStatement.setString(11, "Body content of the article");
+    	        preparedStatement.setString(12, "Reference list");
+    	        preparedStatement.setString(13, "[]");  // Assuming special access groups are empty
+
+    	        int affectedRows = preparedStatement.executeUpdate();
+
+    	        if (affectedRows > 0) {
+    	            // Get the generated ID of the newly inserted article
+    	            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+    	                if (generatedKeys.next()) {
+    	                    articleId = generatedKeys.getInt(1);  // Retrieve the generated ID
+    	                    System.out.println("New article ID: " + articleId);
+    	                }
+    	            }
+    	        } else {
+    	            System.err.println("No rows affected, article not inserted.");
+    	        }
+
+    	    } catch (SQLException e) {
+    	        System.err.println("Error inserting article: " + e.getMessage());
+    	    }
+    	    
+    	    return articleId;
+    	}
 
 
-     // Method to merge articles from a file into the main articles table
+     // Method to merge articles from a file into the main articles table for articlesPage method
      public boolean mergeArticles(String filePath) {
          // SQL to create temporary table for articles including the specialaccessgroups field
          String createTempTableSQL = "CREATE TEMP TABLE IF NOT EXISTS TempArticles ("
@@ -1347,19 +1461,27 @@ public class DatabaseHelper {
                      specialAccessGroups = line.substring(22).trim(); // Extract the special access groups field
                  } else if (line.isEmpty()) {
                      // Process each article when an empty line is encountered
-                     try {
-                         // Ensure groups and specialAccessGroups are valid JSON
-                         if (!groups.isEmpty()) {
-                             new JSONArray(groups);  // Validate groups as JSON
-                         }
-                         if (!specialAccessGroups.isEmpty()) {
-                             new JSONArray(specialAccessGroups);  // Validate special access groups as JSON
-                         }
-                     } catch (JSONException e) {
-                         System.err.println("Invalid JSON format in article: " + title);
-                         groups = "Invalid JSON format"; // Handle invalid JSON gracefully
-                         specialAccessGroups = "Invalid JSON format"; // Handle invalid JSON gracefully
-                     }
+                	 try {
+                		    if (!groups.isEmpty()) {
+                		        new JSONArray(groups); // Validate JSON format
+                		    } else {
+                		        groups = null; // Nullify if empty
+                		    }
+                		} catch (JSONException e) {
+                		    System.err.println("Invalid JSON in 'groups'. Skipping article with title: " + title);
+                		    groups = null; // Optionally set it to null or handle as needed
+                		}
+
+                		try {
+                		    if (!specialAccessGroups.isEmpty()) {
+                		        new JSONArray(specialAccessGroups); // Validate JSON format
+                		    } else {
+                		        specialAccessGroups = null; // Nullify if empty
+                		    }
+                		} catch (JSONException e) {
+                		    System.err.println("Invalid JSON in 'specialAccessGroups'. Skipping article with title: " + title);
+                		    specialAccessGroups = null; // Optionally set it to null or handle as needed
+                		}
 
                      // Insert article into TempArticles table
                      tempStmt.setString(1, title);
@@ -1396,6 +1518,164 @@ public class DatabaseHelper {
              return false;
          }
      }
+     
+     // Method to merge articles for speical access groups
+     public boolean mergeArticlesforGroups(String filePath, String sourceGroup, String targetGroup) {
+    	    // SQL to create temporary table for articles including the specialaccessgroups field
+    	    String createTempTableSQL = "CREATE TEMP TABLE IF NOT EXISTS TempArticles ("
+    	            + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+    	            + "title TEXT NOT NULL, "
+    	            + "headers TEXT, "
+    	            + "groups JSON, "
+    	            + "access TEXT, "
+    	            + "beginner INTEGER, "
+    	            + "intermediate INTEGER, "
+    	            + "advanced INTEGER, "
+    	            + "expert INTEGER, "
+    	            + "abstract TEXT, "
+    	            + "keywords TEXT, "
+    	            + "body TEXT NOT NULL, "
+    	            + "ref_list TEXT, "
+    	            + "specialaccessgroups JSON);";
+
+    	    // SQL to insert into the TempArticles table
+    	    String insertTempSQL = "INSERT INTO TempArticles (title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list, specialaccessgroups) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    	    // SQL to merge articles into the main table, ensuring no duplicate titles
+    	    String mergeSQL = """
+    	        INSERT INTO articles (title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list, specialaccessgroups)
+    	        SELECT t.title, t.headers, t.groups, t.access, t.beginner, t.intermediate, t.advanced, t.expert, t.abstract, t.keywords, t.body, t.ref_list, t.specialaccessgroups
+    	        FROM TempArticles t
+    	        WHERE NOT EXISTS (
+    	            SELECT 1 FROM articles a WHERE a.title = t.title
+    	        );
+    	    """;
+
+    	    // SQL to update the groups field after the merge
+    	    String updateGroupsSQL = """
+    	        UPDATE articles
+    	        SET groups = CASE
+    	            WHEN groups IS NULL THEN json_array(?)
+    	            WHEN groups NOT LIKE '%?%' THEN json_insert(groups, '$', ?)
+    	            ELSE groups
+    	        END
+    	        WHERE groups LIKE ?;
+    	    """;
+
+    	    try {
+    	        statement.execute(createTempTableSQL);
+    	    } catch (SQLException e) {
+    	        System.err.println("Error creating temporary articles table: " + e.getMessage());
+    	        return false;
+    	    }
+
+    	    // Prepare for reading the backup file and inserting data into the temporary table
+    	    try (BufferedReader br = new BufferedReader(new FileReader(filePath));
+    	         PreparedStatement tempStmt = connection.prepareStatement(insertTempSQL)) {
+
+    	        String line;
+    	        String title = "", headers = "", groups = "", access = "", specialAccessGroups = "";
+    	        int beginner = 0, intermediate = 0, advanced = 0, expert = 0;
+    	        String abstractText = "", keywords = "", body = "", references = "";
+
+    	        while ((line = br.readLine()) != null) {
+    	            if (line.startsWith("Title: ")) {
+    	                title = line.substring(7).trim();
+    	            } else if (line.startsWith("Headers: ")) {
+    	                headers = line.substring(9).trim();
+    	            } else if (line.startsWith("Groups: ")) {
+    	                groups = line.substring(8).trim();
+    	            } else if (line.startsWith("Access: ")) {
+    	                access = line.substring(8).trim();
+    	            } else if (line.startsWith("Beginner: ")) {
+    	                beginner = Integer.parseInt(line.substring(10).trim());
+    	            } else if (line.startsWith("Intermediate: ")) {
+    	                intermediate = Integer.parseInt(line.substring(14).trim());
+    	            } else if (line.startsWith("Advanced: ")) {
+    	                advanced = Integer.parseInt(line.substring(10).trim());
+    	            } else if (line.startsWith("Expert: ")) {
+    	                expert = Integer.parseInt(line.substring(8).trim());
+    	            } else if (line.startsWith("Abstract: ")) {
+    	                abstractText = line.substring(10).trim();
+    	            } else if (line.startsWith("Keywords: ")) {
+    	                keywords = line.substring(10).trim();
+    	            } else if (line.startsWith("Body: ")) {
+    	                body = line.substring(6).trim();
+    	            } else if (line.startsWith("References: ")) {
+    	                references = line.substring(11).trim();
+    	            } else if (line.startsWith("Special Access Groups: ")) {
+    	                specialAccessGroups = line.substring(22).trim(); // Extract the special access groups field
+    	            } else if (line.isEmpty()) {
+    	                // Process each article when an empty line is encountered
+    	                try {
+    	                    if (!groups.isEmpty()) {
+    	                        new JSONArray(groups); // Validate JSON format
+    	                    } else {
+    	                        groups = null; // Nullify if empty
+    	                    }
+    	                } catch (JSONException e) {
+    	                    System.err.println("Invalid JSON in 'groups'. Skipping article with title: " + title);
+    	                    groups = null; // Optionally set it to null or handle as needed
+    	                }
+
+    	                try {
+    	                    if (!specialAccessGroups.isEmpty()) {
+    	                        new JSONArray(specialAccessGroups); // Validate JSON format
+    	                    } else {
+    	                        specialAccessGroups = null; // Nullify if empty
+    	                    }
+    	                } catch (JSONException e) {
+    	                    System.err.println("Invalid JSON in 'specialAccessGroups'. Skipping article with title: " + title);
+    	                    specialAccessGroups = null; // Optionally set it to null or handle as needed
+    	                }
+
+    	                // Insert article into TempArticles table
+    	                tempStmt.setString(1, title);
+    	                tempStmt.setString(2, headers);
+    	                tempStmt.setString(3, groups);  // JSON formatted groups
+    	                tempStmt.setString(4, access);
+    	                tempStmt.setInt(5, beginner);
+    	                tempStmt.setInt(6, intermediate);
+    	                tempStmt.setInt(7, advanced);
+    	                tempStmt.setInt(8, expert);
+    	                tempStmt.setString(9, abstractText);
+    	                tempStmt.setString(10, keywords);
+    	                tempStmt.setString(11, body);
+    	                tempStmt.setString(12, references);
+    	                tempStmt.setString(13, specialAccessGroups);  // JSON formatted special access groups
+    	                tempStmt.addBatch();
+
+    	                // Reset variables for the next article
+    	                title = headers = groups = access = specialAccessGroups = "";
+    	                abstractText = keywords = body = references = "";
+    	                beginner = intermediate = advanced = expert = 0;
+    	            }
+    	        }
+
+    	        // Execute the batch insert into the temporary table
+    	        tempStmt.executeBatch();
+
+    	        // Merge the temporary table into the main articles table
+    	        statement.executeUpdate(mergeSQL);
+
+    	        // After merge, update the groups to add the target group to the articles that belong to the source group
+    	        try (PreparedStatement updateStmt = connection.prepareStatement(updateGroupsSQL)) {
+    	            // Add the target group to articles from the source group
+    	            updateStmt.setString(1, targetGroup);  // Add target group
+    	            updateStmt.setString(2, "%" + sourceGroup + "%");  // Match articles with the source group
+    	            updateStmt.setString(3, targetGroup);  // Ensure the target group is added only if not already there
+    	            updateStmt.executeUpdate();
+    	            System.out.println("Group merge completed successfully.");
+    	        }
+
+    	        System.out.println("Merge completed successfully.");
+    	        return true;
+
+    	    } catch (SQLException | IOException e) {
+    	        System.err.println("Error during merging: " + e.getMessage());
+    	        return false;
+    	    }
+    	}
 
      
      // Method to retrieve a limited list of articles (title)
@@ -2122,7 +2402,7 @@ public class DatabaseHelper {
 
     // Method to print a table of special access groups
     public void printSpecialAccessTable() {
-        String query = "SELECT * FROM specialaccess";
+    	String query = "SELECT * FROM specialaccess";
 
         try (PreparedStatement stmt = connection.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
@@ -2147,18 +2427,66 @@ public class DatabaseHelper {
         }
     }
     
-    // Method to empty the special access groups table 
-    public void emptySpecialArticles() throws Exception {
-        try {
-            String droparticleTable = "DROP TABLE IF EXISTS articles;";
-            statement.executeUpdate(droparticleTable);
-
+    
+    // Method to remove articles from a specific special access group
+    public boolean removeArticlesFromGroup(String groupName, List<Long> articleIdsToRemove) {
+        // Convert the articleIds list to a string for easier manipulation
+        String articleIdsToRemoveStr = articleIdsToRemove.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        
+        String getGroupSQL = "SELECT id, article_ids FROM specialaccess WHERE groupname = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(getGroupSQL)) {
+            stmt.setString(1, groupName);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    // Get the current article_ids from the database
+                    String currentArticleIds = rs.getString("article_ids");
+                    
+                    if (currentArticleIds != null && !currentArticleIds.isEmpty()) {
+                        // Remove the articles that are no longer part of the group
+                        String[] currentArticleIdArray = currentArticleIds.split(",");
+                        Set<String> currentArticleIdSet = new HashSet<>(Arrays.asList(currentArticleIdArray));
+                        Set<String> articleIdsToRemoveSet = new HashSet<>(Arrays.asList(articleIdsToRemoveStr.split(",")));
+                        
+                        // Remove the articles from the set
+                        currentArticleIdSet.removeAll(articleIdsToRemoveSet);
+                        
+                        // Create the new article_ids string
+                        String updatedArticleIds = String.join(",", currentArticleIdSet);
+                        
+                        // Update the database with the new article_ids
+                        String updateSQL = "UPDATE specialaccess SET article_ids = ? WHERE groupname = ?";
+                        try (PreparedStatement updateStmt = connection.prepareStatement(updateSQL)) {
+                            updateStmt.setString(1, updatedArticleIds);
+                            updateStmt.setString(2, groupName);
+                            int rowsUpdated = updateStmt.executeUpdate();
+                            
+                            if (rowsUpdated > 0) {
+                                System.out.println("Articles removed successfully from the group.");
+                                return true;
+                            } else {
+                                System.err.println("Error removing articles from the group.");
+                                return false;
+                            }
+                        }
+                    } else {
+                        System.err.println("No articles found in this group to remove.");
+                        return false;
+                    }
+                } else {
+                    System.err.println("Group not found with the name: " + groupName);
+                    return false;
+                }
+            }
         } catch (SQLException e) {
-            System.err.println("SQL error while emptying the database: " + e.getMessage());
-        } finally {
-            System.out.println("Database emptied successfully.");
+            System.err.println("Error removing articles from group: " + e.getMessage());
+            return false;
         }
     }
+    
     //Search Functions for Phase III
     
     // Method to retrieve a list of articles from the group

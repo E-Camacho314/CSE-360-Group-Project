@@ -163,5 +163,6 @@ public class NewPassword extends VBox {
             messageLabel.setTextFill(Color.RED);
             messageLabel.setText("An error occurred during password reset.");
         }
+        System.out.println("Account successfully created.");
     }
 }
