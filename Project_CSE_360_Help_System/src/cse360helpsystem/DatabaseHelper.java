@@ -139,6 +139,8 @@ public class DatabaseHelper {
         statement.execute(requestTable);
     }
 
+    // DATABASE FUNCTIONS -------------------------------------------------------------------------------------------------------------
+    
     /**
      * Establishes a connection to the SQLite database.
      * If the database does not exist, it will be created automatically.
@@ -206,6 +208,62 @@ public class DatabaseHelper {
         }
         System.out.println("Empty");
         return true;
+    }
+    
+    /**
+     * Closes the database connection and associated statement.
+     * Should be called when the application is shutting down to release resources.
+     */
+    public void closeConnection() {
+        try { 
+            if (statement != null) statement.close(); 
+            System.out.println("Connection Closed");
+        } catch(SQLException se2) { 
+            se2.printStackTrace();
+        } 
+        try { 
+            if (connection != null) connection.close(); 
+        } catch(SQLException se){ 
+            se.printStackTrace(); 
+        } 
+    }
+    
+ // ------------------------------------------------------------------------------------------------------------------------------------
+    
+    
+ // BASIC USER FUNCTIONS ---------------------------------------------------------------------------------------------------------------
+    
+    /**
+     * Authenticates a user by checking if the provided username and password match a record in the database.
+     * 
+     * @param username the username entered by the user
+     * @param password the password entered by the user
+     * @return a User object if authentication is successful, null otherwise
+     * @throws SQLException if a database access error occurs
+     */
+    public User login(String username, String password) throws SQLException {
+        String query = "SELECT * FROM cse360users WHERE username = ? AND password = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String email = rs.getString("email");
+                    String firstname = rs.getString("firstname");
+                    String middlename = rs.getString("middlename");
+                    String lastname = rs.getString("lastname");
+                    String preferredName = rs.getString("preferred");
+                    boolean isAdmin = rs.getInt("admin") == 1;
+                    boolean isInstructor = rs.getInt("instructor") == 1;
+                    boolean isStudent = rs.getInt("student") == 1;
+                    boolean isFlagged = rs.getInt("flag") == 1;
+                    
+                    return new User(username, email, firstname, middlename, lastname, preferredName, isAdmin, isInstructor, isStudent, isFlagged);
+                }
+            }
+        }
+        return null;
     }
     
     // Logs in a user by setting the isloggedin column to 1.
@@ -292,27 +350,6 @@ public class DatabaseHelper {
         
         // If no user is logged in
         return null;
-    }
-    
-    // checks if there is more than one admin in existence, returns true if so
-    public boolean moreThanOneAdmin() {
-        String countAdminsQuery = "SELECT COUNT(*) AS adminCount FROM cse360users WHERE admin = 1;";
-        
-        try (PreparedStatement countAdminsStmt = connection.prepareStatement(countAdminsQuery)) {
-            
-            ResultSet rs = countAdminsStmt.executeQuery();
-            
-            if (rs.next()) {  // Check if we got a result
-                int adminCount = rs.getInt("adminCount");
-                return adminCount > 1;  // Return true if more than one admin exists
-            }
-            
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-        
-        // Return false if there's one or zero admins
-        return false;
     }
     
     // Method to update database with a different password in the case of resetting
@@ -456,39 +493,6 @@ public class DatabaseHelper {
     }
 
     /**
-     * Authenticates a user by checking if the provided username and password match a record in the database.
-     * 
-     * @param username the username entered by the user
-     * @param password the password entered by the user
-     * @return a User object if authentication is successful, null otherwise
-     * @throws SQLException if a database access error occurs
-     */
-    public User login(String username, String password) throws SQLException {
-        String query = "SELECT * FROM cse360users WHERE username = ? AND password = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
-            
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    String email = rs.getString("email");
-                    String firstname = rs.getString("firstname");
-                    String middlename = rs.getString("middlename");
-                    String lastname = rs.getString("lastname");
-                    String preferredName = rs.getString("preferred");
-                    boolean isAdmin = rs.getInt("admin") == 1;
-                    boolean isInstructor = rs.getInt("instructor") == 1;
-                    boolean isStudent = rs.getInt("student") == 1;
-                    boolean isFlagged = rs.getInt("flag") == 1;
-                    
-                    return new User(username, email, firstname, middlename, lastname, preferredName, isAdmin, isInstructor, isStudent, isFlagged);
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
      * Changes the roles of a user based on their email address.
      * Updates the admin, instructor, and student status flags in the database.
      * 
@@ -541,6 +545,27 @@ public class DatabaseHelper {
         } catch (SQLException e) {
             System.err.println("SQL error while deleting user: " + e.getMessage());
         }
+    }
+    
+    // checks if there is more than one admin in existence, returns true if so
+    public boolean moreThanOneAdmin() {
+        String countAdminsQuery = "SELECT COUNT(*) AS adminCount FROM cse360users WHERE admin = 1;";
+        
+        try (PreparedStatement countAdminsStmt = connection.prepareStatement(countAdminsQuery)) {
+            
+            ResultSet rs = countAdminsStmt.executeQuery();
+            
+            if (rs.next()) {  // Check if we got a result
+                int adminCount = rs.getInt("adminCount");
+                return adminCount > 1;  // Return true if more than one admin exists
+            }
+            
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        }
+        
+        // Return false if there's one or zero admins
+        return false;
     }
 
 
@@ -696,6 +721,11 @@ public class DatabaseHelper {
         }
         return null;
     }
+    
+ // ------------------------------------------------------------------------------------------------------------------------------------
+    
+    
+// INVITE CODE FUNCTIONS ---------------------------------------------------------------------------------------------------------------
     
     /**
      * Stores an invite code associated with a user and their roles.
@@ -861,6 +891,11 @@ public class DatabaseHelper {
         }
     }
     
+ // ------------------------------------------------------------------------------------------------------------------------------------
+    
+    
+// PASSWORD RESET FUNCTIONS ---------------------------------------------------------------------------------------------------------------
+    
     /**
      * Resets a user's password to a new value.
      * 
@@ -961,6 +996,11 @@ public class DatabaseHelper {
         }
     }
     
+ // ------------------------------------------------------------------------------------------------------------------------------------
+    
+    
+// ARTICLE FUNCTIONS -------------------------------------------------------------------------------------------------------------------
+    
     // Check if articles is empty
  	public boolean isArticlesEmpty() throws SQLException {
  		// creates new articles table if the table is already empty
@@ -1004,7 +1044,313 @@ public class DatabaseHelper {
          }
      }
      
-     // inserts the information from the articles table into the user specified file
+     
+     
+     // Method to add an article to a group after restoring
+     void addArticlesToGroups(String groupNames, String articleTitle) {
+    	    // Convert the group names (or IDs) to a list
+    	    String[] groupsArray = groupNames.replaceAll("[\\[\\]\" ]", "").split(",");
+
+    	    for (String groupName : groupsArray) {
+    	        // Get the articles that were just inserted
+    	        String getArticleSQL = "SELECT id FROM articles WHERE title = ?";  // Assuming title is unique
+    	        try (PreparedStatement getArticleStmt = connection.prepareStatement(getArticleSQL)) {
+    	            getArticleStmt.setString(1, articleTitle);
+    	            ResultSet rs = getArticleStmt.executeQuery();
+    	            
+    	            if (rs.next()) {
+    	                int articleId = rs.getInt("id");
+
+    	                // Now, update the group's article_ids with the new article ID
+    	                String updateGroupSQL = "UPDATE specialaccess SET article_ids = json_insert(article_ids, '$', ?) WHERE groupname = ?";
+    	                try (PreparedStatement updateGroupStmt = connection.prepareStatement(updateGroupSQL)) {
+    	                    updateGroupStmt.setInt(1, articleId);
+    	                    updateGroupStmt.setString(2, groupName);
+    	                    updateGroupStmt.executeUpdate();
+    	                }
+    	            }
+    	        } catch (SQLException e) {
+    	            System.err.println("Error adding article to group: " + e.getMessage());
+    	        }
+    	    }
+    	}
+     
+     // Method to get the article id after restoring
+     int getNewArticleId() {
+    	    int articleId = -1;  // Default value indicating failure
+    	    String insertSQL = "INSERT INTO articles (title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list, specialaccessgroups) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    	    
+    	    try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
+    	        
+    	        // Set parameters for the insert query
+    	        preparedStatement.setString(1, "Sample Title");
+    	        preparedStatement.setString(2, "Sample Headers");
+    	        preparedStatement.setString(3, "[]");  // Assuming empty JSON for simplicity
+    	        preparedStatement.setString(4, "Public");
+    	        preparedStatement.setInt(5, 1);
+    	        preparedStatement.setInt(6, 1);
+    	        preparedStatement.setInt(7, 1);
+    	        preparedStatement.setInt(8, 1);
+    	        preparedStatement.setString(9, "Abstract Text");
+    	        preparedStatement.setString(10, "Keyword1, Keyword2");
+    	        preparedStatement.setString(11, "Body content of the article");
+    	        preparedStatement.setString(12, "Reference list");
+    	        preparedStatement.setString(13, "[]");  // Assuming special access groups are empty
+
+    	        int affectedRows = preparedStatement.executeUpdate();
+
+    	        if (affectedRows > 0) {
+    	            // Get the generated ID of the newly inserted article
+    	            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+    	                if (generatedKeys.next()) {
+    	                    articleId = generatedKeys.getInt(1);  // Retrieve the generated ID
+    	                    System.out.println("New article ID: " + articleId);
+    	                }
+    	            }
+    	        } else {
+    	            System.err.println("No rows affected, article not inserted.");
+    	        }
+
+    	    } catch (SQLException e) {
+    	        System.err.println("Error inserting article: " + e.getMessage());
+    	    }
+    	    
+    	    return articleId;
+    	}
+     
+  // Method to insert an article into the table of articles
+     public boolean insertArticle(String title, String headers, String groups, boolean admin, boolean instructor, boolean student, boolean beginner, boolean intermediate, boolean advanced, boolean expert, String abstractText, String keywords, String body, String references) throws Exception {
+	    // Ensure the updated table exists
+	    String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
+	            + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+	            + "title TEXT NOT NULL, "
+	            + "headers TEXT, "
+	            + "groups JSON, "
+	            + "access TEXT, "
+	            + "beginner INTEGER, "
+	            + "intermediate INTEGER, "
+	            + "advanced INTEGER, "
+	            + "expert INTEGER, "
+	            + "abstract TEXT, "
+	            + "keywords TEXT, "
+	            + "body TEXT NOT NULL, "
+	            + "ref_list TEXT, "
+	            + "specialaccessgroups JSON"
+	            + ");";
+	    try {
+	        statement.execute(createArticlesTableSQL);
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+
+	    // Encrypt the body
+	    String encryptedbody = Base64.getEncoder().encodeToString(
+	            encryptionHelper.encrypt(body.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray()))
+	    );
+	    System.out.println("Original title: " + title);
+	    System.out.println("Original headers: " + headers);
+	    System.out.println("Original groups: " + groups);
+	    System.out.println("Original keywords: " + keywords);
+	    System.out.println("Original body: " + body);
+	    System.out.println("New body: " + encryptedbody);
+	    System.out.println("Original references: " + references);
+
+	    // Convert boolean values into an access string
+	    String access = "admin:" + (admin ? "1" : "0") + ","
+	                  + "instructor:" + (instructor ? "1" : "0") + ","
+	                  + "student:" + (student ? "1" : "0");
+
+	    // Parse the groups into a JSON array
+	    JSONArray groupsArray = new JSONArray();
+	    if (groups != null && !groups.trim().isEmpty()) {
+	        String[] groupIds = groups.split(",");
+	        for (String groupId : groupIds) {
+	            groupsArray.put(groupId.trim());
+	        }
+	    }
+
+	    // Debugging log for parsed groups
+	    System.out.println("Parsed groups JSON array: " + groupsArray.toString());
+
+	    // SQL query to insert the article into the database
+	    String insertSQL = "INSERT INTO articles (title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+	    try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
+	        // Set parameters for insertion
+	        preparedStatement.setString(1, title);
+	        preparedStatement.setString(2, headers);
+	        preparedStatement.setString(3, groupsArray.toString()); // Store the groups JSON array as a string
+	        preparedStatement.setString(4, access);
+	        preparedStatement.setInt(5, beginner ? 1 : 0);
+	        preparedStatement.setInt(6, intermediate ? 1 : 0);
+	        preparedStatement.setInt(7, advanced ? 1 : 0);
+	        preparedStatement.setInt(8, expert ? 1 : 0);
+	        preparedStatement.setString(9, abstractText);
+	        preparedStatement.setString(10, keywords);
+	        preparedStatement.setString(11, encryptedbody);
+	        preparedStatement.setString(12, references);
+
+	        int rowsAffected = preparedStatement.executeUpdate();
+	        if (rowsAffected > 0) {
+	            System.out.println("Article inserted successfully.");
+	            return true;
+	        } else {
+	            System.out.println("Failed to insert article.");
+	            return false;
+	        }
+	    } catch (SQLException e) {
+	        System.err.println("Error while inserting article: " + e.getMessage());
+	        return false;
+	    }
+	}
+ 	
+ 	// Method to delete an article by ID
+    public boolean deleteArticleById(long id) {
+        String query = "DELETE FROM articles WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setLong(1, id);
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0; // Return true if an article was deleted
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // Return false on failure
+        }
+    }
+    
+    // Method to update a specific entry of an article
+    public boolean updateArticleField(long articleId, String field, String newValue) {
+        if(field.equals("body")) {
+            // Encrypt the body
+            try {
+				newValue = Base64.getEncoder().encodeToString(
+				        encryptionHelper.encrypt(newValue.getBytes(), EncryptionUtils.getInitializationVector(newValue.toCharArray()))
+				);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+        }
+    	
+    	String updateSQL = "UPDATE articles SET " + field + " = ? WHERE id = ?";
+        
+        try (PreparedStatement pstmt = connection.prepareStatement(updateSQL)) {
+            pstmt.setString(1, newValue);
+            pstmt.setLong(2, articleId);
+            
+            int rowsAffected = pstmt.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println(field + " updated successfully for article ID: " + articleId);
+                return true;
+            } else {
+                System.out.println("No article found with ID: " + articleId);
+                return false;
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL error while updating article: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    // updates the different levels all at once
+    public boolean updateLevels(long id, boolean isBeginner, boolean isIntermediate, boolean isAdvanced, boolean isExpert) {
+        // SQL statement to update levels based on the provided title
+        String updateSQL = "UPDATE articles SET beginner = ?, intermediate = ?, advanced = ?, expert = ? WHERE id = ?";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(updateSQL)) {
+            // Set the levels based on boolean values (1 for true, 0 for false)
+            preparedStatement.setInt(1, isBeginner ? 1 : 0);
+            preparedStatement.setInt(2, isIntermediate ? 1 : 0);
+            preparedStatement.setInt(3, isAdvanced ? 1 : 0);
+            preparedStatement.setInt(4, isExpert ? 1 : 0);
+            preparedStatement.setLong(5, id);
+
+            // Execute the update and check if any rows were affected
+            int rowsAffected = preparedStatement.executeUpdate();
+            if (rowsAffected > 0) {
+                System.out.println("Levels updated successfully for article: " + id);
+                return true;
+            } else {
+                System.out.println("No article found with the id: " + id);
+                return false;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error updating levels: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Checks if a user can view a specific article based on their role and special access group membership.
+    public boolean canUserViewArticle(String userRole, String username, long articleId) throws SQLException {
+        String query = "SELECT access, specialaccessgroups FROM articles WHERE id = ?";
+        boolean hasAccess = false;
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setLong(1, articleId);
+
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    // Check role-based access
+                    String accessRoles = rs.getString("access");
+                    if (accessRoles != null) {
+                        String[] rolesAllowed = accessRoles.split(",");
+                        for (String roleAccess : rolesAllowed) {
+                            String[] roleAccessPair = roleAccess.split(":");
+                            if (roleAccessPair.length == 2) {
+                                String role = roleAccessPair[0].trim();
+                                String accessLevel = roleAccessPair[1].trim();
+                                if (role.equalsIgnoreCase(userRole) && "1".equals(accessLevel)) {
+                                    hasAccess = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // Check special access groups if not already granted access
+                    if (!hasAccess) {
+                        String specialAccessGroups = rs.getString("specialaccessgroups");
+                        if (specialAccessGroups != null && !specialAccessGroups.isEmpty()) {
+                            JSONArray specialGroups = new JSONArray(specialAccessGroups);
+                            for (int i = 0; i < specialGroups.length(); i++) {
+                                String groupName = specialGroups.getString(i);
+                                if (isUserInGroup(groupName, username)) {
+                                    hasAccess = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Failed to check article access: " + e.getMessage());
+            throw e;
+        } catch (JSONException e) {
+            System.err.println("Failed to parse special access groups JSON: " + e.getMessage());
+        }
+        return hasAccess;
+    }
+
+    
+    // Method to see if the Article ID exists in the table
+    public boolean isArticleIDValid(int articleId) throws SQLException {
+        String query = "SELECT COUNT(*) AS count FROM articles WHERE id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, articleId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("count") > 0; // Returns true if count > 0
+            }
+        }
+        return false; // If no result, the article ID is invalid
+    }
+    
+  // ------------------------------------------------------------------------------------------------------------------------------------
+     
+     
+  // BACKUP & RESTORE FUNCTIONS -------------------------------------------------------------------------------------------------------------------
+
+  // inserts the information from the articles table into the user specified file
      public boolean backup(String filePath) throws Exception {
          String query = "SELECT title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list, specialaccessgroups FROM articles";
          
@@ -1288,101 +1634,6 @@ public class DatabaseHelper {
              return false;
          }
      }
-     
-     // Method to add an article to a group after restoring
-     void addArticlesToGroups(String groupNames, String articleTitle) {
-    	    // Convert the group names (or IDs) to a list
-    	    String[] groupsArray = groupNames.replaceAll("[\\[\\]\" ]", "").split(",");
-
-    	    for (String groupName : groupsArray) {
-    	        // Get the articles that were just inserted
-    	        String getArticleSQL = "SELECT id FROM articles WHERE title = ?";  // Assuming title is unique
-    	        try (PreparedStatement getArticleStmt = connection.prepareStatement(getArticleSQL)) {
-    	            getArticleStmt.setString(1, articleTitle);
-    	            ResultSet rs = getArticleStmt.executeQuery();
-    	            
-    	            if (rs.next()) {
-    	                int articleId = rs.getInt("id");
-
-    	                // Now, update the group's article_ids with the new article ID
-    	                String updateGroupSQL = "UPDATE specialaccess SET article_ids = json_insert(article_ids, '$', ?) WHERE groupname = ?";
-    	                try (PreparedStatement updateGroupStmt = connection.prepareStatement(updateGroupSQL)) {
-    	                    updateGroupStmt.setInt(1, articleId);
-    	                    updateGroupStmt.setString(2, groupName);
-    	                    updateGroupStmt.executeUpdate();
-    	                }
-    	            }
-    	        } catch (SQLException e) {
-    	            System.err.println("Error adding article to group: " + e.getMessage());
-    	        }
-    	    }
-    	}
-     
-     // Method to get the article title after restoring
-     String getRestoredArticleTitle(int articleId) {
-    	    String title = null;
-    	    String getTitleSQL = "SELECT title FROM articles WHERE id = ?";
-    	    
-    	    try (PreparedStatement getTitleStmt = connection.prepareStatement(getTitleSQL)) {
-    	        getTitleStmt.setInt(1, articleId); // Set the article ID to search for
-    	        
-    	        try (ResultSet rs = getTitleStmt.executeQuery()) {
-    	            if (rs.next()) {
-    	                title = rs.getString("title");  // Get the title from the result set
-    	            } else {
-    	                System.err.println("Article not found with ID: " + articleId);
-    	            }
-    	        }
-    	    } catch (SQLException e) {
-    	        System.err.println("Error retrieving article title: " + e.getMessage());
-    	    }
-    	    
-    	    return title;
-    	}
-     
-     // Method to get the article id after restoring
-     int getNewArticleId() {
-    	    int articleId = -1;  // Default value indicating failure
-    	    String insertSQL = "INSERT INTO articles (title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list, specialaccessgroups) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    	    
-    	    try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL, Statement.RETURN_GENERATED_KEYS)) {
-    	        
-    	        // Set parameters for the insert query
-    	        preparedStatement.setString(1, "Sample Title");
-    	        preparedStatement.setString(2, "Sample Headers");
-    	        preparedStatement.setString(3, "[]");  // Assuming empty JSON for simplicity
-    	        preparedStatement.setString(4, "Public");
-    	        preparedStatement.setInt(5, 1);
-    	        preparedStatement.setInt(6, 1);
-    	        preparedStatement.setInt(7, 1);
-    	        preparedStatement.setInt(8, 1);
-    	        preparedStatement.setString(9, "Abstract Text");
-    	        preparedStatement.setString(10, "Keyword1, Keyword2");
-    	        preparedStatement.setString(11, "Body content of the article");
-    	        preparedStatement.setString(12, "Reference list");
-    	        preparedStatement.setString(13, "[]");  // Assuming special access groups are empty
-
-    	        int affectedRows = preparedStatement.executeUpdate();
-
-    	        if (affectedRows > 0) {
-    	            // Get the generated ID of the newly inserted article
-    	            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
-    	                if (generatedKeys.next()) {
-    	                    articleId = generatedKeys.getInt(1);  // Retrieve the generated ID
-    	                    System.out.println("New article ID: " + articleId);
-    	                }
-    	            }
-    	        } else {
-    	            System.err.println("No rows affected, article not inserted.");
-    	        }
-
-    	    } catch (SQLException e) {
-    	        System.err.println("Error inserting article: " + e.getMessage());
-    	    }
-    	    
-    	    return articleId;
-    	}
-
 
      // Method to merge articles from a file into the main articles table for articlesPage method
      public boolean mergeArticles(String filePath) {
@@ -1676,7 +1927,33 @@ public class DatabaseHelper {
     	        return false;
     	    }
     	}
-
+     
+     // Method to get the article title after restoring
+     String getRestoredArticleTitle(int articleId) {
+    	    String title = null;
+    	    String getTitleSQL = "SELECT title FROM articles WHERE id = ?";
+    	    
+    	    try (PreparedStatement getTitleStmt = connection.prepareStatement(getTitleSQL)) {
+    	        getTitleStmt.setInt(1, articleId); // Set the article ID to search for
+    	        
+    	        try (ResultSet rs = getTitleStmt.executeQuery()) {
+    	            if (rs.next()) {
+    	                title = rs.getString("title");  // Get the title from the result set
+    	            } else {
+    	                System.err.println("Article not found with ID: " + articleId);
+    	            }
+    	        }
+    	    } catch (SQLException e) {
+    	        System.err.println("Error retrieving article title: " + e.getMessage());
+    	    }
+    	    
+    	    return title;
+    	}
+     
+     // ------------------------------------------------------------------------------------------------------------------------------------
+     
+     
+     // ARTICLES LIST & VIEW FUNCTIONS -------------------------------------------------------------------------------------------------------------------
      
      // Method to retrieve a limited list of articles (title)
      public List<String> getAllArticlesLimited() throws SQLException {
@@ -1851,236 +2128,11 @@ public class DatabaseHelper {
     	    return articles; // Return the list of articles
     }
 
-     // Method to insert an article into the table of articles
-     public boolean insertArticle(String title, String headers, String groups, boolean admin, boolean instructor, boolean student, boolean beginner, boolean intermediate, boolean advanced, boolean expert, String abstractText, String keywords, String body, String references) throws Exception {
-	    // Ensure the updated table exists
-	    String createArticlesTableSQL = "CREATE TABLE IF NOT EXISTS articles ("
-	            + "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-	            + "title TEXT NOT NULL, "
-	            + "headers TEXT, "
-	            + "groups JSON, "
-	            + "access TEXT, "
-	            + "beginner INTEGER, "
-	            + "intermediate INTEGER, "
-	            + "advanced INTEGER, "
-	            + "expert INTEGER, "
-	            + "abstract TEXT, "
-	            + "keywords TEXT, "
-	            + "body TEXT NOT NULL, "
-	            + "ref_list TEXT, "
-	            + "specialaccessgroups JSON"
-	            + ");";
-	    try {
-	        statement.execute(createArticlesTableSQL);
-	    } catch (SQLException e) {
-	        e.printStackTrace();
-	    }
 
-	    // Encrypt the body
-	    String encryptedbody = Base64.getEncoder().encodeToString(
-	            encryptionHelper.encrypt(body.getBytes(), EncryptionUtils.getInitializationVector(title.toCharArray()))
-	    );
-	    System.out.println("Original title: " + title);
-	    System.out.println("Original headers: " + headers);
-	    System.out.println("Original groups: " + groups);
-	    System.out.println("Original keywords: " + keywords);
-	    System.out.println("Original body: " + body);
-	    System.out.println("New body: " + encryptedbody);
-	    System.out.println("Original references: " + references);
-
-	    // Convert boolean values into an access string
-	    String access = "admin:" + (admin ? "1" : "0") + ","
-	                  + "instructor:" + (instructor ? "1" : "0") + ","
-	                  + "student:" + (student ? "1" : "0");
-
-	    // Parse the groups into a JSON array
-	    JSONArray groupsArray = new JSONArray();
-	    if (groups != null && !groups.trim().isEmpty()) {
-	        String[] groupIds = groups.split(",");
-	        for (String groupId : groupIds) {
-	            groupsArray.put(groupId.trim());
-	        }
-	    }
-
-	    // Debugging log for parsed groups
-	    System.out.println("Parsed groups JSON array: " + groupsArray.toString());
-
-	    // SQL query to insert the article into the database
-	    String insertSQL = "INSERT INTO articles (title, headers, groups, access, beginner, intermediate, advanced, expert, abstract, keywords, body, ref_list) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-	    try (PreparedStatement preparedStatement = connection.prepareStatement(insertSQL)) {
-	        // Set parameters for insertion
-	        preparedStatement.setString(1, title);
-	        preparedStatement.setString(2, headers);
-	        preparedStatement.setString(3, groupsArray.toString()); // Store the groups JSON array as a string
-	        preparedStatement.setString(4, access);
-	        preparedStatement.setInt(5, beginner ? 1 : 0);
-	        preparedStatement.setInt(6, intermediate ? 1 : 0);
-	        preparedStatement.setInt(7, advanced ? 1 : 0);
-	        preparedStatement.setInt(8, expert ? 1 : 0);
-	        preparedStatement.setString(9, abstractText);
-	        preparedStatement.setString(10, keywords);
-	        preparedStatement.setString(11, encryptedbody);
-	        preparedStatement.setString(12, references);
-
-	        int rowsAffected = preparedStatement.executeUpdate();
-	        if (rowsAffected > 0) {
-	            System.out.println("Article inserted successfully.");
-	            return true;
-	        } else {
-	            System.out.println("Failed to insert article.");
-	            return false;
-	        }
-	    } catch (SQLException e) {
-	        System.err.println("Error while inserting article: " + e.getMessage());
-	        return false;
-	    }
-	}
- 	
- 	// Method to delete an article by ID
-    public boolean deleteArticleById(long id) {
-        String query = "DELETE FROM articles WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setLong(1, id);
-            int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0; // Return true if an article was deleted
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false; // Return false on failure
-        }
-    }
-    
-    // Method to update a specific entry of an article
-    public boolean updateArticleField(long articleId, String field, String newValue) {
-        if(field.equals("body")) {
-            // Encrypt the body
-            try {
-				newValue = Base64.getEncoder().encodeToString(
-				        encryptionHelper.encrypt(newValue.getBytes(), EncryptionUtils.getInitializationVector(newValue.toCharArray()))
-				);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-        }
-    	
-    	String updateSQL = "UPDATE articles SET " + field + " = ? WHERE id = ?";
+     // ------------------------------------------------------------------------------------------------------------------------------------
         
-        try (PreparedStatement pstmt = connection.prepareStatement(updateSQL)) {
-            pstmt.setString(1, newValue);
-            pstmt.setLong(2, articleId);
-            
-            int rowsAffected = pstmt.executeUpdate();
-            if (rowsAffected > 0) {
-                System.out.println(field + " updated successfully for article ID: " + articleId);
-                return true;
-            } else {
-                System.out.println("No article found with ID: " + articleId);
-                return false;
-            }
-        } catch (SQLException e) {
-            System.err.println("SQL error while updating article: " + e.getMessage());
-            return false;
-        }
-    }
-    
-    // updates the different levels all at once
-    public boolean updateLevels(long id, boolean isBeginner, boolean isIntermediate, boolean isAdvanced, boolean isExpert) {
-        // SQL statement to update levels based on the provided title
-        String updateSQL = "UPDATE articles SET beginner = ?, intermediate = ?, advanced = ?, expert = ? WHERE id = ?";
-
-        try (PreparedStatement preparedStatement = connection.prepareStatement(updateSQL)) {
-            // Set the levels based on boolean values (1 for true, 0 for false)
-            preparedStatement.setInt(1, isBeginner ? 1 : 0);
-            preparedStatement.setInt(2, isIntermediate ? 1 : 0);
-            preparedStatement.setInt(3, isAdvanced ? 1 : 0);
-            preparedStatement.setInt(4, isExpert ? 1 : 0);
-            preparedStatement.setLong(5, id);
-
-            // Execute the update and check if any rows were affected
-            int rowsAffected = preparedStatement.executeUpdate();
-            if (rowsAffected > 0) {
-                System.out.println("Levels updated successfully for article: " + id);
-                return true;
-            } else {
-                System.out.println("No article found with the id: " + id);
-                return false;
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Error updating levels: " + e.getMessage());
-            return false;
-        }
-    }
-
-    // Checks if a user can view a specific article based on their role and special access group membership.
-    public boolean canUserViewArticle(String userRole, String username, long articleId) throws SQLException {
-        String query = "SELECT access, specialaccessgroups FROM articles WHERE id = ?";
-        boolean hasAccess = false;
-
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setLong(1, articleId);
-
-            try (ResultSet rs = preparedStatement.executeQuery()) {
-                if (rs.next()) {
-                    // Check role-based access
-                    String accessRoles = rs.getString("access");
-                    if (accessRoles != null) {
-                        String[] rolesAllowed = accessRoles.split(",");
-                        for (String roleAccess : rolesAllowed) {
-                            String[] roleAccessPair = roleAccess.split(":");
-                            if (roleAccessPair.length == 2) {
-                                String role = roleAccessPair[0].trim();
-                                String accessLevel = roleAccessPair[1].trim();
-                                if (role.equalsIgnoreCase(userRole) && "1".equals(accessLevel)) {
-                                    hasAccess = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    // Check special access groups if not already granted access
-                    if (!hasAccess) {
-                        String specialAccessGroups = rs.getString("specialaccessgroups");
-                        if (specialAccessGroups != null && !specialAccessGroups.isEmpty()) {
-                            JSONArray specialGroups = new JSONArray(specialAccessGroups);
-                            for (int i = 0; i < specialGroups.length(); i++) {
-                                String groupName = specialGroups.getString(i);
-                                if (isUserInGroup(groupName, username)) {
-                                    hasAccess = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Failed to check article access: " + e.getMessage());
-            throw e;
-        } catch (JSONException e) {
-            System.err.println("Failed to parse special access groups JSON: " + e.getMessage());
-        }
-        return hasAccess;
-    }
-
-    
-    // Method to see if the Article ID exists in the table
-    public boolean isArticleIDValid(int articleId) throws SQLException {
-        String query = "SELECT COUNT(*) AS count FROM articles WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, articleId);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt("count") > 0; // Returns true if count > 0
-            }
-        }
-        return false; // If no result, the article ID is invalid
-    }
-    
-    /**
-     * THIS BEGINS THE SPECIAL ACCESS GROUP SECTION FOR THE DATABASE HELPER
-     */
+        
+     // SPECIAL ACCESS GROUP FUNCTIONS -------------------------------------------------------------------------------------------------------------------
     
     public static void createGroup(String groupname, String username) throws SQLException {
         // Prepare the JSON arrays with the given username
@@ -2487,241 +2539,6 @@ public class DatabaseHelper {
         }
     }
     
-    //Search Functions for Phase III
-    
-    // Method to retrieve a list of articles from the group
-    public List<Long> getSpecialAccessByGroups(String groupName) throws SQLException {
-   	 List<Long> articleIds = new ArrayList<>(); // List to store article IDs
-
-   	    // SQL query to fetch article_ids where groupname matches the given value
-   	    String query = "SELECT article_ids FROM specialaccess WHERE groupname = ?";
-
-   	    System.out.println("Preparing to execute query for group: " + groupName);
-
-   	    try (PreparedStatement stmt = connection.prepareStatement(query)) {
-   	        // Set the groupName parameter in the query
-   	        stmt.setString(1, groupName);
-   	        System.out.println("Query prepared: " + query);
-
-   	        try (ResultSet rs = stmt.executeQuery()) {
-   	            System.out.println("Query executed. Checking results...");
-
-   	            while (rs.next()) {
-   	                System.out.println("Row found for group: " + groupName);
-
-   	                String articleIdsJson = rs.getString("article_ids"); // Get the JSON array
-   	                System.out.println("Retrieved article_ids JSON: " + articleIdsJson);
-
-   	                if (articleIdsJson != null && !articleIdsJson.isEmpty()) {
-   	                    try {
-   	                        // Parse the JSON array and add each ID to the list
-   	                        JSONArray articleIdsArray = new JSONArray(articleIdsJson);
-   	                        System.out.println("Parsing article_ids JSON array...");
-   	                        
-   	                        for (int i = 0; i < articleIdsArray.length(); i++) {
-   	                            long articleId = articleIdsArray.getLong(i);
-   	                            articleIds.add(articleId);
-   	                            System.out.println("Article ID added: " + articleId);
-   	                        }
-   	                    } catch (JSONException e) {
-   	                        System.err.println("Error parsing article_ids JSON for group '" + groupName + "': " + e.getMessage());
-   	                    }
-   	                } else {
-   	                    System.out.println("No article_ids JSON found for group '" + groupName + "'.");
-   	                }
-   	            }
-   	        }
-   	        
-   	        System.out.println("Finished processing results. Total article IDs found: " + articleIds.size());
-   	    } catch (SQLException e) {
-   	        System.err.println("Failed to retrieve article IDs for group '" + groupName + "': " + e.getMessage());
-   	        throw e;
-   	    }
-   	    
-   	    if (articleIds.isEmpty()) {
-   	        System.out.println("No article IDs found for group '" + groupName + "'.");
-   	    } else {
-   	        System.out.println("Article IDs retrieved successfully for group '" + groupName + "'.");
-   	    }
-   	    return articleIds; // Return the list of article IDs
-   }
-    
-    // Method to retrieve a list of article ids accessible to a user based on difficulty level and group access 
-    public List<Long> getArticlesByDifficulty(String username, boolean beginner, boolean intermediate, boolean advanced, boolean expert) throws SQLException, JSONException {
-        List<Long> accessibleArticleIds = new ArrayList<>();
-
-        // SQL query to retrieve articles (no need to include difficulty or groups)
-        String query = "SELECT a.id, a.beginner, a.intermediate, a.advanced, a.expert, a.specialaccessgroups FROM articles a";
-
-        try (PreparedStatement stmt = connection.prepareStatement(query);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                long articleId = rs.getLong("id");
-                String specialAccessGroupsJson = rs.getString("specialaccessgroups");
-
-                // Check for at least one required difficulty (any difficulty that matches)
-                boolean hasRequiredDifficulty = (beginner && rs.getInt("beginner") == 1) ||
-                                                (intermediate && rs.getInt("intermediate") == 1) ||
-                                                (advanced && rs.getInt("advanced") == 1) ||
-                                                (expert && rs.getInt("expert") == 1);
-
-                boolean hasAccess = false;
-
-                // Check access through 'specialaccessgroups' field using hasUserAccessToGroups
-                if (specialAccessGroupsJson != null && !specialAccessGroupsJson.isEmpty()) {
-                    JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
-
-                    // Loop through each special access group to check if user has access
-                    for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
-                        String specialGroup = specialAccessGroupsArray.getString(i).trim();
-                        // Check if user has access to this group using hasUserAccessToGroups
-                        if (hasUserAccessToGroups(specialGroup, username)) {
-                            hasAccess = true;
-                            break; // Stop checking once access is confirmed
-                        }
-                    }
-                }
-                else {
-                	hasAccess = true;
-                }
-
-                // Add article if it matches at least one difficulty and has access
-                if (hasRequiredDifficulty && hasAccess) {
-                    accessibleArticleIds.add(articleId);
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving accessible articles: " + e.getMessage());
-            throw e;
-        }
-        return accessibleArticleIds;
-    }
-
-    // Method to retrieve articles accessible to a user based on group access
-    public List<Long> searchArticlesByGroups(String username, String groupNames) throws SQLException, JSONException {
-        List<Long> accessibleArticleIds = new ArrayList<>();
-
-        // Safely handle groupNames, split by comma, and use a HashSet for efficient lookups
-        Set<String> groupSet = new HashSet<>();
-        if (groupNames != null && !groupNames.isEmpty()) {
-            for (String group : groupNames.split(",")) {
-                groupSet.add(group.trim());
-            }
-        }
-
-        String query = "SELECT a.id, a.groups, a.specialaccessgroups FROM articles a WHERE a.groups IS NOT NULL OR a.specialaccessgroups IS NOT NULL";
-
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-
-            while (rs.next()) {
-                long articleId = rs.getLong("id");
-                String groupsJson = rs.getString("groups");
-                String specialAccessGroupsJson = rs.getString("specialaccessgroups");
-
-                boolean groupMatchFound = false;
-                boolean specialGroupMatchFound = false;
-                boolean hasSpecialAccess = false;
-
-                // Step 1: Check if at least one of the groupNames matches the article's regular groups
-                if (groupsJson != null && !groupsJson.isEmpty()) {
-                    JSONArray groupsArray = new JSONArray(groupsJson);
-                    for (int i = 0; i < groupsArray.length(); i++) {
-                        String articleGroup = groupsArray.getString(i).trim();
-                        if (groupSet.contains(articleGroup)) {
-                            groupMatchFound = true;
-                            break; // Stop checking if regular group matches
-                        }
-                    }
-                }
-
-                // Step 2: Check if at least one of the groupNames matches the article's regular groups
-                if (specialAccessGroupsJson != null && !specialAccessGroupsJson.isEmpty()) {
-                    JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
-                    for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
-                        String specialGroup = specialAccessGroupsArray.getString(i).trim();
-                        if (groupSet.contains(specialGroup)) {
-                            specialGroupMatchFound = true;
-                            break; // Stop checking if special access group matches
-                        }
-                    }
-                }
-
-                // Step 3: Check if user has access to any special access groups, if present
-                if (specialAccessGroupsJson != null && !specialAccessGroupsJson.isEmpty()) {
-                    JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
-                    for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
-                        String specialGroup = specialAccessGroupsArray.getString(i).trim();
-
-                        // If user has access to any special access group, mark as having access
-                        if (hasUserAccessToGroups(specialGroup, username)) {
-                            hasSpecialAccess = true;
-                            break; // Stop checking once access is confirmed
-                        }
-                    }
-                }
-
-                // Step 4: Add article if there is a regular group or special access group match and the user has access to special access groups if present
-                if ((groupMatchFound || specialGroupMatchFound) && (specialAccessGroupsJson == null || hasSpecialAccess)) {
-                    accessibleArticleIds.add(articleId);
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error retrieving articles by group(s): " + e.getMessage());
-            throw e;
-        }
-        return accessibleArticleIds;
-    }
-
-    // Method to retrieve articles based on keyword search in title or abstract given the user has group access
-    public List<Long> searchArticlesByKeywordWithAccess(String username, String searchQuery) throws SQLException, JSONException {
-        List<Long> accessibleArticleIds = new ArrayList<>();
-        String query = "SELECT id, title, abstract, specialaccessgroups FROM articles WHERE LOWER(title) LIKE ? OR LOWER(abstract) LIKE ?";
-
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            String keywordPattern = "%" + searchQuery.toLowerCase().trim() + "%";
-
-            // Set parameters for the query
-            stmt.setString(1, keywordPattern); // For title
-            stmt.setString(2, keywordPattern); // For abstract
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    long articleId = rs.getLong("id");
-                    String specialAccessGroupsJson = rs.getString("specialaccessgroups");
-
-                    // Check access via specialaccessgroups only
-                    boolean hasAccess = false;
-                    if (specialAccessGroupsJson != null && !specialAccessGroupsJson.isEmpty()) {
-                        JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
-                        for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
-                            String specialGroup = specialAccessGroupsArray.getString(i).trim();
-
-                            // If user has access to any special access group, mark as having access
-                            if (hasUserAccessToGroups(specialGroup, username)) {
-                                hasAccess = true;
-                                break; // Stop checking once access is confirmed
-                            }
-                        }
-                    }
-                    else {
-                    	hasAccess = true;
-                    }
-
-                    // Add article if the user has access
-                    if (hasAccess) {
-                        accessibleArticleIds.add(articleId);
-                    }
-                }
-            }
-        } catch (SQLException | JSONException e) {
-            System.err.println("Error during article search: " + e.getMessage());
-            throw e;
-        }
-        return accessibleArticleIds;
-    }
-    
     // Method to check if student exist in the database for deleting
     public boolean doesStudentExist(String studentIdentifier) throws SQLException {
         String query = "SELECT 1 FROM cse360users WHERE username = ? OR email = ?";
@@ -2831,92 +2648,7 @@ public class DatabaseHelper {
         return students;
     }
     
-    // Method to access list of students
-    public List<User> getAllStudents() throws SQLException {
-        String query = "SELECT * FROM cse360users WHERE student = 1";
-        List<User> students = new ArrayList<>();
-
-        try (PreparedStatement statement = connection.prepareStatement(query);
-             ResultSet resultSet = statement.executeQuery()) {
-
-            while (resultSet.next()) {
-                // Extract data from the result set
-                String username = resultSet.getString("username");
-                String email = resultSet.getString("email");
-                String firstname = resultSet.getString("firstname");
-                String middlename = resultSet.getString("middlename");
-                String lastname = resultSet.getString("lastname");
-                String preferred = resultSet.getString("preferred");
-                boolean isAdmin = resultSet.getInt("admin") == 1;
-                boolean isInstructor = resultSet.getInt("instructor") == 1;
-                boolean isStudent = resultSet.getInt("student") == 1;
-                boolean isFlagged = resultSet.getInt("flag") == 1;
-
-                // Create a new User object
-                User student = new User(
-                    username,
-                    email,
-                    firstname,
-                    middlename,
-                    lastname,
-                    preferred,
-                    isAdmin,
-                    isInstructor,
-                    isStudent,
-                    isFlagged
-                );
-
-                // Add the user to the list
-                students.add(student);
-            }
-        }
-        return students;
-    }
     
-    // Method to access list of students
-    public List<User> getStudent(String username) throws SQLException {
-        String query = "SELECT * FROM cse360users WHERE student = 1 AND username = ?";
-        List<User> students = new ArrayList<>();
-
-        try (PreparedStatement statement = connection.prepareStatement(query)) {
-            // Bind the username parameter
-            statement.setString(1, username);
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    // Extract data from the result set
-                    String uname = resultSet.getString("username");
-                    String email = resultSet.getString("email");
-                    String firstname = resultSet.getString("firstname");
-                    String middlename = resultSet.getString("middlename");
-                    String lastname = resultSet.getString("lastname");
-                    String preferred = resultSet.getString("preferred");
-                    boolean isAdmin = resultSet.getInt("admin") == 1;
-                    boolean isInstructor = resultSet.getInt("instructor") == 1;
-                    boolean isStudent = resultSet.getInt("student") == 1;
-                    boolean isFlagged = resultSet.getInt("flag") == 1;
-
-                    // Create a new User object
-                    User student = new User(
-                        uname,
-                        email,
-                        firstname,
-                        middlename,
-                        lastname,
-                        preferred,
-                        isAdmin,
-                        isInstructor,
-                        isStudent,
-                        isFlagged
-                    );
-
-                    // Add the user to the list
-                    students.add(student);
-                }
-            }
-        }
-        return students;
-    }
     
     // Checks if a user is the last admin in a group
     boolean isLastAdminInGroup(String groupName, String username) throws SQLException, JSONException {
@@ -3193,6 +2925,340 @@ public class DatabaseHelper {
         }
         return false; // Return false if no matches are found
     }
+    
+    // ------------------------------------------------------------------------------------------------------------------------------------
+    
+    
+    // SEARCH FUNCTIONS -------------------------------------------------------------------------------------------------------------------
+    
+    // Method to retrieve a list of articles from the group
+    public List<Long> getSpecialAccessByGroups(String groupName) throws SQLException {
+   	 List<Long> articleIds = new ArrayList<>(); // List to store article IDs
+
+   	    // SQL query to fetch article_ids where groupname matches the given value
+   	    String query = "SELECT article_ids FROM specialaccess WHERE groupname = ?";
+
+   	    System.out.println("Preparing to execute query for group: " + groupName);
+
+   	    try (PreparedStatement stmt = connection.prepareStatement(query)) {
+   	        // Set the groupName parameter in the query
+   	        stmt.setString(1, groupName);
+   	        System.out.println("Query prepared: " + query);
+
+   	        try (ResultSet rs = stmt.executeQuery()) {
+   	            System.out.println("Query executed. Checking results...");
+
+   	            while (rs.next()) {
+   	                System.out.println("Row found for group: " + groupName);
+
+   	                String articleIdsJson = rs.getString("article_ids"); // Get the JSON array
+   	                System.out.println("Retrieved article_ids JSON: " + articleIdsJson);
+
+   	                if (articleIdsJson != null && !articleIdsJson.isEmpty()) {
+   	                    try {
+   	                        // Parse the JSON array and add each ID to the list
+   	                        JSONArray articleIdsArray = new JSONArray(articleIdsJson);
+   	                        System.out.println("Parsing article_ids JSON array...");
+   	                        
+   	                        for (int i = 0; i < articleIdsArray.length(); i++) {
+   	                            long articleId = articleIdsArray.getLong(i);
+   	                            articleIds.add(articleId);
+   	                            System.out.println("Article ID added: " + articleId);
+   	                        }
+   	                    } catch (JSONException e) {
+   	                        System.err.println("Error parsing article_ids JSON for group '" + groupName + "': " + e.getMessage());
+   	                    }
+   	                } else {
+   	                    System.out.println("No article_ids JSON found for group '" + groupName + "'.");
+   	                }
+   	            }
+   	        }
+   	        
+   	        System.out.println("Finished processing results. Total article IDs found: " + articleIds.size());
+   	    } catch (SQLException e) {
+   	        System.err.println("Failed to retrieve article IDs for group '" + groupName + "': " + e.getMessage());
+   	        throw e;
+   	    }
+   	    
+   	    if (articleIds.isEmpty()) {
+   	        System.out.println("No article IDs found for group '" + groupName + "'.");
+   	    } else {
+   	        System.out.println("Article IDs retrieved successfully for group '" + groupName + "'.");
+   	    }
+   	    return articleIds; // Return the list of article IDs
+   }
+    
+    // Method to retrieve a list of article ids accessible to a user based on difficulty level and group access 
+    public List<Long> getArticlesByDifficulty(String username, boolean beginner, boolean intermediate, boolean advanced, boolean expert) throws SQLException, JSONException {
+        List<Long> accessibleArticleIds = new ArrayList<>();
+
+        // SQL query to retrieve articles (no need to include difficulty or groups)
+        String query = "SELECT a.id, a.beginner, a.intermediate, a.advanced, a.expert, a.specialaccessgroups FROM articles a";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                long articleId = rs.getLong("id");
+                String specialAccessGroupsJson = rs.getString("specialaccessgroups");
+
+                // Check for at least one required difficulty (any difficulty that matches)
+                boolean hasRequiredDifficulty = (beginner && rs.getInt("beginner") == 1) ||
+                                                (intermediate && rs.getInt("intermediate") == 1) ||
+                                                (advanced && rs.getInt("advanced") == 1) ||
+                                                (expert && rs.getInt("expert") == 1);
+
+                boolean hasAccess = false;
+
+                // Check access through 'specialaccessgroups' field using hasUserAccessToGroups
+                if (specialAccessGroupsJson != null && !specialAccessGroupsJson.isEmpty()) {
+                    JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
+
+                    // Loop through each special access group to check if user has access
+                    for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
+                        String specialGroup = specialAccessGroupsArray.getString(i).trim();
+                        // Check if user has access to this group using hasUserAccessToGroups
+                        if (hasUserAccessToGroups(specialGroup, username)) {
+                            hasAccess = true;
+                            break; // Stop checking once access is confirmed
+                        }
+                    }
+                }
+                else {
+                	hasAccess = true;
+                }
+
+                // Add article if it matches at least one difficulty and has access
+                if (hasRequiredDifficulty && hasAccess) {
+                    accessibleArticleIds.add(articleId);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving accessible articles: " + e.getMessage());
+            throw e;
+        }
+        return accessibleArticleIds;
+    }
+
+    // Method to retrieve articles accessible to a user based on group access
+    public List<Long> searchArticlesByGroups(String username, String groupNames) throws SQLException, JSONException {
+        List<Long> accessibleArticleIds = new ArrayList<>();
+
+        // Safely handle groupNames, split by comma, and use a HashSet for efficient lookups
+        Set<String> groupSet = new HashSet<>();
+        if (groupNames != null && !groupNames.isEmpty()) {
+            for (String group : groupNames.split(",")) {
+                groupSet.add(group.trim());
+            }
+        }
+
+        String query = "SELECT a.id, a.groups, a.specialaccessgroups FROM articles a WHERE a.groups IS NOT NULL OR a.specialaccessgroups IS NOT NULL";
+
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            while (rs.next()) {
+                long articleId = rs.getLong("id");
+                String groupsJson = rs.getString("groups");
+                String specialAccessGroupsJson = rs.getString("specialaccessgroups");
+
+                boolean groupMatchFound = false;
+                boolean specialGroupMatchFound = false;
+                boolean hasSpecialAccess = false;
+
+                // Step 1: Check if at least one of the groupNames matches the article's regular groups
+                if (groupsJson != null && !groupsJson.isEmpty()) {
+                    JSONArray groupsArray = new JSONArray(groupsJson);
+                    for (int i = 0; i < groupsArray.length(); i++) {
+                        String articleGroup = groupsArray.getString(i).trim();
+                        if (groupSet.contains(articleGroup)) {
+                            groupMatchFound = true;
+                            break; // Stop checking if regular group matches
+                        }
+                    }
+                }
+
+                // Step 2: Check if at least one of the groupNames matches the article's regular groups
+                if (specialAccessGroupsJson != null && !specialAccessGroupsJson.isEmpty()) {
+                    JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
+                    for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
+                        String specialGroup = specialAccessGroupsArray.getString(i).trim();
+                        if (groupSet.contains(specialGroup)) {
+                            specialGroupMatchFound = true;
+                            break; // Stop checking if special access group matches
+                        }
+                    }
+                }
+
+                // Step 3: Check if user has access to any special access groups, if present
+                if (specialAccessGroupsJson != null && !specialAccessGroupsJson.isEmpty()) {
+                    JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
+                    for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
+                        String specialGroup = specialAccessGroupsArray.getString(i).trim();
+
+                        // If user has access to any special access group, mark as having access
+                        if (hasUserAccessToGroups(specialGroup, username)) {
+                            hasSpecialAccess = true;
+                            break; // Stop checking once access is confirmed
+                        }
+                    }
+                }
+
+                // Step 4: Add article if there is a regular group or special access group match and the user has access to special access groups if present
+                if ((groupMatchFound || specialGroupMatchFound) && (specialAccessGroupsJson == null || hasSpecialAccess)) {
+                    accessibleArticleIds.add(articleId);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error retrieving articles by group(s): " + e.getMessage());
+            throw e;
+        }
+        return accessibleArticleIds;
+    }
+
+    // Method to retrieve articles based on keyword search in title or abstract given the user has group access
+    public List<Long> searchArticlesByKeywordWithAccess(String username, String searchQuery) throws SQLException, JSONException {
+        List<Long> accessibleArticleIds = new ArrayList<>();
+        String query = "SELECT id, title, abstract, specialaccessgroups FROM articles WHERE LOWER(title) LIKE ? OR LOWER(abstract) LIKE ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            String keywordPattern = "%" + searchQuery.toLowerCase().trim() + "%";
+
+            // Set parameters for the query
+            stmt.setString(1, keywordPattern); // For title
+            stmt.setString(2, keywordPattern); // For abstract
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    long articleId = rs.getLong("id");
+                    String specialAccessGroupsJson = rs.getString("specialaccessgroups");
+
+                    // Check access via specialaccessgroups only
+                    boolean hasAccess = false;
+                    if (specialAccessGroupsJson != null && !specialAccessGroupsJson.isEmpty()) {
+                        JSONArray specialAccessGroupsArray = new JSONArray(specialAccessGroupsJson);
+                        for (int i = 0; i < specialAccessGroupsArray.length(); i++) {
+                            String specialGroup = specialAccessGroupsArray.getString(i).trim();
+
+                            // If user has access to any special access group, mark as having access
+                            if (hasUserAccessToGroups(specialGroup, username)) {
+                                hasAccess = true;
+                                break; // Stop checking once access is confirmed
+                            }
+                        }
+                    }
+                    else {
+                    	hasAccess = true;
+                    }
+
+                    // Add article if the user has access
+                    if (hasAccess) {
+                        accessibleArticleIds.add(articleId);
+                    }
+                }
+            }
+        } catch (SQLException | JSONException e) {
+            System.err.println("Error during article search: " + e.getMessage());
+            throw e;
+        }
+        return accessibleArticleIds;
+    }
+    
+    // ------------------------------------------------------------------------------------------------------------------------------------
+    
+    // INSTRUCTOR SPECIFIC FUNCTIONS -------------------------------------------------------------------------------------------------------------------
+    
+    // Method to access list of students
+    public List<User> getAllStudents() throws SQLException {
+        String query = "SELECT * FROM cse360users WHERE student = 1";
+        List<User> students = new ArrayList<>();
+
+        try (PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                // Extract data from the result set
+                String username = resultSet.getString("username");
+                String email = resultSet.getString("email");
+                String firstname = resultSet.getString("firstname");
+                String middlename = resultSet.getString("middlename");
+                String lastname = resultSet.getString("lastname");
+                String preferred = resultSet.getString("preferred");
+                boolean isAdmin = resultSet.getInt("admin") == 1;
+                boolean isInstructor = resultSet.getInt("instructor") == 1;
+                boolean isStudent = resultSet.getInt("student") == 1;
+                boolean isFlagged = resultSet.getInt("flag") == 1;
+
+                // Create a new User object
+                User student = new User(
+                    username,
+                    email,
+                    firstname,
+                    middlename,
+                    lastname,
+                    preferred,
+                    isAdmin,
+                    isInstructor,
+                    isStudent,
+                    isFlagged
+                );
+
+                // Add the user to the list
+                students.add(student);
+            }
+        }
+        return students;
+    }
+    
+    // Method to access list of students
+    public List<User> getStudent(String username) throws SQLException {
+        String query = "SELECT * FROM cse360users WHERE student = 1 AND username = ?";
+        List<User> students = new ArrayList<>();
+
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            // Bind the username parameter
+            statement.setString(1, username);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    // Extract data from the result set
+                    String uname = resultSet.getString("username");
+                    String email = resultSet.getString("email");
+                    String firstname = resultSet.getString("firstname");
+                    String middlename = resultSet.getString("middlename");
+                    String lastname = resultSet.getString("lastname");
+                    String preferred = resultSet.getString("preferred");
+                    boolean isAdmin = resultSet.getInt("admin") == 1;
+                    boolean isInstructor = resultSet.getInt("instructor") == 1;
+                    boolean isStudent = resultSet.getInt("student") == 1;
+                    boolean isFlagged = resultSet.getInt("flag") == 1;
+
+                    // Create a new User object
+                    User student = new User(
+                        uname,
+                        email,
+                        firstname,
+                        middlename,
+                        lastname,
+                        preferred,
+                        isAdmin,
+                        isInstructor,
+                        isStudent,
+                        isFlagged
+                    );
+
+                    // Add the user to the list
+                    students.add(student);
+                }
+            }
+        }
+        return students;
+    }
+
+    // ------------------------------------------------------------------------------------------------------------------------------------
+       
+    // HELP MESSAGE FUNCTIONS -------------------------------------------------------------------------------------------------------------------
+
 
     // Method to add a specific message from the user to the requests table
     public void addSpecificMessage(String username, String specificText, String specificNeed) throws SQLException {
@@ -3236,21 +3302,4 @@ public class DatabaseHelper {
         }
     }
     
-    /**
-     * Closes the database connection and associated statement.
-     * Should be called when the application is shutting down to release resources.
-     */
-    public void closeConnection() {
-        try { 
-            if (statement != null) statement.close(); 
-            System.out.println("Connection Closed");
-        } catch(SQLException se2) { 
-            se2.printStackTrace();
-        } 
-        try { 
-            if (connection != null) connection.close(); 
-        } catch(SQLException se){ 
-            se.printStackTrace(); 
-        } 
-    }
 }
